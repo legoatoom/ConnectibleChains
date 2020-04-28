@@ -1,29 +1,29 @@
 {
   "schemaVersion": 1,
-  "id": "modid",
+  "id": "connectiblechains",
   "version": "${version}",
 
-  "name": "Example Mod",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "name": "Connectible Chains",
+  "description": "Simple mod to allow the new chain block to be connected to 2 fences.",
   "authors": [
-    "Me!"
+    "legoatoom"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://github.com/legoatoom/ConnectibleChains",
+    "sources": "https://github.com/legoatoom/ConnectibleChains"
   },
 
   "license": "CC0-1.0",
-  "icon": "assets/modid/icon.png",
+  "icon": "assets/connectiblechains/icon.png",
+  "_comment": "TODO: NEW ICON",
 
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.fabricmc.example.ExampleMod"
+      "com.legoatoom.develop.ConnectibleChains"
     ]
   },
   "mixins": [
-    "modid.mixins.json"
   ],
 
   "depends": {
