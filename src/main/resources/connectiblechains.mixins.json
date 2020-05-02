@@ -1,12 +1,12 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "net.fabricmc.example.mixin",
+  "package": "com.legoatoom.develop.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
   ],
   "client": [
-    "ExampleMixin"
+    "network.ClientPlayNetworkHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
