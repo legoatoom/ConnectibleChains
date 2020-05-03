@@ -49,8 +49,8 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
     private void method_4073(ChainKnotEntity fromEntity, float f, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, Entity chainOrPlayerEntity) {
         matrixStack.push();
-        double d = (double)(MathHelper.lerp(f * 0.5F, chainOrPlayerEntity.yaw, chainOrPlayerEntity.prevYaw) * 0.017453292F);
-        double e = (double)(MathHelper.lerp(f * 0.5F, chainOrPlayerEntity.pitch, chainOrPlayerEntity.prevPitch) * 0.017453292F);
+        double d = MathHelper.lerp(f * 0.5F, chainOrPlayerEntity.yaw, chainOrPlayerEntity.prevYaw) * 0.017453292F;
+        double e = MathHelper.lerp(f * 0.5F, chainOrPlayerEntity.pitch, chainOrPlayerEntity.prevPitch) * 0.017453292F;
         double g = Math.cos(d);
         double h = Math.sin(d);
         double i = Math.sin(e);
@@ -60,29 +60,25 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         if (chainOrPlayerEntity instanceof AbstractDecorationEntity) {
             g = 0.0D;
             h = 0.0D;
-            i = -1.0D;
-            double k = MathHelper.lerp((double) f, chainOrPlayerEntity.prevX, chainOrPlayerEntity.getX());
-            double l = MathHelper.lerp((double) f, chainOrPlayerEntity.prevY, chainOrPlayerEntity.getY());
-            double m = MathHelper.lerp((double) f, chainOrPlayerEntity.prevZ, chainOrPlayerEntity.getZ());
-            double o = MathHelper.lerp((double) f, fromEntity.prevX, fromEntity.getX());
-            double p = MathHelper.lerp((double) f, fromEntity.prevY, fromEntity.getY());
-            double q = MathHelper.lerp((double) f, fromEntity.prevZ, fromEntity.getZ());
+            double k = MathHelper.lerp(f, chainOrPlayerEntity.prevX, chainOrPlayerEntity.getX());
+            double l = MathHelper.lerp(f, chainOrPlayerEntity.prevY, chainOrPlayerEntity.getY());
+            double m = MathHelper.lerp(f, chainOrPlayerEntity.prevZ, chainOrPlayerEntity.getZ());
+            double o = MathHelper.lerp(f, fromEntity.prevX, fromEntity.getX());
+            double p = MathHelper.lerp(f, fromEntity.prevY, fromEntity.getY());
+            double q = MathHelper.lerp(f, fromEntity.prevZ, fromEntity.getZ());
             matrixStack.translate(g, 0.3F, h);
             r = (float) (k - o);
             s = (float) (l - p);
             t = (float) (m - q);
         } else {
             double j = Math.cos(e);
-            double k = MathHelper.lerp((double) f, chainOrPlayerEntity.prevX, chainOrPlayerEntity.getX()) - g * 0.7D - h * 0.5D * j;
-            double l = MathHelper.lerp((double) f, chainOrPlayerEntity.prevY + (double) chainOrPlayerEntity.getStandingEyeHeight() * 0.7D, chainOrPlayerEntity.getY() + (double) chainOrPlayerEntity.getStandingEyeHeight() * 0.7D) - i * 0.5D - 0.5D;
-            double m = MathHelper.lerp((double) f, chainOrPlayerEntity.prevZ, chainOrPlayerEntity.getZ()) - h * 0.7D + g * 0.5D * j;
-            double n = (double) (MathHelper.lerp(f, fromEntity.yaw, fromEntity.prevYaw) * 0.017453292F) + 1.5707963267948966D;
-            g = 0;
-            h = 0;
-            double o = MathHelper.lerp((double) f, fromEntity.prevX, fromEntity.getX()) + g;
-            double p = MathHelper.lerp((double) f, fromEntity.prevY, fromEntity.getY()) + 0.3F;
-            double q = MathHelper.lerp((double) f, fromEntity.prevZ, fromEntity.getZ()) + h;
-            matrixStack.translate(g,0.3F, h);
+            double k = MathHelper.lerp(f, chainOrPlayerEntity.prevX, chainOrPlayerEntity.getX()) - g * 0.7D - h * 0.5D * j;
+            double l = MathHelper.lerp(f, chainOrPlayerEntity.prevY + (double) chainOrPlayerEntity.getStandingEyeHeight() * 0.7D, chainOrPlayerEntity.getY() + (double) chainOrPlayerEntity.getStandingEyeHeight() * 0.7D) - i * 0.5D - 0.5D;
+            double m = MathHelper.lerp(f, chainOrPlayerEntity.prevZ, chainOrPlayerEntity.getZ()) - h * 0.7D + g * 0.5D * j;
+            double o = MathHelper.lerp(f, fromEntity.prevX, fromEntity.getX());
+            double p = MathHelper.lerp(f, fromEntity.prevY, fromEntity.getY()) + 0.3F;
+            double q = MathHelper.lerp(f, fromEntity.prevZ, fromEntity.getZ());
+            matrixStack.translate(0,0.3F, 0);
             r = (float) (k - o);
             s = (float) (l - p);
             t = (float) (m - q);
