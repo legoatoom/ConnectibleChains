@@ -7,6 +7,7 @@ import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.decoration.LeashKnotEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -21,8 +22,12 @@ import net.minecraft.tag.BlockTags;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
+
+import java.util.Iterator;
+import java.util.List;
 
 public class TempChainItem extends Item {
 
@@ -30,8 +35,8 @@ public class TempChainItem extends Item {
         super(settings);
     }
 
-    private final String linkName = ConnectibleChains.MODID + ":linkedPos";
-    private final String dimensionName = ConnectibleChains.MODID + ":dimension";
+    public final static String linkName = ConnectibleChains.MODID + ":linkedPos";
+    public final static String dimensionName = ConnectibleChains.MODID + ":dimension";
 
     @Override
     public ActionResult useOnBlock(ItemUsageContext context) {
@@ -40,53 +45,37 @@ public class TempChainItem extends Item {
         Block block = world.getBlockState(blockPos).getBlock();
         PlayerEntity playerEntity = context.getPlayer();
         if (!world.isClient && playerEntity != null) {
-            ItemStack stack = playerEntity.getStackInHand(context.getHand());
+            ItemStack itemStack = playerEntity.getStackInHand(context.getHand());
             if (block.isIn(BlockTags.FENCES)) {
                 if (playerEntity.isSneaking()) {
-                    if (stack.hasTag() && stack.getOrCreateTag().contains(linkName)) {
-                        stack.removeSubTag(linkName);
-                    } else {
-                        placeChain(context, world, blockPos, playerEntity, stack);
-                    }
+                    placeChain(context, world, blockPos, playerEntity, itemStack);
                 } else {
-                    if (!(stack.hasTag() && stack.getOrCreateTag().contains(linkName))) {
-                        ChainKnotEntity chainKnotEntity = ChainKnotEntity.getOrCreate(world, blockPos, false);
-                        chainKnotEntity.attachChain(playerEntity, playerEntity);
-                        CompoundTag linkedFromTag = NbtHelper.fromBlockPos(blockPos);
-                        linkedFromTag.putInt(dimensionName, world.getDimension().getType().getRawId());
-                        stack.getOrCreateTag().put(linkName, linkedFromTag);
-                    } else {
-                        CompoundTag linkToTag = stack.getOrCreateTag().getCompound(linkName);
-                        BlockPos linkPos = NbtHelper.toBlockPos(linkToTag);
-                        ChainKnotEntity chainKnotFrom = ChainKnotEntity.getOrCreate(world, linkPos, true);
-                        DimensionType dimensionType = DimensionType.byRawId(linkToTag.getInt(dimensionName));
-                        int distance = (int) Math.ceil(Math.sqrt(getSquaredDistance(blockPos, linkPos)));
-                        int maxDistance = 7;
-                        if (chainKnotFrom == null){
-                            playerEntity.sendMessage(new TranslatableText("Original knot is missing"), true);
-                        } else if (dimensionType != world.getDimension().getType()) {
-                            playerEntity.sendMessage(new TranslatableText("Wrong dimension"), true);
-                        } else if (linkPos.equals(blockPos)) {
-                            playerEntity.sendMessage(new TranslatableText("Same connection"), true);
-                        } else if (distance > maxDistance) {
-                            playerEntity.sendMessage(new TranslatableText("Too far"), true);
-                        } else if (stack.getCount() < distance && !playerEntity.isCreative()) {
-                            playerEntity.sendMessage(new TranslatableText("Insufficient materials"), true);
-                        } else {
-                            // Finally, it can actually connect :D
-                            ChainKnotEntity chainKnotTo = ChainKnotEntity.getOrCreate(world, blockPos, false);
-                            if (chainKnotTo != null) {
-                                chainKnotTo.attachChain(chainKnotFrom, playerEntity);
-                            }
-                            playerEntity.sendMessage(new TranslatableText("Success"), true);
-                            if (!playerEntity.isCreative()) {
-                                stack.decrement(distance);
-                            } stack.removeSubTag(linkName);
+                    ChainKnotEntity chainKnotEntity = ChainKnotEntity.getOrCreate(world, blockPos);
+                    boolean bl = false;
+                    double d = 7.0D;
+                    int i = blockPos.getX();
+                    int j = blockPos.getY();
+                    int k = blockPos.getZ();
+                    List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class,
+                            new Box((double)i - 7.0D, (double)j - 7.0D, (double)k - 7.0D,
+                                    (double)i + 7.0D, (double)j + 7.0D, (double)k + 7.0D));
+                    Iterator<ChainKnotEntity> var11 = list.iterator();
+
+                    while(var11.hasNext()) {
+                        ChainKnotEntity chainKnotEntity1 = (ChainKnotEntity)var11.next();
+                        if (chainKnotEntity1.getHoldingEntity() == playerEntity) {
+                            chainKnotEntity1.attachChain(chainKnotEntity, true);
+                            bl = true;
                         }
+                    }
+
+                    if (!bl && chainKnotEntity.canbeChainedBy(playerEntity)) {
+                        chainKnotEntity.attachChain(playerEntity, true);
+                        itemStack.decrement(1);
                     }
                 }
             } else {
-                placeChain(context, world, blockPos, playerEntity, stack);
+                placeChain(context, world, blockPos, playerEntity, itemStack);
             }
             return ActionResult.SUCCESS;
         }

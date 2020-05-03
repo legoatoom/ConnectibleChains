@@ -3,48 +3,47 @@ package com.legoatoom.develop.enitity;
 import com.legoatoom.develop.ConnectibleChains;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.entity.EntityType;
+import net.minecraft.entity.*;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
-import net.minecraft.entity.decoration.LeashKnotEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Packet;
 import net.minecraft.network.packet.s2c.play.EntityAttachS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.tag.BlockTags;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 public class ChainKnotEntity extends AbstractDecorationEntity {
 
-    private List<PlayerEntity> builders;
-    private List<Integer> buildersID;
+    private Entity holdingEntity;
+    private int holdingEntityId;
+    private CompoundTag chainTag;
 
-    private List<ChainKnotEntity> connections;
-    private List<Integer> connectionsID;
-
-    public ChainKnotEntity(EntityType<? extends ChainKnotEntity> entityType, World world) { super(entityType, world); }
+    public ChainKnotEntity(EntityType<? extends AbstractDecorationEntity> entityType, World world) {
+        super(entityType, world);
+    }
 
     public ChainKnotEntity(World world, BlockPos pos) {
         super(ConnectibleChains.CHAIN_KNOT, world, pos);
         this.updatePosition((double)pos.getX() + 0.5D, (double)pos.getY() + 0.5D, (double)pos.getZ() + 0.5D);
+        float f = 0.125F;
+        float g = 0.1875F;
+        float h = 0.25F;
         this.setBoundingBox(new Box(this.getX() - 0.1875D, this.getY() - 0.25D + 0.125D, this.getZ() - 0.1875D, this.getX() + 0.1875D, this.getY() + 0.25D + 0.125D, this.getZ() + 0.1875D));
         this.teleporting = true;
-        this.builders = new ArrayList<>();
-        this.buildersID = new ArrayList<>();
-        this.connections = new ArrayList<>();
-        this.connectionsID = new ArrayList<>();
     }
 
     @Override
@@ -64,32 +63,235 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     @Override
     public void tick() {
         super.tick();
-        if (!this.world.isClient){
+        if (!this.world.isClient) {
             this.updateChain();
         }
     }
 
-    protected void updateChain() {
-        //TODO: what is the use of leashTag
-        for (PlayerEntity playerEntity : this.builders){
-            if (!this.isAlive() || !playerEntity.isAlive()){
-                //this.detachLeash(true, true);
+    @Override
+    public void writeCustomDataToTag(CompoundTag tag) {
+        super.writeCustomDataToTag(tag);
+        CompoundTag compoundTag3;
+        if (this.holdingEntity != null) {
+            compoundTag3 = new CompoundTag();
+            if (this.holdingEntity instanceof LivingEntity) {
+                UUID uUID = this.holdingEntity.getUuid();
+                compoundTag3.putUuidNew("UUID", uUID);
+            } else if (this.holdingEntity instanceof AbstractDecorationEntity) {
+                BlockPos blockPos = ((AbstractDecorationEntity) this.holdingEntity).getDecorationBlockPos();
+                compoundTag3.putInt("X", blockPos.getX());
+                compoundTag3.putInt("Y", blockPos.getY());
+                compoundTag3.putInt("Z", blockPos.getZ());
+            }
+
+            tag.put("Chain", this.chainTag.copy());
+        } else if (this.chainTag != null) {
+            tag.put("Chain", this.chainTag.copy());
+        }
+    }
+
+    @Override
+    public void readCustomDataFromTag(CompoundTag tag) {
+        super.readCustomDataFromTag(tag);
+        if (tag.contains("Chain", 10)){
+            this.chainTag = tag.getCompound("Leash");
+        }
+    }
+
+    /**
+     * Called when a player interacts with this entity.
+     *
+     * @param player the player
+     * @param hand   the hand the player used to interact with this entity
+     */
+    @Override
+    public boolean interact(PlayerEntity player, Hand hand) {
+        if (this.world.isClient){
+            return true;
+        } else {
+            ItemStack itemStack = player.getStackInHand(hand);
+            if (!this.isAlive()) {
+                return false;
+            } else {
+                if (this.getHoldingEntity() == player) {
+                    this.detachChain(true, !player.abilities.creativeMode);
+                } else {
+                    boolean bl = false;
+                    double d = 7.0D;
+                    List<ChainKnotEntity> list = this.world.getNonSpectatingEntities(ChainKnotEntity.class,
+                            new Box(this.getX() - 7.0D, this.getY() - 7.0D, this.getZ() - 7.0D,
+                                    this.getX() + 7.0D, this.getY() + 7.0D, this.getZ() + 7.0D));
+                    Iterator<ChainKnotEntity> var7 = list.iterator();
+
+                    ChainKnotEntity chainKnotEntity;
+                    while(var7.hasNext()){
+                        chainKnotEntity = (ChainKnotEntity)var7.next();
+                        if (chainKnotEntity.getHoldingEntity() == player){
+                            chainKnotEntity.attachChain(this, true);
+                            bl = true;
+                        }
+                    }
+                    if (!bl) {
+                        if (itemStack.getItem() == ConnectibleChains.TEMP_CHAIN && this.canbeChainedBy(player)) {
+                            this.attachChain(player, true);
+                            itemStack.decrement(1);
+                            return true;
+                        } else {
+                            this.remove();
+                            if (player.abilities.creativeMode) {
+                                var7 = list.iterator();
+                                while (var7.hasNext()) {
+                                    chainKnotEntity = var7.next();
+                                    if (chainKnotEntity.isChained() && chainKnotEntity.getHoldingEntity() == this) {
+                                        chainKnotEntity.detachChain(true, false);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return true;
             }
         }
     }
 
+    public boolean canStayAttached() {
+        return this.world.getBlockState(this.attachmentPos).getBlock().isIn(BlockTags.FENCES);
+    }
 
+    public static ChainKnotEntity getOrCreate(World world, BlockPos pos) {
+        int i = pos.getX();
+        int j = pos.getY();
+        int k = pos.getZ();
+        List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class,
+                new Box((double)i - 1.0D, (double)j - 1.0D, (double)k - 1.0D,
+                        (double)i + 1.0D, (double)j + 1.0D, (double)k + 1.0D));
+        Iterator<ChainKnotEntity> var6 = list.iterator();
+
+        ChainKnotEntity chainKnotEntity;
+        do {
+            if (!var6.hasNext()) {
+                ChainKnotEntity leashKnotEntity2 = new ChainKnotEntity(world, pos);
+                world.spawnEntity(leashKnotEntity2);
+                leashKnotEntity2.onPlace();
+                return leashKnotEntity2;
+            }
+
+            chainKnotEntity = var6.next();
+        } while(!chainKnotEntity.getDecorationBlockPos().equals(pos));
+
+        return chainKnotEntity;
+    }
+
+    public void updateChain() {
+        if (this.chainTag != null) {
+            this.deserializeChainTag();
+        }
+
+        if (this.holdingEntity != null) {
+            if (!this.isAlive() || !this.holdingEntity.isAlive()) {
+                this.detachChain(true, true);
+            }
+        }
+    }
+
+    public void detachChain(boolean sendPacket, boolean bl){
+        if (this.holdingEntity != null){
+            this.teleporting = false;
+            if (!(this.holdingEntity instanceof PlayerEntity)){
+                this.holdingEntity.teleporting = false;
+            }
+
+            this.holdingEntity = null;
+            this.chainTag = null;
+            if (!this.world.isClient && bl){
+                this.dropItem(ConnectibleChains.TEMP_CHAIN);
+            }
+
+            if (!this.world.isClient && sendPacket && this.world instanceof ServerWorld) {
+                ((ServerWorld)this.world).getChunkManager().sendToOtherNearbyPlayers(
+                        this, new EntityAttachS2CPacket(this, (Entity)null));
+            }
+        }
+    }
+
+    public boolean canbeChainedBy(PlayerEntity player) {
+        return !this.isChained();
+    }
+
+    public boolean isChained() {
+        return this.holdingEntity != null;
+    }
+
+    public Entity getHoldingEntity() {
+        if (this.holdingEntity == null && this.holdingEntityId != 0 && this.world.isClient){
+            this.holdingEntity = this.world.getEntityById(this.holdingEntityId);
+        }
+
+        return this.holdingEntity;
+    }
+
+    public void attachChain(Entity entity, boolean bl){
+        this.holdingEntity = entity;
+        this.chainTag = null;
+        this.teleporting = true;
+        if(!(this.holdingEntity instanceof PlayerEntity)){
+            this.holdingEntity.teleporting = true;
+        }
+
+        if(!this.world.isClient && bl && this.world instanceof ServerWorld){
+            ((ServerWorld)this.world).getChunkManager().sendToOtherNearbyPlayers(this,
+                    new EntityAttachS2CPacket(this, this.holdingEntity));
+        }
+    }
+
+    @Environment(EnvType.CLIENT)
+    public void setHoldingEntity(int id){
+        this.holdingEntityId = id;
+        this.detachChain(false, false);
+    }
+
+    private void deserializeChainTag() {
+        if (this.chainTag != null && this.world instanceof ServerWorld) {
+            if (this.chainTag.containsUuidNew("UUID")){
+                UUID uUID = this.chainTag.getUuidNew("UUID");
+                Entity entity = ((ServerWorld)this.world).getEntity(uUID);
+                if (entity != null){
+                    this.attachChain(entity, true);
+                }
+            } else if (this.chainTag.contains("X", 99)
+                    && this.chainTag.contains("Y", 99)
+                    && this.chainTag.contains("Z", 99)){
+                BlockPos blockPos = new BlockPos(this.chainTag.getInt("X"),
+                                                    this.chainTag.getInt("Z"),
+                                                        this.chainTag.getInt("Z"));
+                this.attachChain(ChainKnotEntity.getOrCreate(this.world, blockPos), true);
+            } else {
+                this.detachChain(false, true);
+            }
+
+            if (this.age > 100) {
+                this.chainTag = null;
+            }
+        }
+    }
 
     @Override
-    public int getWidthPixels() { return 9; }
+    public int getWidthPixels() {
+        return 9;
+    }
 
     @Override
-    public int getHeightPixels() { return 9; }
+    public int getHeightPixels() {
+        return 9;
+    }
 
     @Override
     protected float getEyeHeight(EntityPose pose, EntityDimensions dimensions) {
         return -0.0625F;
     }
+
+
 
     @Environment(EnvType.CLIENT)
     public boolean shouldRender(double distance) {
@@ -102,109 +304,12 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     }
 
     @Override
-    public boolean canStayAttached() {
-        return this.world.getBlockState(this.attachmentPos).getBlock().isIn(BlockTags.FENCES);
+    public void onPlace() {
+        this.playSound(SoundEvents.BLOCK_CHAIN_PLACE, 1.0F, 1.0F);
     }
-
-    /**
-     * @see LeashKnotEntity#getOrCreate(World, BlockPos);
-     * Basicly the same, so I cannot take credit.
-     */
-    public static ChainKnotEntity getOrCreate(World world, BlockPos pos, boolean mustExist) {
-        int i = pos.getX();
-        int j = pos.getY();
-        int k = pos.getZ();
-        List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class, new Box((double)i - 1.0D, (double)j - 1.0D, (double)k - 1.0D, (double)i + 1.0D, (double)j + 1.0D, (double)k + 1.0D));
-        Iterator<ChainKnotEntity> var6 = list.iterator();
-
-        ChainKnotEntity chainKnotEntity;
-        do {
-            if (!var6.hasNext()) {
-                if (mustExist){
-                    return null;
-                }
-                ChainKnotEntity chainKnotEntity1 = new ChainKnotEntity(world, pos);
-                world.spawnEntity(chainKnotEntity1);
-                chainKnotEntity1.onPlace();
-                return chainKnotEntity1;
-            }
-
-            chainKnotEntity = var6.next();
-        } while(!chainKnotEntity.getDecorationBlockPos().equals(pos));
-        return chainKnotEntity;
-    }
-
-    @Override
-    public void onPlace() { this.playSound(SoundEvents.BLOCK_CHAIN_STEP, 1.0F, 1.0F); }
 
     @Override
     public Packet<?> createSpawnPacket() {
         return new EntitySpawnS2CPacket(this, this.getType(), 0, this.getDecorationBlockPos());
-    }
-
-    /**
-     * Connect a chain to a {@link PlayerEntity} or a different {@link ChainKnotEntity}.
-     * @param entity
-     * @param setter
-     * @return <code>True</code> if a chain was successfully made between the entity and this ChainKnot,
-     * else <code>False</code>
-     */
-    public boolean attachChain(Entity entity, PlayerEntity setter){
-        if (entity instanceof PlayerEntity) {
-            if (builders == null){
-                this.builders = new ArrayList<>();
-            }
-            builders.add((PlayerEntity) entity);
-        } else if (entity instanceof ChainKnotEntity) {
-            if (entity.equals(this)) {
-                return false;
-            }
-            if (connections == null){
-                this.connections = new ArrayList<>();
-            }
-            connections.add((ChainKnotEntity) entity);
-        } else {
-            LOGGER.error("Entity of type: " + entity.getEntityName() +
-                    " trying to connect to chain. Only Players and Other ChainsKnots allowed");
-            return false;
-        }
-
-        if (!this.world.isClient && this.world instanceof ServerWorld) {
-            ((ServerWorld)this.world).getChunkManager()
-                    .sendToOtherNearbyPlayers(this,
-                            new EntityAttachS2CPacket(this, entity));
-        }
-        return true;
-    }
-
-    @Environment(EnvType.CLIENT)
-    public void setNewConnectorID(int id) {
-        this.connectionsID.add(id);
-        this.detachChain(false, false);
-    }
-
-    @Environment(EnvType.CLIENT)
-    public void setNewBuilderID(int id) {
-        this.buildersID.add(id);
-    }
-
-    public void detachChain(boolean sendPacket, boolean b1, int fromID) {
-        Entity entity = this.world.getEntityById(fomrID){
-
-        }
-    }
-
-    public List<PlayerEntity> getBuilders(){
-        for (int ID : this.buildersID){
-            this.builders.add((PlayerEntity) this.world.getEntityById(ID));
-        }
-        return this.builders;
-    }
-
-    public List<ChainKnotEntity> getConnections(){
-        for (int ID : this.connectionsID){
-            this.connections.add((ChainKnotEntity) this.world.getEntityById(ID));
-        }
-        return this.connections;
     }
 }

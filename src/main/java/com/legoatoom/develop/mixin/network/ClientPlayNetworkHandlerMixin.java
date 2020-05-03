@@ -53,22 +53,16 @@ public abstract class ClientPlayNetworkHandlerMixin {
 
     @Inject(
             method = "onEntityAttach(Lnet/minecraft/network/packet/s2c/play/EntityAttachS2CPacket;)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/world/ClientWorld;getEntityById()Lnet/minecraft/entity/Entity;", shift = At.Shift.AFTER),
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/network/NetworkThreadUtils;forceMainThread(Lnet/minecraft/network/Packet;Lnet/minecraft/network/listener/PacketListener;Lnet/minecraft/util/thread/ThreadExecutor;)V", shift = At.Shift.AFTER),
             cancellable = true,
             locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private void onEntityAttach(EntityAttachS2CPacket packet, CallbackInfo ci, Entity entity) {
+    private void onEntityAttach(EntityAttachS2CPacket packet, CallbackInfo ci) {
+        Entity entity = this.world.getEntityById(packet.getAttachedEntityId());
         if (entity instanceof ChainKnotEntity){
-            Entity holdingEntity = this.world.getEntityById(packet.getHoldingEntityId());
-            if (holdingEntity instanceof ChainKnotEntity){
-                ((ChainKnotEntity) entity).setNewConnectorID(packet.getHoldingEntityId());
-            }
-            if (holdingEntity instanceof PlayerEntity){
-                ((ChainKnotEntity) entity).setNewBuilderID(packet.getHoldingEntityId());
-            }
+            ((ChainKnotEntity) entity).setHoldingEntity(packet.getHoldingEntityId());
             ci.cancel();
         }
-
     }
 
 }
