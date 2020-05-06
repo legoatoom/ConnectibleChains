@@ -2,12 +2,11 @@ package com.legoatoom.develop.mixin.network;
 
 import com.legoatoom.develop.ConnectibleChains;
 import com.legoatoom.develop.enitity.ChainKnotEntity;
+import com.legoatoom.develop.network.packet.s2c.play.EntitiesAttachS2CPacket;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.decoration.LeashKnotEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.s2c.play.EntityAttachS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.util.math.BlockPos;
@@ -58,11 +57,16 @@ public abstract class ClientPlayNetworkHandlerMixin {
             locals = LocalCapture.CAPTURE_FAILHARD
     )
     private void onEntityAttach(EntityAttachS2CPacket packet, CallbackInfo ci) {
-        Entity entity = this.world.getEntityById(packet.getAttachedEntityId());
-        if (entity instanceof ChainKnotEntity){
-            ((ChainKnotEntity) entity).setHoldingEntity(packet.getHoldingEntityId());
-            ci.cancel();
+        if (packet instanceof EntitiesAttachS2CPacket){
+            Entity entity = this.world.getEntityById(packet.getAttachedEntityId());
+            assert entity != null;
+            if (((EntitiesAttachS2CPacket) packet).isRemove()){
+                ((ChainKnotEntity) entity).removeHoldingEntity(((EntitiesAttachS2CPacket) packet).getLimboId());
+            } else {
+                ((ChainKnotEntity) entity).addHoldingEntity(((EntitiesAttachS2CPacket) packet).getLimboId(), ((EntitiesAttachS2CPacket) packet).getFromId());
+            }
         }
+
     }
 
 }

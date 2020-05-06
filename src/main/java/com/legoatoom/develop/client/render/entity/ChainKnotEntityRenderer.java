@@ -7,16 +7,16 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.MobEntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.world.LightType;
+
+import java.util.List;
 
 /**
  * @see net.minecraft.client.render.entity.LeashKnotEntityRenderer
@@ -31,14 +31,15 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     }
 
     public void render(ChainKnotEntity chainKnotEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
-        super.render(chainKnotEntity, f, g, matrixStack, vertexConsumerProvider, i);Entity entity = chainKnotEntity.getHoldingEntity();
+        super.render(chainKnotEntity, f, g, matrixStack, vertexConsumerProvider, i);
         matrixStack.push();
         matrixStack.scale(-1.0F, -1.0F, 1.0F);
         this.model.setAngles(chainKnotEntity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
         VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(this.model.getLayer(TEXTURE));
         this.model.render(matrixStack, vertexConsumer, i, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
         matrixStack.pop();
-        if (entity != null){
+        List<Entity> entities = chainKnotEntity.getHoldingEntities();
+        for (Entity entity : entities){
             this.method_4073(chainKnotEntity, g, matrixStack, vertexConsumerProvider, entity);
         }
     }
@@ -139,8 +140,9 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         if (super.shouldRender(entity, frustum, x, y, z)){
             return true;
         } else {
-            Entity entity1 = entity.getHoldingEntity();
-            return entity1 != null && frustum.isVisible(entity1.getVisibilityBoundingBox());
+            List<Entity> entity1 = entity.getHoldingEntities();
+            boolean bl = entity1.stream().anyMatch(entity2 -> frustum.isVisible(entity2.getVisibilityBoundingBox()));
+            return !entity1.isEmpty() && bl;
         }
     }
 

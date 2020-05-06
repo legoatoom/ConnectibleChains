@@ -1,14 +1,13 @@
 package com.legoatoom.develop.enitity;
 
 import com.legoatoom.develop.ConnectibleChains;
+import com.legoatoom.develop.network.packet.s2c.play.EntitiesAttachS2CPacket;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.entity.*;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
-import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Packet;
 import net.minecraft.network.packet.s2c.play.EntityAttachS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
@@ -21,16 +20,18 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ChainKnotEntity extends AbstractDecorationEntity {
 
-    private Entity holdingEntity;
-    private int holdingEntityId;
-    private CompoundTag chainTag;
+    private List<Entity> holdingEntities;
+    private List<Integer> holdingEntitiesId;
+
+    //private CompoundTag chainTag;
 
     public ChainKnotEntity(EntityType<? extends AbstractDecorationEntity> entityType, World world) {
         super(entityType, world);
@@ -42,8 +43,10 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         float f = 0.125F;
         float g = 0.1875F;
         float h = 0.25F;
-        this.setBoundingBox(new Box(this.getX() - 0.1875D, this.getY() - 0.25D + 0.125D, this.getZ() - 0.1875D, this.getX() + 0.1875D, this.getY() + 0.25D + 0.125D, this.getZ() + 0.1875D));
+        this.setBoundingBox(new Box(this.getX() - g, this.getY() - h + f, this.getZ() - g, this.getX() + g, this.getY() + h + f, this.getZ() + g));
         this.teleporting = true;
+        this.holdingEntitiesId = new ArrayList<>();
+        this.holdingEntities = new ArrayList<>();
     }
 
     @Override
@@ -68,35 +71,35 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         }
     }
 
-    @Override
-    public void writeCustomDataToTag(CompoundTag tag) {
-        super.writeCustomDataToTag(tag);
-        CompoundTag compoundTag3;
-        if (this.holdingEntity != null) {
-            compoundTag3 = new CompoundTag();
-            if (this.holdingEntity instanceof LivingEntity) {
-                UUID uUID = this.holdingEntity.getUuid();
-                compoundTag3.putUuidNew("UUID", uUID);
-            } else if (this.holdingEntity instanceof AbstractDecorationEntity) {
-                BlockPos blockPos = ((AbstractDecorationEntity) this.holdingEntity).getDecorationBlockPos();
-                compoundTag3.putInt("X", blockPos.getX());
-                compoundTag3.putInt("Y", blockPos.getY());
-                compoundTag3.putInt("Z", blockPos.getZ());
-            }
-
-            tag.put("Chain", this.chainTag.copy());
-        } else if (this.chainTag != null) {
-            tag.put("Chain", this.chainTag.copy());
-        }
-    }
-
-    @Override
-    public void readCustomDataFromTag(CompoundTag tag) {
-        super.readCustomDataFromTag(tag);
-        if (tag.contains("Chain", 10)){
-            this.chainTag = tag.getCompound("Leash");
-        }
-    }
+//    @Override
+//    public void writeCustomDataToTag(CompoundTag tag) {
+//        super.writeCustomDataToTag(tag);
+//        CompoundTag compoundTag3;
+//        if (this.holdingEntities != null) {
+//            compoundTag3 = new CompoundTag();
+//            if (this.holdingEntities instanceof LivingEntity) {
+//                UUID uUID = this.holdingEntities.getUuid();
+//                compoundTag3.putUuidNew("UUID", uUID);
+//            } else if (this.holdingEntities instanceof AbstractDecorationEntity) {
+//                BlockPos blockPos = ((AbstractDecorationEntity) this.holdingEntities).getDecorationBlockPos();
+//                compoundTag3.putInt("X", blockPos.getX());
+//                compoundTag3.putInt("Y", blockPos.getY());
+//                compoundTag3.putInt("Z", blockPos.getZ());
+//            }
+//
+//            tag.put("Chain", this.chainTag.copy());
+//        } else if (this.chainTag != null) {
+//            tag.put("Chain", this.chainTag.copy());
+//        }
+//    }
+//
+//    @Override
+//    public void readCustomDataFromTag(CompoundTag tag) {
+//        super.readCustomDataFromTag(tag);
+//        if (tag.contains("Chain", 10)){
+//            this.chainTag = tag.getCompound("Leash");
+//        }
+//    }
 
     /**
      * Called when a player interacts with this entity.
@@ -113,27 +116,28 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
             if (!this.isAlive()) {
                 return false;
             } else {
-                if (this.getHoldingEntity() == player) {
-                    this.detachChain(true, !player.abilities.creativeMode);
+                if (this.getHoldingEntities().contains(player)) {
+                    this.detachChain(true, false, player);
                 } else {
                     boolean bl = false;
                     double d = 7.0D;
                     List<ChainKnotEntity> list = this.world.getNonSpectatingEntities(ChainKnotEntity.class,
-                            new Box(this.getX() - 7.0D, this.getY() - 7.0D, this.getZ() - 7.0D,
-                                    this.getX() + 7.0D, this.getY() + 7.0D, this.getZ() + 7.0D));
+                            new Box(this.getX() - d, this.getY() - d, this.getZ() - d,
+                                    this.getX() + d, this.getY() + d, this.getZ() + d));
                     Iterator<ChainKnotEntity> var7 = list.iterator();
 
                     ChainKnotEntity chainKnotEntity;
                     while(var7.hasNext()){
-                        chainKnotEntity = (ChainKnotEntity)var7.next();
-                        if (chainKnotEntity.getHoldingEntity() == player){
-                            chainKnotEntity.attachChain(this, true);
+                        chainKnotEntity = var7.next();
+                        if (chainKnotEntity.getHoldingEntities().contains(player)){
+                            chainKnotEntity.attachChain(this, true, player.getEntityId());
+                            chainKnotEntity.detachChain(false, false, player);
                             bl = true;
                         }
                     }
                     if (!bl) {
-                        if (itemStack.getItem() == ConnectibleChains.TEMP_CHAIN && this.canbeChainedBy(player)) {
-                            this.attachChain(player, true);
+                        if (itemStack.getItem() == ConnectibleChains.TEMP_CHAIN) {
+                            this.attachChain(player, true, 0);
                             itemStack.decrement(1);
                             return true;
                         } else {
@@ -142,9 +146,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                                 var7 = list.iterator();
                                 while (var7.hasNext()) {
                                     chainKnotEntity = var7.next();
-                                    if (chainKnotEntity.isChained() && chainKnotEntity.getHoldingEntity() == this) {
-                                        chainKnotEntity.detachChain(true, false);
-                                    }
+                                    chainKnotEntity.detachChain(true, false, player);
                                 }
                             }
                         }
@@ -184,97 +186,117 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     }
 
     public void updateChain() {
-        if (this.chainTag != null) {
-            this.deserializeChainTag();
-        }
+//        if (this.chainTag != null) {
+//            this.deserializeChainTag();
+//        }
 
-        if (this.holdingEntity != null) {
-            if (!this.isAlive() || !this.holdingEntity.isAlive()) {
-                this.detachChain(true, true);
+        List<Integer> copy = this.holdingEntities.subList(0, this.holdingEntities.size()).stream().map(Entity::getEntityId).collect(Collectors.toList());
+        for (int entity : copy){
+            Entity entity1 = this.world.getEntityById(entity);
+            if (entity1 == null) {
+                this.holdingEntitiesId.remove((Object) entity);
+                this.dropItem(ConnectibleChains.TEMP_CHAIN);
+                if(!this.world.isClient && this.world instanceof ServerWorld){
+                    ((ServerWorld)this.world).getChunkManager().sendToOtherNearbyPlayers(this,
+                            new EntitiesAttachS2CPacket(this, entity, true, 0));
+                }
+            } else if (!this.isAlive() || !entity1.isAlive()){
+                this.detachChain(true, true, entity1);
             }
         }
+        this.holdingEntities = this.holdingEntities.stream().filter(Objects::nonNull).filter(Entity::isAlive).collect(Collectors.toList());
     }
 
-    public void detachChain(boolean sendPacket, boolean bl){
-        if (this.holdingEntity != null){
+    public void detachChain(boolean sendPacket, boolean bl, Entity entity){
+        if (this.getHoldingEntities().contains(entity) || !entity.isAlive()){
             this.teleporting = false;
-            if (!(this.holdingEntity instanceof PlayerEntity)){
-                this.holdingEntity.teleporting = false;
+            if (!(entity instanceof PlayerEntity)){
+                entity.teleporting = false;
             }
-
-            this.holdingEntity = null;
-            this.chainTag = null;
+            this.holdingEntities.remove(entity);
+            this.holdingEntitiesId.remove((Object) entity.getEntityId());
             if (!this.world.isClient && bl){
                 this.dropItem(ConnectibleChains.TEMP_CHAIN);
             }
 
             if (!this.world.isClient && sendPacket && this.world instanceof ServerWorld) {
                 ((ServerWorld)this.world).getChunkManager().sendToOtherNearbyPlayers(
-                        this, new EntityAttachS2CPacket(this, (Entity)null));
+                        this, new EntitiesAttachS2CPacket(this, entity.getEntityId(), true, 0));
             }
         }
     }
 
-    public boolean canbeChainedBy(PlayerEntity player) {
-        return !this.isChained();
-    }
-
-    public boolean isChained() {
-        return this.holdingEntity != null;
-    }
-
-    public Entity getHoldingEntity() {
-        if (this.holdingEntity == null && this.holdingEntityId != 0 && this.world.isClient){
-            this.holdingEntity = this.world.getEntityById(this.holdingEntityId);
+    public List<Entity> getHoldingEntities() {
+        if (this.world.isClient && this.holdingEntitiesId.size() != this.holdingEntities.size()){
+            this.holdingEntities = this.holdingEntitiesId.stream().map(integer -> this.world.getEntityById(integer)).collect(Collectors.toList());
         }
-
-        return this.holdingEntity;
+        return this.holdingEntities;
     }
 
-    public void attachChain(Entity entity, boolean bl){
-        this.holdingEntity = entity;
-        this.chainTag = null;
-        this.teleporting = true;
-        if(!(this.holdingEntity instanceof PlayerEntity)){
-            this.holdingEntity.teleporting = true;
-        }
-
-        if(!this.world.isClient && bl && this.world instanceof ServerWorld){
-            ((ServerWorld)this.world).getChunkManager().sendToOtherNearbyPlayers(this,
-                    new EntityAttachS2CPacket(this, this.holdingEntity));
+    public void attachChain(Entity entity, boolean bl, int playerFrom){
+        if (!this.getHoldingEntities().contains(entity)){
+            this.holdingEntities.add(entity);
+            this.holdingEntitiesId.add(entity.getEntityId());
+            this.teleporting = true;
+            if(!(entity instanceof PlayerEntity)){
+                entity.teleporting = true;
+            }
+            if(!this.world.isClient && bl && this.world instanceof ServerWorld){
+                ((ServerWorld)this.world).getChunkManager().sendToOtherNearbyPlayers(this,
+                        new EntitiesAttachS2CPacket(this, entity.getEntityId(), false, playerFrom));
+            }
         }
     }
 
     @Environment(EnvType.CLIENT)
-    public void setHoldingEntity(int id){
-        this.holdingEntityId = id;
-        this.detachChain(false, false);
-    }
-
-    private void deserializeChainTag() {
-        if (this.chainTag != null && this.world instanceof ServerWorld) {
-            if (this.chainTag.containsUuidNew("UUID")){
-                UUID uUID = this.chainTag.getUuidNew("UUID");
-                Entity entity = ((ServerWorld)this.world).getEntity(uUID);
-                if (entity != null){
-                    this.attachChain(entity, true);
-                }
-            } else if (this.chainTag.contains("X", 99)
-                    && this.chainTag.contains("Y", 99)
-                    && this.chainTag.contains("Z", 99)){
-                BlockPos blockPos = new BlockPos(this.chainTag.getInt("X"),
-                                                    this.chainTag.getInt("Z"),
-                                                        this.chainTag.getInt("Z"));
-                this.attachChain(ChainKnotEntity.getOrCreate(this.world, blockPos), true);
-            } else {
-                this.detachChain(false, true);
-            }
-
-            if (this.age > 100) {
-                this.chainTag = null;
-            }
+    public void addHoldingEntity(int id, int fromId){
+        if (fromId != 0){
+            ChainKnotEntity old = (ChainKnotEntity) this.world.getEntityById(id);
+            Entity from = this.world.getEntityById(fromId);
+            this.detachChain(false, false, from);
+            assert old != null;
+            old.detachChain(false, false, from);
+        }
+        if (!this.holdingEntitiesId.contains(id)){
+            this.holdingEntitiesId.add(id);
         }
     }
+
+    @Environment(EnvType.CLIENT)
+    public void removeHoldingEntity(int id){
+        if (this.holdingEntitiesId.contains(id)){
+            this.holdingEntitiesId.remove((Object) id);
+            this.holdingEntitiesId = this.holdingEntitiesId.stream()
+                    .filter(integer -> this.world.getEntityById(integer) == null)
+                    .filter(integer -> !this.world.getEntityById(integer)
+                            .isAlive()).collect(Collectors.toList());
+        }
+    }
+
+//    private void deserializeChainTag() {
+//        if (this.chainTag != null && this.world instanceof ServerWorld) {
+//            if (this.chainTag.containsUuidNew("UUID")){
+//                UUID uUID = this.chainTag.getUuidNew("UUID");
+//                Entity entity = ((ServerWorld)this.world).getEntity(uUID);
+//                if (entity != null){
+//                    this.attachChain(entity, true);
+//                }
+//            } else if (this.chainTag.contains("X", 99)
+//                    && this.chainTag.contains("Y", 99)
+//                    && this.chainTag.contains("Z", 99)){
+//                BlockPos blockPos = new BlockPos(this.chainTag.getInt("X"),
+//                                                    this.chainTag.getInt("Z"),
+//                                                        this.chainTag.getInt("Z"));
+//                this.attachChain(ChainKnotEntity.getOrCreate(this.world, blockPos), true);
+//            } else {
+//                this.detachChain(false, true);
+//            }
+//
+//            if (this.age > 100) {
+//                this.chainTag = null;
+//            }
+//        }
+//    }
 
     @Override
     public int getWidthPixels() {
@@ -290,9 +312,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     protected float getEyeHeight(EntityPose pose, EntityDimensions dimensions) {
         return -0.0625F;
     }
-
-
-
+    
     @Environment(EnvType.CLIENT)
     public boolean shouldRender(double distance) {
         return distance < 1024.0D;

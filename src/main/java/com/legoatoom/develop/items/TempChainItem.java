@@ -1,32 +1,23 @@
 package com.legoatoom.develop.items;
 
-import com.legoatoom.develop.ConnectibleChains;
 import com.legoatoom.develop.enitity.ChainKnotEntity;
-import com.sun.net.httpserver.Filter;
 import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.entity.decoration.LeashKnotEntity;
-import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtHelper;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.stat.Stats;
 import net.minecraft.tag.BlockTags;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class TempChainItem extends Item {
@@ -34,9 +25,6 @@ public class TempChainItem extends Item {
     public TempChainItem(Settings settings) {
         super(settings);
     }
-
-    public final static String linkName = ConnectibleChains.MODID + ":linkedPos";
-    public final static String dimensionName = ConnectibleChains.MODID + ":dimension";
 
     @Override
     public ActionResult useOnBlock(ItemUsageContext context) {
@@ -57,20 +45,19 @@ public class TempChainItem extends Item {
                     int j = blockPos.getY();
                     int k = blockPos.getZ();
                     List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class,
-                            new Box((double)i - 7.0D, (double)j - 7.0D, (double)k - 7.0D,
-                                    (double)i + 7.0D, (double)j + 7.0D, (double)k + 7.0D));
-                    Iterator<ChainKnotEntity> var11 = list.iterator();
+                            new Box((double)i - d, (double)j - d, (double)k - d,
+                                    (double)i + d, (double)j + d, (double)k + d));
 
-                    while(var11.hasNext()) {
-                        ChainKnotEntity chainKnotEntity1 = (ChainKnotEntity)var11.next();
-                        if (chainKnotEntity1.getHoldingEntity() == playerEntity) {
-                            chainKnotEntity1.attachChain(chainKnotEntity, true);
+                    for (ChainKnotEntity chainKnotEntity1 : list) {
+                        if (chainKnotEntity1.getHoldingEntities().contains(playerEntity)) {
+                            chainKnotEntity1.attachChain(chainKnotEntity, true, playerEntity.getEntityId());
+                            chainKnotEntity1.detachChain(false,false, playerEntity);
                             bl = true;
                         }
                     }
 
-                    if (!bl && chainKnotEntity.canbeChainedBy(playerEntity)) {
-                        chainKnotEntity.attachChain(playerEntity, true);
+                    if (!bl) {
+                        chainKnotEntity.attachChain(playerEntity, true, 0);
                         itemStack.decrement(1);
                     }
                 }
@@ -96,14 +83,5 @@ public class TempChainItem extends Item {
             playerEntity.incrementStat(Stats.USED.getOrCreateStat(this));
             world.playSound(null, blockPos, SoundEvents.BLOCK_CHAIN_PLACE, SoundCategory.BLOCKS, 1.0F, 1.0F);
         }
-    }
-
-    private double getSquaredDistance(BlockPos a, BlockPos b){
-        double ax = (double)a.getX(); double ay = (double)a.getY(); double az = (double)a.getZ();
-        double bx = (double)b.getX(); double by = (double)b.getY(); double bz = (double)b.getZ();
-        double e = ax - bx;
-        double f = ay - by;
-        double g = az - bz;
-        return e * e + f * f + g * g;
     }
 }
