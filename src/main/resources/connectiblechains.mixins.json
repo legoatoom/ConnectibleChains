@@ -4,6 +4,7 @@
   "package": "com.legoatoom.develop.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "block.FenceBlockMixin"
   ],
   "client": [
     "network.ClientPlayNetworkHandlerMixin"

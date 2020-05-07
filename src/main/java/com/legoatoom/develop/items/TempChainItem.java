@@ -4,6 +4,8 @@ import com.legoatoom.develop.enitity.ChainKnotEntity;
 import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.decoration.LeashKnotEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -18,6 +20,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 
+import java.util.Iterator;
 import java.util.List;
 
 public class TempChainItem extends Item {
@@ -49,7 +52,9 @@ public class TempChainItem extends Item {
                                     (double)i + d, (double)j + d, (double)k + d));
 
                     for (ChainKnotEntity chainKnotEntity1 : list) {
-                        if (chainKnotEntity1.getHoldingEntities().contains(playerEntity)) {
+                        if (chainKnotEntity1.getHoldingEntities().contains(playerEntity)
+                                && !chainKnotEntity1.getHoldingEntities().contains(chainKnotEntity)
+                                && !chainKnotEntity.getHoldingEntities().contains(chainKnotEntity1)) {
                             chainKnotEntity1.attachChain(chainKnotEntity, true, playerEntity.getEntityId());
                             chainKnotEntity1.detachChain(false,false, playerEntity);
                             bl = true;
@@ -84,4 +89,27 @@ public class TempChainItem extends Item {
             world.playSound(null, blockPos, SoundEvents.BLOCK_CHAIN_PLACE, SoundCategory.BLOCKS, 1.0F, 1.0F);
         }
     }
+
+    public static ActionResult attachHeldChainsToBlock(PlayerEntity playerEntity, World world, BlockPos blockPos) {
+        ChainKnotEntity chainKnotEntity = ChainKnotEntity.getOrCreate(world, blockPos);
+        boolean bl = false;
+        double d = 7.0D;
+        int i = blockPos.getX();
+        int j = blockPos.getY();
+        int k = blockPos.getZ();
+        List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class,
+                new Box((double)i - d, (double)j - d, (double)k - d,
+                        (double)i + d, (double)j + d, (double)k + d));
+
+        for (ChainKnotEntity chainKnotEntity1 : list) {
+            if (chainKnotEntity1.getHoldingEntities().contains(playerEntity)) {
+                chainKnotEntity1.attachChain(chainKnotEntity, true, playerEntity.getEntityId());
+                chainKnotEntity1.detachChain(false,false, playerEntity);
+                bl = true;
+            }
+        }
+
+        return bl ? ActionResult.SUCCESS : ActionResult.PASS;
+    }
 }
+
