@@ -1,7 +1,7 @@
-package com.legoatoom.develop.client;
+package com.github.legoatoom.connectiblechains.client;
 
-import com.legoatoom.develop.ConnectibleChains;
-import com.legoatoom.develop.client.render.entity.ChainKnotEntityRenderer;
+import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendereregistry.v1.EntityRendererRegistry;
 

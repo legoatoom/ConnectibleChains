@@ -1,8 +1,8 @@
-package com.legoatoom.develop.mixin.network;
+package com.github.legoatoom.connectiblechains.mixin.network;
 
-import com.legoatoom.develop.ConnectibleChains;
-import com.legoatoom.develop.enitity.ChainKnotEntity;
-import com.legoatoom.develop.network.packet.s2c.play.EntitiesAttachS2CPacket;
+import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.network.packet.s2c.play.EntitiesAttachS2CPacket;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;

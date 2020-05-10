@@ -4,7 +4,7 @@
   "version": "${version}",
 
   "name": "Connectible Chains",
-  "description": "Simple mod to allow the new chain block to be connected to 2 fences.",
+  "description": "A 'Simple' mod (not to make ._.) that allow the chains to be connected to 2 fences.",
   "authors": [
     "legoatoom"
   ],
@@ -13,17 +13,17 @@
     "sources": "https://github.com/legoatoom/ConnectibleChains"
   },
 
-  "license": "CC0-1.0",
+  "license": "GPL-3.0",
   "icon": "assets/connectiblechains/icon.png",
   "_comment": "TODO: NEW ICON",
 
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.legoatoom.develop.ConnectibleChains"
+      "com.github.legoatoom.connectiblechains.ConnectibleChains"
     ],
     "client": [
-      "com.legoatoom.develop.client.ClientInitializer"
+      "com.github.legoatoom.connectiblechains.client.ClientInitializer"
     ]
   },
   "mixins": [

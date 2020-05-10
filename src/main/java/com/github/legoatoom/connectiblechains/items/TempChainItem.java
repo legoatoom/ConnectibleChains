@@ -1,11 +1,9 @@
-package com.legoatoom.develop.items;
+package com.github.legoatoom.connectiblechains.items;
 
-import com.legoatoom.develop.enitity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.entity.decoration.LeashKnotEntity;
-import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -20,7 +18,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class TempChainItem extends Item {

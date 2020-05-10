@@ -1,13 +1,13 @@
-package com.legoatoom.develop;
+package com.github.legoatoom.connectiblechains;
 
 
-import com.legoatoom.develop.enitity.ChainKnotEntity;
-import com.legoatoom.develop.items.TempChainItem;
+import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.items.TempChainItem;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
-import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.util.Identifier;
@@ -22,7 +22,7 @@ public class ConnectibleChains implements ModInitializer {
     public static final EntityType<ChainKnotEntity> CHAIN_KNOT =
             Registry.register(
                     Registry.ENTITY_TYPE, new Identifier(ConnectibleChains.MODID,  "chain_knot"),
-                    FabricEntityTypeBuilder.create(EntityCategory.MISC,
+                    FabricEntityTypeBuilder.create(SpawnGroup.MISC,
                             (EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new)
                             .disableSaving()
                             .trackable(10, Integer.MAX_VALUE, false)

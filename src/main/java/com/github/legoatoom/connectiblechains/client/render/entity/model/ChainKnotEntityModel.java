@@ -1,4 +1,4 @@
-package com.legoatoom.develop.client.render.entity.model;
+package com.github.legoatoom.connectiblechains.client.render.entity.model;
 
 import com.google.common.collect.ImmutableList;
 import net.fabricmc.api.EnvType;

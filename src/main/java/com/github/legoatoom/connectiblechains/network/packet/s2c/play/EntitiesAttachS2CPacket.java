@@ -1,4 +1,4 @@
-package com.legoatoom.develop.network.packet.s2c.play;
+package com.github.legoatoom.connectiblechains.network.packet.s2c.play;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -6,8 +6,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.s2c.play.EntityAttachS2CPacket;
-
-import java.io.IOException;
 
 public class EntitiesAttachS2CPacket extends EntityAttachS2CPacket {
     private int attachedId;
@@ -25,7 +23,7 @@ public class EntitiesAttachS2CPacket extends EntityAttachS2CPacket {
 
 
     @Override
-    public void read(PacketByteBuf buf) throws IOException {
+    public void read(PacketByteBuf buf) {
         this.attachedId = buf.readInt();
         this.limboId = buf.readInt();
         this.remove = buf.readBoolean();
@@ -33,7 +31,7 @@ public class EntitiesAttachS2CPacket extends EntityAttachS2CPacket {
     }
 
     @Override
-    public void write(PacketByteBuf buf) throws IOException {
+    public void write(PacketByteBuf buf) {
         buf.writeInt(this.attachedId);
         buf.writeInt(this.limboId);
         buf.writeBoolean(this.remove);
