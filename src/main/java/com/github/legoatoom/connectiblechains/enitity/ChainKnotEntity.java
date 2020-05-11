@@ -197,8 +197,9 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
         List<Entity> copy = new ArrayList<>(this.holdingEntities);
         for (Entity entity1 : copy){
-            if (!this.isAlive() || !entity1.isAlive()){
-                this.detachChain(true, true, entity1);
+            if (!this.isAlive() || !entity1.isAlive() || !entity1.isInRange(this, 7.0D)){
+                this.detachChain(true, false, entity1);
+                entity1.dropItem(ConnectibleChains.TEMP_CHAIN);
             }
         } }
 
@@ -301,7 +302,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     public int getWidthPixels() {
         return 9;
     }
-
     @Override
     public int getHeightPixels() {
         return 9;

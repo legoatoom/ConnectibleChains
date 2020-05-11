@@ -32,15 +32,15 @@ public class FenceBlockMixin {
     )
     public void onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit,
                       CallbackInfoReturnable<ActionResult> callbackInfoReturnable) {
-        if (world.isClient) {
-            ItemStack itemStack = player.getStackInHand(hand);
-            if (itemStack.getItem() == ConnectibleChains.TEMP_CHAIN)
-                callbackInfoReturnable.setReturnValue(ActionResult.SUCCESS);
-        } else {
-            ActionResult result = TempChainItem.attachHeldChainsToBlock(player, world, pos);
-            if (result.isAccepted()) {
-                callbackInfoReturnable.setReturnValue(result);
-            }
-        }
+//        if (world.isClient) {
+//            ItemStack itemStack = player.getStackInHand(hand);
+//            if (itemStack.getItem() == ConnectibleChains.TEMP_CHAIN)
+//                callbackInfoReturnable.setReturnValue(ActionResult.SUCCESS);
+//        } else {
+//            ActionResult result = TempChainItem.attachHeldChainsToBlock(player, world, pos);
+//            if (result.isAccepted()) {
+//                callbackInfoReturnable.setReturnValue(result);
+//            }
+//        }
     }
 }

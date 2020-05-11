@@ -15,7 +15,7 @@ public class ChainKnotEntityModel<T extends Entity> extends CompositeEntityModel
         this.textureWidth = 32;
         this.textureHeight = 32;
         this.chainKnot = new ModelPart(this, 0, 0);
-        this.chainKnot.addCuboid(-3.0F, -6.0F, -3.0F, 6.0F, 8.0F, 6.0F, 0.0F);
+        this.chainKnot.addCuboid(-3.0F, -6.0F, -3.0F, 6.0F, 3.0F, 6.0F, 0.0F);
         this.chainKnot.setPivot(0.0F, 0.0F, 0.0F);
     }
 
