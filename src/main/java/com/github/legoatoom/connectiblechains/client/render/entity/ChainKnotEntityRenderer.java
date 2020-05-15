@@ -17,7 +17,6 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.world.LightType;
 
-import javax.sound.midi.Soundbank;
 import java.util.*;
 
 /**
@@ -47,7 +46,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         matrixStack.pop();
         List<Entity> entities = chainKnotEntity.getHoldingEntities();
         for (Entity entity : entities){
-            this.method_4073(chainKnotEntity, g, matrixStack, vertexConsumerProvider, entity);
+            this.createChainLine(chainKnotEntity, g, matrixStack, vertexConsumerProvider, entity);
         }
     }
 
@@ -57,7 +56,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
 
 
-    private void method_4073(ChainKnotEntity fromEntity, float f, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, Entity chainOrPlayerEntity) {
+    private void createChainLine(ChainKnotEntity fromEntity, float f, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, Entity chainOrPlayerEntity) {
         matrixStack.push();
         double d = MathHelper.lerp(f * 0.5F, chainOrPlayerEntity.yaw, chainOrPlayerEntity.prevYaw) * 0.017453292F;
         double e = MathHelper.lerp(f * 0.5F, chainOrPlayerEntity.pitch, chainOrPlayerEntity.prevPitch) * 0.017453292F;
@@ -114,20 +113,15 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         double x2 = x*x;
         double z2 = z*z;
         double zx = Math.sqrt(x2 + z2);
-        double arc1;
-        if (zx == 0.0D){ arc1 = Math.acos(0); } else { arc1 = Math.atan(y / zx); }
-        double arc2;
-        if (z == 0.0D){
-            arc2 = Math.acos(0);
-        } else {
-            arc2 = Math.atan(x/z);
-        }
+        double arc1 = Math.atan2(y,zx);
+        double arc2 = Math.atan2(x,z);
         double d = Math.sin(arc1) * 0.0125F;
         float y_new = (float) (Math.cos(arc1) * 0.0125F);
         float z_new = (float) (Math.cos(arc2) * d);
         float x_new = (float) (Math.sin(arc2) * d);
         float annoying = 0.0F;
-        if (zx == 0.0D){
+        if (zx == 0.0F){
+            x_new = z_new;
             annoying = 1.0F;
         }
         return new float[]{x_new, y_new, z_new, annoying};
@@ -192,27 +186,19 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         double drip = drip(step, V);
         float s = ((float) step / (float) l);
         float[] rotate = rotator(cordX, cordY, cordZ);
-        int dirX = 1;
-        int dirZ = 1;
-        if (cordX <= 0){
-            dirX = -1;
-        }
-        if (cordZ <= 0){
-            dirZ = -1;
-        }
-        float frick = 0.0F;
+        float frick = 1.0F;
         if (rotate[3] == 1.0F){
-            frick = 0.0125F;
+            frick *= -1;
         }
         float t = cordX * s;
         float u = cordY * s;
         float v = cordZ * s;
-        float x1 = t + (rotate[0] * dirX) + n;
+        float x1 = t + (rotate[0]) + n;
         float y1 = u + k - rotate[1];
-        float z1 = v + (rotate[2] * dirZ) - o;
-        float x2 = t - (rotate[0] * dirX) - n;
+        float z1 = v + (rotate[2]) - o;
+        float x2 = t - (rotate[0]) - n;
         float y2 = u + k + rotate[1];
-        float z2 = v - (rotate[2] * dirZ) + o;
+        float z2 = v - (rotate[2]) + o;
         float R = 0.12F*0.7F;
         float G = 0.12F*0.7F;
         float B = 0.17F*0.7F;
@@ -220,10 +206,10 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             R = 0.12F;
             G = 0.12F;
             B = 0.17F;
-             x1 = t + (rotate[0] * dirX) - n + frick;
-             z1 = v + (rotate[2] * dirZ) + o - frick;
-             x2 = t - (rotate[0] * dirX) + n - frick;
-             z2 = v - (rotate[2] * dirZ) - o + frick;
+             x1 = t + (rotate[0]*frick) - n ;
+             z1 = v + (rotate[2]) + o;
+             x2 = t - (rotate[0]*frick) + n;
+             z2 = v - (rotate[2]) - o;
         }
         y1 += drip;
         y2 += drip;
@@ -252,27 +238,19 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         double drip = drip(step, V);
         float s = ((float) step / (float) l);
         float[] rotate = rotator(cordX, cordY, cordZ);
-        int dirX = 1;
-        int dirZ = 1;
-        if (cordX < 0){
-            dirX = -1;
-        }
-        if (cordZ < 0){
-            dirZ = -1;
-        }
-        float frick = 0.0F;
+        float frick = 1.0F;
         if (rotate[3] == 1.0F){
-            frick = 0.0125F;
+            frick *= -1;
         }
         float t = cordX * s;
         float u = cordY * s;
         float v = cordZ * s;
-        float x1 = t - (rotate[0] * dirX) + n;
+        float x1 = t - (rotate[0]) + n;
         float y1 = u + k + rotate[1];
-        float z1 = v - (rotate[2] * dirZ) - o;
-        float x2 = t - ((rotate[0] * dirX) - n)*3;
+        float z1 = v - (rotate[2]) - o;
+        float x2 = t - ((rotate[0]) - n)*3;
         float y2 = u + k + rotate[1]*3;
-        float z2 = v - ((rotate[2] * dirZ) + o)*3;
+        float z2 = v - ((rotate[2]) + o)*3;
         float R = 0.16F;
         float G = 0.17F;
         float B = 0.21F;
@@ -280,10 +258,10 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             R *= 0.8F;
             G *= 0.8F;
             B *= 0.8F;
-            x1 = t - (rotate[0] * dirX) - n + frick;
-            z1 = v - (rotate[2] * dirZ) + o - frick;
-            x2 = t - ((rotate[0] * dirX) + n- frick)*3 ;
-            z2 = v - ((rotate[2] * dirZ) - o+ frick)*3 ;
+            x1 = t - (rotate[0]*frick) - n;
+            z1 = v - (rotate[2]) + o;
+            x2 = t - ((rotate[0]*frick) + n)*3 ;
+            z2 = v - ((rotate[2]) - o)*3 ;
         }
         y1 += drip;
         y2 += drip;
@@ -296,27 +274,19 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         double drip = drip(step, V);
         float s = ((float) step / (float) l);
         float[] rotate = rotator(cordX, cordY, cordZ);
-        int dirX = 1;
-        int dirZ = 1;
-        if (cordX < 0){
-            dirX = -1;
-        }
-        if (cordZ < 0){
-            dirZ = -1;
-        }
-        float frick = 0.0F;
+        float frick = 1.0F;
         if (rotate[3] == 1.0F){
-            frick = 0.0125F;
+            frick *= -1;
         }
         float t = cordX * s;
         float u = cordY * s;
         float v = cordZ * s;
-        float x1 = t + ((rotate[0] * dirX) - n)*3;
+        float x1 = t + ((rotate[0]) - n)*3;
         float y1 = u + k - rotate[1]*3;
-        float z1 = v + ((rotate[2] * dirZ) + o)*3;
-        float x2 = t + (rotate[0] * dirX) - n;
+        float z1 = v + ((rotate[2]) + o)*3;
+        float x2 = t + (rotate[0]) - n;
         float y2 = u + k - rotate[1];
-        float z2 = v + (rotate[2] * dirZ) + o;
+        float z2 = v + (rotate[2]) + o;
         float R = 0.16F;
         float G = 0.17F;
         float B = 0.21F;
@@ -324,10 +294,10 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             R *= 0.8F;
             G *= 0.8F;
             B *= 0.8F;
-            x1 = t + ((rotate[0] * dirX) + n - frick)*3;
-            z1 = v + ((rotate[2] * dirZ) - o + frick)*3;
-            x2 = t + (rotate[0] * dirX) + n - frick;
-            z2 = v + (rotate[2] * dirZ) - o + frick;
+            x1 = t + ((rotate[0]*frick) + n)*3;
+            z1 = v + ((rotate[2]) - o)*3;
+            x2 = t + (rotate[0]*frick) + n;
+            z2 = v + (rotate[2]) - o;
         }
         y1 += drip;
         y2 += drip;
