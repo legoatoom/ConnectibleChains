@@ -2,12 +2,16 @@ package com.github.legoatoom.connectiblechains.enitity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.network.packet.s2c.play.EntitiesAttachS2CPacket;
+import com.sun.net.httpserver.Filter;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.entity.*;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.server.world.ServerWorld;
@@ -20,17 +24,19 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class ChainKnotEntity extends AbstractDecorationEntity {
 
-    private List<Entity> holdingEntities;
-    private List<Integer> holdingEntitiesId;
+    private List<Entity> holdingEntities  = new ArrayList<>();
+    private final List<Integer> holdingEntitiesId  = new ArrayList<>();
 
-    public List<Integer> holdedByEntitiesId;
-
-    //private CompoundTag chainTag;
+    public List<Integer> holdedByEntitiesId = new ArrayList<>();
+    private ListTag chainTag;
 
     public ChainKnotEntity(EntityType<? extends AbstractDecorationEntity> entityType, World world) {
         super(entityType, world);
@@ -44,9 +50,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         float h = 0.25F;
         this.setBoundingBox(new Box(this.getX() - g, this.getY() - h + f, this.getZ() - g, this.getX() + g, this.getY() + h + f, this.getZ() + g));
         this.teleporting = true;
-        this.holdingEntitiesId = new ArrayList<>();
-        this.holdingEntities = new ArrayList<>();
-        this.holdedByEntitiesId = new ArrayList<>();
     }
 
     @Override
@@ -71,35 +74,61 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         }
     }
 
-//    @Override
-//    public void writeCustomDataToTag(CompoundTag tag) {
-//        super.writeCustomDataToTag(tag);
-//        CompoundTag compoundTag3;
-//        if (this.holdingEntities != null) {
-//            compoundTag3 = new CompoundTag();
-//            if (this.holdingEntities instanceof LivingEntity) {
-//                UUID uUID = this.holdingEntities.getUuid();
-//                compoundTag3.putUuidNew("UUID", uUID);
-//            } else if (this.holdingEntities instanceof AbstractDecorationEntity) {
-//                BlockPos blockPos = ((AbstractDecorationEntity) this.holdingEntities).getDecorationBlockPos();
-//                compoundTag3.putInt("X", blockPos.getX());
-//                compoundTag3.putInt("Y", blockPos.getY());
-//                compoundTag3.putInt("Z", blockPos.getZ());
-//            }
+    @Override
+    public void writeCustomDataToTag(CompoundTag tag) {
+        if (!this.holdingEntities.isEmpty()) {
+            ListTag list = new ListTag();
+            for (Entity entity : holdingEntities){
+                CompoundTag compoundTag = new CompoundTag();
+                if (entity instanceof LivingEntity) {
+                    UUID uUID = entity.getUuid();
+                    compoundTag.putUuidNew("UUID", uUID);
+                } else if (entity instanceof AbstractDecorationEntity) {
+                    BlockPos blockPos = ((AbstractDecorationEntity)entity).getDecorationBlockPos();
+                    compoundTag.putInt("X", blockPos.getX());
+                    compoundTag.putInt("Y", blockPos.getY());
+                    compoundTag.putInt("Z", blockPos.getZ());
+                }
+                list.add(compoundTag);
+            }
+            tag.put("Chain", list);
+
+
+        } else if (chainTag != null) {
+            tag.put("Chain", this.chainTag.copy());
+        }
+        Box box = this.getBoundingBox();
+        CompoundTag boxTag = new CompoundTag();
+        boxTag.putDouble("maxX",box.maxX);
+        boxTag.putDouble("maxY",box.maxY);
+        boxTag.putDouble("maxZ",box.maxZ);
+        boxTag.putDouble("minX",box.minX);
+        boxTag.putDouble("minY",box.minY);
+        boxTag.putDouble("minZ",box.minZ);
+        tag.put("BoundBox", boxTag);
+        super.writeCustomDataToTag(tag);
+    }
 //
-//            tag.put("Chain", this.chainTag.copy());
-//        } else if (this.chainTag != null) {
-//            tag.put("Chain", this.chainTag.copy());
-//        }
-//    }
-//
-//    @Override
-//    public void readCustomDataFromTag(CompoundTag tag) {
-//        super.readCustomDataFromTag(tag);
-//        if (tag.contains("Chain", 10)){
-//            this.chainTag = tag.getCompound("Leash");
-//        }
-//    }
+    @Override
+    public void readCustomDataFromTag(CompoundTag tag) {
+        super.readCustomDataFromTag(tag);
+
+        if (tag.contains("BoundBox")){
+            CompoundTag boxTag = tag.getCompound("BoundBox");
+            double maxX = boxTag.getDouble("maxX");
+            double maxY = boxTag.getDouble("maxY");
+            double maxZ = boxTag.getDouble("maxZ");
+            double minX = boxTag.getDouble("minX");
+            double minY = boxTag.getDouble("minY");
+            double minZ = boxTag.getDouble("minZ");
+            Box box = new Box(maxX,maxY,maxZ,minX,minY,minZ);
+            this.setBoundingBox(box);
+        }
+        if (tag.contains("Chain")) {
+            this.chainTag = (ListTag) tag.get("Chain");
+        }
+
+    }
 
     /**
      * Called when a player interacts with this entity.
@@ -170,9 +199,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         int i = pos.getX();
         int j = pos.getY();
         int k = pos.getZ();
-        List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class,
-                new Box((double)i - 1.0D, (double)j - 1.0D, (double)k - 1.0D,
-                        (double)i + 1.0D, (double)j + 1.0D, (double)k + 1.0D));
+        List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class, new Box(pos).expand(1.0D));
         Iterator<ChainKnotEntity> var6 = list.iterator();
 
         ChainKnotEntity chainKnotEntity;
@@ -191,9 +218,9 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     }
 
     public void updateChain() {
-//        if (this.chainTag != null) {
-//            this.deserializeChainTag();
-//        }
+        if (this.chainTag != null) {
+            this.deserializeChainTag();
+        }
 
         List<Entity> copy = new ArrayList<>(this.holdingEntities);
         for (Entity entity1 : copy){
@@ -273,30 +300,30 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         }
     }
 
-//    private void deserializeChainTag() {
-//        if (this.chainTag != null && this.world instanceof ServerWorld) {
-//            if (this.chainTag.containsUuidNew("UUID")){
-//                UUID uUID = this.chainTag.getUuidNew("UUID");
-//                Entity entity = ((ServerWorld)this.world).getEntity(uUID);
-//                if (entity != null){
-//                    this.attachChain(entity, true);
-//                }
-//            } else if (this.chainTag.contains("X", 99)
-//                    && this.chainTag.contains("Y", 99)
-//                    && this.chainTag.contains("Z", 99)){
-//                BlockPos blockPos = new BlockPos(this.chainTag.getInt("X"),
-//                                                    this.chainTag.getInt("Z"),
-//                                                        this.chainTag.getInt("Z"));
-//                this.attachChain(ChainKnotEntity.getOrCreate(this.world, blockPos), true);
-//            } else {
-//                this.detachChain(false, true);
-//            }
-//
-//            if (this.age > 100) {
-//                this.chainTag = null;
-//            }
-//        }
-//    }
+    private void deserializeChainTag() {
+        if (this.chainTag != null && this.world instanceof ServerWorld && this.age > 10) {
+            for (Tag tag : chainTag){
+                if (tag instanceof CompoundTag) {
+                    if (((CompoundTag) tag).containsUuidNew("UUID")) {
+                        UUID uUID = ((CompoundTag) tag).getUuidNew("UUID");
+                        Entity entity = ((ServerWorld)this.world).getEntity(uUID);
+                        if (entity != null) {
+                            this.attachChain(entity, true, 0);
+                        }
+                    } else if (((CompoundTag) tag).contains("X", 99 ) && ((CompoundTag) tag).contains("Y", 99) && ((CompoundTag) tag).contains("Z", 99)) {
+                        BlockPos blockPos = new BlockPos(((CompoundTag) tag).getInt("X"), ((CompoundTag) tag).getInt("Y"), ((CompoundTag) tag).getInt("Z"));
+                        ChainKnotEntity entity = ChainKnotEntity.getOrCreate(this.world, blockPos);
+                        this.holdingEntities.add(entity);
+                        this.holdingEntitiesId.add(entity.getEntityId());
+                        this.teleporting = true;
+                            ((ServerWorld)this.world).getChunkManager().sendToOtherNearbyPlayers(this,
+                                    new EntitiesAttachS2CPacket(this, entity.getEntityId(), false, 0));
+                    }
+                }
+                this.chainTag = null;
+            }
+        }
+    }
 
     @Override
     public int getWidthPixels() {
@@ -311,7 +338,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     protected float getEyeHeight(EntityPose pose, EntityDimensions dimensions) {
         return -0.0625F;
     }
-    
+
     @Environment(EnvType.CLIENT)
     public boolean shouldRender(double distance) {
         return distance < 1024.0D;

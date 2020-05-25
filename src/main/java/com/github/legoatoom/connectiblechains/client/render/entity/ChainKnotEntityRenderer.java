@@ -229,7 +229,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     }
 
     private static float drip(int x, float V){
-        float c = 0.8F;
+        float c = 0.3F;
         float b = -c/V;
         float a = c/(V*V);
         return (a * (x*x) + b*x);

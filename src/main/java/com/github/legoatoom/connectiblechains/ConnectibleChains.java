@@ -24,7 +24,6 @@ public class ConnectibleChains implements ModInitializer {
                     Registry.ENTITY_TYPE, new Identifier(ConnectibleChains.MODID,  "chain_knot"),
                     FabricEntityTypeBuilder.create(SpawnGroup.MISC,
                             (EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new)
-                            .disableSaving()
                             .trackable(10, Integer.MAX_VALUE, false)
                             .dimensions(EntityDimensions.fixed(0.5F, 0.5F))
                             .build()

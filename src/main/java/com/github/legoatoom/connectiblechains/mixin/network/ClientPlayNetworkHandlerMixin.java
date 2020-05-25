@@ -29,7 +29,7 @@ public abstract class ClientPlayNetworkHandlerMixin {
             at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/network/packet/s2c/play/EntitySpawnS2CPacket;getEntityTypeId()Lnet/minecraft/entity/EntityType;"),
             cancellable = true,
             locals = LocalCapture.CAPTURE_FAILHARD
-    ) // thank you parzivail
+    )
     private void onEntitySpawn(EntitySpawnS2CPacket packet, CallbackInfo ci, double x, double y, double z, EntityType<?> type) {
         Entity entity = null;
         if (type == ConnectibleChains.CHAIN_KNOT) {
