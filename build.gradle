@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '0.2.7-SNAPSHOT'
+	id 'fabric-loom' version '0.5-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -22,6 +22,10 @@ dependencies {
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
+}
+
+minecraft{
+	accessWidener "src/main/resources/connectiblechains.accesswidener"
 }
 
 processResources {
@@ -54,25 +58,4 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 
 jar {
 	from "LICENSE"
-}
-
-// configure the maven publication
-publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			// add all the jars that should be included when publishing to maven
-			artifact(remapJar) {
-				builtBy remapJar
-			}
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
-			}
-		}
-	}
-
-	// select the repositories you want to publish to
-	repositories {
-		// uncomment to publish to the local maven
-		// mavenLocal()
-	}
 }

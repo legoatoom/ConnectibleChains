@@ -2,12 +2,10 @@ package com.github.legoatoom.connectiblechains.mixin.network;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
-import com.github.legoatoom.connectiblechains.network.packet.s2c.play.EntitiesAttachS2CPacket;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.network.packet.s2c.play.EntityAttachS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -19,10 +17,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(ClientPlayNetworkHandler.class)
-public abstract class ClientPlayNetworkHandlerMixin {
+public class ClientPlayerNetworkHandlerMixin {
 
-    @Shadow
-    private ClientWorld world;
+    @Shadow private ClientWorld world;
 
     @Inject(
             method = "onEntitySpawn(Lnet/minecraft/network/packet/s2c/play/EntitySpawnS2CPacket;)V",
@@ -49,24 +46,4 @@ public abstract class ClientPlayNetworkHandlerMixin {
             ci.cancel(); // cancel stops the rest of the method to run (so no spawning code from mc runs)
         }
     }
-
-    @Inject(
-            method = "onEntityAttach(Lnet/minecraft/network/packet/s2c/play/EntityAttachS2CPacket;)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/network/NetworkThreadUtils;forceMainThread(Lnet/minecraft/network/Packet;Lnet/minecraft/network/listener/PacketListener;Lnet/minecraft/util/thread/ThreadExecutor;)V", shift = At.Shift.AFTER),
-            cancellable = true,
-            locals = LocalCapture.CAPTURE_FAILHARD
-    )
-    private void onEntityAttach(EntityAttachS2CPacket packet, CallbackInfo ci) {
-        if (packet instanceof EntitiesAttachS2CPacket){
-            Entity entity = this.world.getEntityById(packet.getAttachedEntityId());
-            assert entity != null;
-            if (((EntitiesAttachS2CPacket) packet).isRemove()){
-                ((ChainKnotEntity) entity).removeHoldingEntity(((EntitiesAttachS2CPacket) packet).getLimboId());
-            } else {
-                ((ChainKnotEntity) entity).addHoldingEntity(((EntitiesAttachS2CPacket) packet).getLimboId(), ((EntitiesAttachS2CPacket) packet).getFromId());
-            }
-        }
-
-    }
-
 }

@@ -31,7 +31,7 @@ import java.util.List;
  */
 @Environment(EnvType.CLIENT)
 public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
-    private static final Identifier TEXTURE = new Identifier(ConnectibleChains.MODID + ":textures/entity/chain_knot.png");
+    private static final Identifier TEXTURE = new Identifier(ConnectibleChains.MODID,"textures/entity/chain_knot.png");
     private final ChainKnotEntityModel<ChainKnotEntity> model = new ChainKnotEntityModel<>();
 
     public ChainKnotEntityRenderer(EntityRenderDispatcher entityRenderDispatcher) {
@@ -46,17 +46,24 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(this.model.getLayer(TEXTURE));
         this.model.render(matrixStack, vertexConsumer, i, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
         matrixStack.pop();
-        List<Entity> entities = chainKnotEntity.getHoldingEntities();
-        for (Entity entity : entities){
+        Entity entity = chainKnotEntity.getHoldingEntity();
+        if (entity != null){
             this.createChainLine(chainKnotEntity, g, matrixStack, vertexConsumerProvider, entity);
+        }
+    }
+
+    @Override
+    public boolean shouldRender(ChainKnotEntity entity, Frustum frustum, double x, double y, double z) {
+        if (entity.getHoldingEntity() != null && entity.getHoldingEntity() instanceof ChainKnotEntity){
+            return super.shouldRender(entity, frustum, x, y, z) || super.shouldRender((ChainKnotEntity) entity.getHoldingEntity(), frustum, x, y, z);
+        } else {
+            return super.shouldRender(entity, frustum, x, y, z);
         }
     }
 
     public Identifier getTexture(ChainKnotEntity chainKnotEntity) {
         return TEXTURE;
     }
-
-
 
     private void createChainLine(ChainKnotEntity fromEntity, float f, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, Entity chainOrPlayerEntity) {
         matrixStack.push();
@@ -229,7 +236,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     }
 
     private static float drip(int x, float V){
-        float c = 0.3F;
+        float c = 0.6F;
         float b = -c/V;
         float a = c/(V*V);
         return (a * (x*x) + b*x);
@@ -306,15 +313,5 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         renderPart(vertexConsumer, matrix4f, i, bl, R, G, B, x1, y1, z1, x2, y2, z2);
     }
 
-    @Override
-    public boolean shouldRender(ChainKnotEntity entity, Frustum frustum, double x, double y, double z) {
-        if (super.shouldRender(entity, frustum, x, y, z)){
-            return true;
-        } else {
-
-            List<Entity> entity1 = entity.getHoldingEntities();
-            return entity1.stream().anyMatch(entity2 -> frustum.isVisible(entity2.getVisibilityBoundingBox().expand(7)));
-        }
-    }
 
 }

@@ -4,10 +4,10 @@
   "package": "com.github.legoatoom.connectiblechains.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "block.FenceBlockMixin"
+    "server.world.ThreadedAnvilChunkStorageMixin"
   ],
   "client": [
-    "network.ClientPlayNetworkHandlerMixin"
+    "network.ClientPlayerNetworkHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
