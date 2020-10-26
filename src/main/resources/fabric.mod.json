@@ -14,7 +14,7 @@
   },
 
   "license": "GPL-3.0",
-  "icon": "assets/connectiblechains/icon.png",
+  "icon": "assets/icon.png",
 
   "environment": "*",
   "entrypoints": {

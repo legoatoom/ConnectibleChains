@@ -155,24 +155,25 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                     bl = true;
                 }
             }
-            if (bl){
-                onPlace();
-            }
 
-            if (!bl && player.getStackInHand(hand).getItem().equals(Items.CHAIN)) {
+            if (!bl) {
                 if (this.getHoldingEntities().contains(player)){
                     onBreak(null);
                     detachChain(player, true, false);
                     if(!player.isCreative()){
                         player.getStackInHand(hand).increment(1);
                     }
-                } else {
+                } else if (player.getStackInHand(hand).getItem().equals(Items.CHAIN)){
                     onPlace();
                     attachChain(player, true, 0);
                     if (!player.isCreative()) {
                         player.getStackInHand(hand).decrement(1);
                     }
+                } else {
+                    damage(DamageSource.player(player), 0);
                 }
+            } else {
+                onPlace();
             }
 
             return ActionResult.CONSUME;

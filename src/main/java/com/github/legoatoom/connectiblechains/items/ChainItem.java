@@ -61,7 +61,7 @@ public class ChainItem extends BlockItem {
     }
 
 
-    private static ActionResult attachHeldMobsToBlock(PlayerEntity playerEntity, World world, BlockPos blockPos) {
+    public static ActionResult attachHeldMobsToBlock(PlayerEntity playerEntity, World world, BlockPos blockPos) {
         ChainKnotEntity leashKnotEntity = null;
         boolean bl = false;
         double d = ChainKnotEntity.MAX_RANGE;
