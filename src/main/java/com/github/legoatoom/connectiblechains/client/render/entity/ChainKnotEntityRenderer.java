@@ -3,6 +3,7 @@ package com.github.legoatoom.connectiblechains.client.render.entity;
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.util.Helper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.*;
@@ -22,16 +23,22 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @see net.minecraft.client.render.entity.LeashKnotEntityRenderer
- * @see net.minecraft.client.render.entity.MobEntityRenderer
- * This class renders the chain you see in game. The block around the fence and the chain.
+ * <p>This class renders the chain you see in game. The block around the fence and the chain.
  * You could use this code to start to understand how this is done.
  * I tried to make it as easy to understand as possible, mainly for myself, since the MobEntityRenderer has a lot of
- * unclear code and shortcuts made.
+ * unclear code and shortcuts made.</p>
+ *
+ * <p>Following is the formula used. h is the height difference, d is the distance and α is a scaling factor</p>
+ *
+ * <img src="./doc-files/formula.png">
+ *
+ * @see net.minecraft.client.render.entity.LeashKnotEntityRenderer
+ * @see net.minecraft.client.render.entity.MobEntityRenderer
+ *
  */
 @Environment(EnvType.CLIENT)
 public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
-    private static final Identifier TEXTURE = new Identifier(ConnectibleChains.MODID,"textures/entity/chain_knot.png");
+    private static final Identifier TEXTURE = Helper.identifier("textures/entity/chain_knot.png");
     private final ChainKnotEntityModel<ChainKnotEntity> model = new ChainKnotEntityModel<>();
 
     public ChainKnotEntityRenderer(EntityRenderDispatcher entityRenderDispatcher) {
@@ -118,7 +125,6 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     }
 
     private static float[] rotator(double x, double y, double z){
-        double y2 = y*y;
         double x2 = x*x;
         double z2 = z*z;
         double zx = Math.sqrt(x2 + z2);
@@ -136,7 +142,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         return new float[]{x_new, y_new, z_new, v};
     }
 
-    public static void lineBuilder(float distance, VertexConsumer vertexConsumer, Matrix4f matrix4f, float cordX, float cordY, float cordZ, int i, int j, int k, int l, float xOffset, float zOffset) {
+    private static void lineBuilder(float distance, VertexConsumer vertexConsumer, Matrix4f matrix4f, float cordX, float cordY, float cordZ, int i, int j, int k, int l, float xOffset, float zOffset) {
         List<Integer> mPatternA = Arrays.asList(1, 3, 6, 9, 12, 14);
         List<Integer> stbPatternA = Arrays.asList(1, 12);
         List<Integer> ltbPatternA = Collections.singletonList(6);
@@ -150,48 +156,48 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             int u = (int)MathHelper.lerp(s, (float)k, (float)l);
             int pack = LightmapTextureManager.pack(t, u);
             if(mPatternA.contains(p % 16)){
-                middle(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F, length, p, false, xOffset, zOffset, false);
-                middle(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F, length, p+1, true, xOffset, zOffset, false);
-                middle(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F, length, p, false, xOffset, zOffset, true);
-                middle(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F, length, p+1, true, xOffset, zOffset, true);
+                middle(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p, false, xOffset, zOffset, false);
+                middle(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p+1, true, xOffset, zOffset, false);
+                middle(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p, false, xOffset, zOffset, true);
+                middle(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p+1, true, xOffset, zOffset, true);
             }
             if(stbPatternA.contains(p % 16)){
                 for (int T = 0; T < 3; T++) {
-                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F,  length, p + T, false, xOffset, zOffset, false);
-                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F,  length, p + 1 + T, true, xOffset, zOffset, false);
-                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F,  length, p + T, false, xOffset, zOffset, false);
-                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F,  length, p + 1 + T, true, xOffset, zOffset, false);
+                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + T, false, xOffset, zOffset, false);
+                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + 1 + T, true, xOffset, zOffset, false);
+                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + T, false, xOffset, zOffset, false);
+                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + 1 + T, true, xOffset, zOffset, false);
                 }
             }
             if(ltbPatternA.contains(p % 16)){
                 for (int T = 0; T < 4; T++) {
-                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F,  length, p + T, false, xOffset, zOffset, false);
-                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F,  length, p+1 +T, true, xOffset, zOffset, false);
-                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F,  length, p + T, false, xOffset, zOffset, false);
-                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F,  length, p+1 + T, true, xOffset, zOffset, false);
+                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + T, false, xOffset, zOffset, false);
+                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p+1 +T, true, xOffset, zOffset, false);
+                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + T, false, xOffset, zOffset, false);
+                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p+1 + T, true, xOffset, zOffset, false);
                 }
             }
             if(stbPatternB.contains(p % 16)){
                 for (int T = 0; T < 2; T++) {
-                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F,  length, p + T, false, xOffset, zOffset, true);
-                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F,  length, p + 1 + T, true, xOffset, zOffset, true);
-                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F,  length, p + T, false, xOffset, zOffset, true);
-                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F,  length, p + 1 + T, true, xOffset, zOffset, true);
+                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + T, false, xOffset, zOffset, true);
+                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + 1 + T, true, xOffset, zOffset, true);
+                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + T, false, xOffset, zOffset, true);
+                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + 1 + T, true, xOffset, zOffset, true);
                 }
             }
             if(ltbPatternB.contains(p % 16)){
                 for (int T = 0; T < 4; T++) {
-                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F, length, p + T, false, xOffset, zOffset, true);
-                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F, length, p + 1 + T, true, xOffset, zOffset, true);
-                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F, length, p + T, false, xOffset, zOffset, true);
-                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, 0.0125F, length, p + 1 + T, true, xOffset, zOffset, true);
+                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + T, false, xOffset, zOffset, true);
+                    top(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + 1 + T, true, xOffset, zOffset, true);
+                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + T, false, xOffset, zOffset, true);
+                    bot(length, vertexConsumer, matrix4f, pack, cordX, cordY, cordZ, length, p + 1 + T, true, xOffset, zOffset, true);
                 }
             }
         }
     }
 
-    public static void middle(int V, VertexConsumer vertexConsumer, Matrix4f matrix4f, int i, float cordX, float cordY,
-                              float cordZ, float k, int l, int step, boolean bl, float n, float o, boolean shift) {
+    private static void middle(int V, VertexConsumer vertexConsumer, Matrix4f matrix4f, int i, float cordX, float cordY,
+                               float cordZ, int l, int step, boolean bl, float n, float o, boolean shift) {
         double drip = drip(step, V);
         float s = ((float) step / (float) l);
         float[] rotate = rotator(cordX, cordY, cordZ);
@@ -203,10 +209,10 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         float u = cordY * s;
         float v = cordZ * s;
         float x1 = t + (rotate[0]) + n;
-        float y1 = u + k - rotate[1];
+        float y1 = u + (float) 0.0125 - rotate[1];
         float z1 = v + (rotate[2]) - o;
         float x2 = t - (rotate[0]) - n;
-        float y2 = u + k + rotate[1];
+        float y2 = u + (float) 0.0125 + rotate[1];
         float z2 = v - (rotate[2]) + o;
         float R = 0.12F*0.7F;
         float G = 0.12F*0.7F;
@@ -242,8 +248,8 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         return (a * (x*x) + b*x);
     }
 
-    public static void top(int V, VertexConsumer vertexConsumer, Matrix4f matrix4f, int i, float cordX, float cordY,
-                           float cordZ, float k, int l, int step, boolean bl, float n, float o, boolean shift) {
+    private static void top(int V, VertexConsumer vertexConsumer, Matrix4f matrix4f, int i, float cordX, float cordY,
+                            float cordZ, int l, int step, boolean bl, float n, float o, boolean shift) {
         double drip = drip(step, V);
         float s = ((float) step / (float) l);
         float[] rotate = rotator(cordX, cordY, cordZ);
@@ -255,10 +261,10 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         float u = cordY * s;
         float v = cordZ * s;
         float x1 = t - (rotate[0]) + n;
-        float y1 = u + k + rotate[1];
+        float y1 = u + (float) 0.0125 + rotate[1];
         float z1 = v - (rotate[2]) - o;
         float x2 = t - ((rotate[0]) - n)*3;
-        float y2 = u + k + rotate[1]*3;
+        float y2 = u + (float) 0.0125 + rotate[1]*3;
         float z2 = v - ((rotate[2]) + o)*3;
         float R = 0.16F;
         float G = 0.17F;
@@ -277,9 +283,9 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         renderPart(vertexConsumer, matrix4f, i, bl, R, G, B, x1, y1, z1, x2, y2, z2);
     }
 
-    public static void bot(int V, VertexConsumer vertexConsumer, Matrix4f matrix4f, int i, float cordX, float cordY,
-                           float cordZ, float k, int l, int step, boolean bl, float n, float o,
-                           boolean shift) {
+    private static void bot(int V, VertexConsumer vertexConsumer, Matrix4f matrix4f, int i, float cordX, float cordY,
+                            float cordZ, int l, int step, boolean bl, float n, float o,
+                            boolean shift) {
         double drip = drip(step, V);
         float s = ((float) step / (float) l);
         float[] rotate = rotator(cordX, cordY, cordZ);
@@ -291,10 +297,10 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         float u = cordY * s;
         float v = cordZ * s;
         float x1 = t + ((rotate[0]) - n)*3;
-        float y1 = u + k - rotate[1]*3;
+        float y1 = u + (float) 0.0125 - rotate[1]*3;
         float z1 = v + ((rotate[2]) + o)*3;
         float x2 = t + (rotate[0]) - n;
-        float y2 = u + k - rotate[1];
+        float y2 = u + (float) 0.0125 - rotate[1];
         float z2 = v + (rotate[2]) + o;
         float R = 0.16F;
         float G = 0.17F;

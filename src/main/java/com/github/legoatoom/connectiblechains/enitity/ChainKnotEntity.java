@@ -2,6 +2,7 @@ package com.github.legoatoom.connectiblechains.enitity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
+import com.sun.org.apache.xpath.internal.operations.Mod;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -14,6 +15,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
@@ -35,12 +37,14 @@ import java.util.stream.Stream;
 
 public class ChainKnotEntity extends AbstractDecorationEntity {
 
+    public static final double MAX_RANGE = 7d;
+
     public ChainKnotEntity(EntityType<? extends ChainKnotEntity> entityType, World world) {
         super(entityType, world);
     }
 
     public ChainKnotEntity(World world, BlockPos pos) {
-        super(ConnectibleChains.CHAIN_KNOT, world, pos);
+        super(ModEntityTypes.CHAIN_KNOT, world, pos);
         this.updatePosition((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D);
         float f = 0.125F;
         float g = 0.1875F;
@@ -136,19 +140,16 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                 }
             }
 
-            if (!bl && player.getStackInHand(hand).getItem().equals(ConnectibleChains.TEMP_CHAIN)) {
+            if (!bl && player.getStackInHand(hand).getItem().equals(Items.CHAIN)) {
                 if (!isChained()){
                     attachChain(player, true);
                     onPlace();
-                    if(!player.isCreative()){
-                        player.getStackInHand(hand).decrement(1);
-                    }
                 } else {
                     ChainKnotEntity chainKnotEntity = getOrCreateWithoutConnection(world, getDecorationBlockPos());
                     chainKnotEntity.attachChain(player, true);
-                    if(!player.isCreative()){
-                        player.getStackInHand(hand).decrement(1);
-                    }
+                }
+                if(!player.isCreative()){
+                    player.getStackInHand(hand).decrement(1);
                 }
             }
 
@@ -160,7 +161,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     public boolean damage(DamageSource source, float amount) {
         boolean bool = super.damage(source, amount);
         if (bool && this.getHoldingEntity() != null){
-            this.dropItem(ConnectibleChains.TEMP_CHAIN);
+            this.dropItem(Items.CHAIN);
         }
         return bool;
     }
@@ -261,6 +262,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         if (this.holdingEntity != null){
             if (!this.isAlive() || !this.holdingEntity.isAlive()){
                 this.detachChain(true, true);
+            } else if (this.holdingEntity.getPos().squaredDistanceTo(this.getPos()) > MAX_RANGE*MAX_RANGE){
+                this.detachChain(true, true);
             }
         }
     }
@@ -275,7 +278,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
             this.holdingEntity = null;
             this.chainTag = null;
             if (!this.world.isClient() && dropItem){
-                this.dropItem(ConnectibleChains.TEMP_CHAIN);
+                this.dropItem(Items.CHAIN);
             }
 
             if (!this.world.isClient() && sendPacket && this.world instanceof ServerWorld){
@@ -340,7 +343,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                 // At the start the server and client need to tell each other the info.
                 // So we need to check if the object is old enough for these things to exist before we delete them.
                 if (this.age > 100) {
-                    this.dropItem(ConnectibleChains.TEMP_CHAIN);
+                    this.dropItem(Items.CHAIN);
                     this.chainTag = null;
                 }
         }

@@ -7,6 +7,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.decoration.LeashKnotEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
@@ -23,10 +24,10 @@ import net.minecraft.world.World;
 import java.util.Iterator;
 import java.util.List;
 
-public class TempChainItem extends Item {
+public class ChainItem extends BlockItem {
 
-    public TempChainItem(Settings settings) {
-        super(settings);
+    public ChainItem(Block block, Settings settings) {
+        super(block, settings);
     }
 
     @Override
@@ -34,9 +35,9 @@ public class TempChainItem extends Item {
         World world = context.getWorld();
         BlockPos blockPos = context.getBlockPos();
         Block block = world.getBlockState(blockPos).getBlock();
-        if (block.isIn(BlockTags.FENCES)) {
-            PlayerEntity playerEntity = context.getPlayer();
-            if (!world.isClient && playerEntity != null) {
+        PlayerEntity playerEntity = context.getPlayer();
+        if (block.isIn(BlockTags.FENCES) && playerEntity != null && !playerEntity.isSneaking()) {
+            if (!world.isClient) {
                 if (!attachHeldMobsToBlock(playerEntity, world, blockPos).isAccepted()){
                     // Create new ChainKnot
                     ChainKnotEntity knot = ChainKnotEntity.getOrCreateWithoutConnection(world, blockPos);
@@ -48,19 +49,19 @@ public class TempChainItem extends Item {
             }
             return ActionResult.success(world.isClient);
         } else {
-            return ActionResult.PASS;
+            return super.useOnBlock(context);
         }
     }
 
 
-    public static ActionResult attachHeldMobsToBlock(PlayerEntity playerEntity, World world, BlockPos blockPos) {
+    private static ActionResult attachHeldMobsToBlock(PlayerEntity playerEntity, World world, BlockPos blockPos) {
         ChainKnotEntity leashKnotEntity = null;
         boolean bl = false;
-        double d = 7.0D;
+        double d = ChainKnotEntity.MAX_RANGE;
         int i = blockPos.getX();
         int j = blockPos.getY();
         int k = blockPos.getZ();
-        List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class, new Box((double)i - 7.0D, (double)j - 7.0D, (double)k - 7.0D, (double)i + 7.0D, (double)j + 7.0D, (double)k + 7.0D));
+        List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class, new Box((double)i - d, (double)j - d, (double)k - d, (double)i + d, (double)j + d, (double)k + d));
 
         for (ChainKnotEntity mobEntity : list) {
             if (mobEntity.getHoldingEntity() == playerEntity) {

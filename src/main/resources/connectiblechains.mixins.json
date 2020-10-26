@@ -4,6 +4,7 @@
   "package": "com.github.legoatoom.connectiblechains.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "item.ItemsMixin",
     "server.world.ThreadedAnvilChunkStorageMixin"
   ],
   "client": [
