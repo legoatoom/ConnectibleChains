@@ -40,11 +40,18 @@ public class ChainItem extends BlockItem {
             if (!world.isClient) {
                 if (!attachHeldMobsToBlock(playerEntity, world, blockPos).isAccepted()){
                     // Create new ChainKnot
-                    ChainKnotEntity knot = ChainKnotEntity.getOrCreateWithoutConnection(world, blockPos);
-                    knot.attachChain(playerEntity, true);
-
-                    if(!playerEntity.isCreative())
-                        context.getStack().decrement(1);
+                    ChainKnotEntity knot = ChainKnotEntity.getOrCreate(world, blockPos);
+                    if (knot.getHoldingEntities().contains(playerEntity)){
+                        knot.detachChain(playerEntity, true, false);
+                        knot.onBreak(null);
+                        if(!playerEntity.isCreative())
+                            context.getStack().increment(1);
+                    } else {
+                        knot.attachChain(playerEntity, true, 0);
+                        knot.onPlace();
+                        if (!playerEntity.isCreative())
+                            context.getStack().decrement(1);
+                    }
                 }
             }
             return ActionResult.success(world.isClient);
@@ -64,13 +71,15 @@ public class ChainItem extends BlockItem {
         List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class, new Box((double)i - d, (double)j - d, (double)k - d, (double)i + d, (double)j + d, (double)k + d));
 
         for (ChainKnotEntity mobEntity : list) {
-            if (mobEntity.getHoldingEntity() == playerEntity) {
+            if (mobEntity.getHoldingEntities().contains(playerEntity)) {
                 if (leashKnotEntity == null) {
                     leashKnotEntity = ChainKnotEntity.getOrCreate(world, blockPos);
                 }
 
-                mobEntity.attachChain(leashKnotEntity, true);
-                bl = true;
+                if (!mobEntity.equals(leashKnotEntity)) {
+                    mobEntity.attachChain(leashKnotEntity, true, playerEntity.getEntityId());
+                    bl = true;
+                }
             }
         }
 

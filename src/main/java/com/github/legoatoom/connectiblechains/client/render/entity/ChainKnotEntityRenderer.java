@@ -1,6 +1,5 @@
 package com.github.legoatoom.connectiblechains.client.render.entity;
 
-import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.util.Helper;
@@ -12,12 +11,14 @@ import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.world.LightType;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -53,19 +54,19 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(this.model.getLayer(TEXTURE));
         this.model.render(matrixStack, vertexConsumer, i, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
         matrixStack.pop();
-        Entity entity = chainKnotEntity.getHoldingEntity();
-        if (entity != null){
+        ArrayList<Entity> entities = chainKnotEntity.getHoldingEntities();
+        for (Entity entity : entities){
             this.createChainLine(chainKnotEntity, g, matrixStack, vertexConsumerProvider, entity);
         }
     }
 
     @Override
     public boolean shouldRender(ChainKnotEntity entity, Frustum frustum, double x, double y, double z) {
-        if (entity.getHoldingEntity() != null && entity.getHoldingEntity() instanceof ChainKnotEntity){
-            return super.shouldRender(entity, frustum, x, y, z) || super.shouldRender((ChainKnotEntity) entity.getHoldingEntity(), frustum, x, y, z);
-        } else {
-            return super.shouldRender(entity, frustum, x, y, z);
-        }
+        boolean should = entity.getHoldingEntities().stream().anyMatch(entity1 -> {
+            if (entity1 instanceof ChainKnotEntity) return super.shouldRender((ChainKnotEntity) entity1, frustum, x, y, z);
+            else return entity1 instanceof PlayerEntity;
+        });
+        return super.shouldRender(entity, frustum, x, y, z) || should;
     }
 
     public Identifier getTexture(ChainKnotEntity chainKnotEntity) {

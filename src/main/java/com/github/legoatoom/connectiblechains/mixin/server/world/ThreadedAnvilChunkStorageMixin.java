@@ -39,7 +39,7 @@ public abstract class ThreadedAnvilChunkStorageMixin {
             ThreadedAnvilChunkStorage.EntityTracker entityTracker = var6.next();
             Entity entity = entityTracker.entity;
             if (entity != player && entity.chunkX == chunk.getPos().x && entity.chunkZ == chunk.getPos().z) {
-                if (entity instanceof ChainKnotEntity && ((ChainKnotEntity)entity).getHoldingEntity() != null) {
+                if (entity instanceof ChainKnotEntity && !((ChainKnotEntity)entity).getHoldingEntities().isEmpty()) {
                     list.add((ChainKnotEntity) entity);
                 }
             }
@@ -49,9 +49,12 @@ public abstract class ThreadedAnvilChunkStorageMixin {
             for (ChainKnotEntity chainKnotEntity : list) {
                 PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
                 //Write our id and the id of the one we connect to.
-                int id = (chainKnotEntity.getHoldingEntity() != null) ? chainKnotEntity.getHoldingEntity().getEntityId() : 0;
-                passedData.writeIntArray(new int[]{chainKnotEntity.getEntityId(), id});
-                ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, NetworkingPackages.S2C_CHAIN_ATTACH_PACKET_ID, passedData);
+                int[] ids = chainKnotEntity.getHoldingEntities().stream().mapToInt(Entity::getEntityId).toArray();
+                if (ids.length > 0) {
+                    passedData.writeInt(chainKnotEntity.getEntityId());
+                    passedData.writeIntArray(ids);
+                    ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, NetworkingPackages.S2C_MULTI_CHAIN_ATTACH_PACKET_ID, passedData);
+                }
             }
         }
     }

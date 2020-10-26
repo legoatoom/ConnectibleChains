@@ -1,6 +1,5 @@
 package com.github.legoatoom.connectiblechains.client;
 
-import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
@@ -20,10 +19,46 @@ public class ClientInitializer implements ClientModInitializer {
         ClientSidePacketRegistry.INSTANCE.register(NetworkingPackages.S2C_CHAIN_ATTACH_PACKET_ID,
                 ((packetContext, packetByteBuf) -> {
                     int[] fromTo = packetByteBuf.readIntArray();
+                    int fromPlayer = packetByteBuf.readInt();
                     packetContext.getTaskQueue().execute(() -> {
                         Entity entity = packetContext.getPlayer().world.getEntityById(fromTo[0]);
                         if (entity instanceof ChainKnotEntity){
-                            ((ChainKnotEntity) entity).setHoldingEntityId(fromTo[1]);
+                            ((ChainKnotEntity) entity).addHoldingEntityId(fromTo[1], fromPlayer);
+                        }
+                    });
+                }));
+
+        ClientSidePacketRegistry.INSTANCE.register(NetworkingPackages.S2C_CHAIN_DETACH_PACKET_ID,
+                ((packetContext, packetByteBuf) -> {
+                    int[] fromTo = packetByteBuf.readIntArray();
+                    packetContext.getTaskQueue().execute(() -> {
+                        Entity entity = packetContext.getPlayer().world.getEntityById(fromTo[0]);
+                        if (entity instanceof ChainKnotEntity){
+                            ((ChainKnotEntity) entity).removeHoldingEntityId(fromTo[1]);
+                        }
+                    });
+                }));
+
+        ClientSidePacketRegistry.INSTANCE.register(NetworkingPackages.S2C_MULTI_CHAIN_ATTACH_PACKET_ID,
+                ((packetContext, packetByteBuf) -> {
+                    int from = packetByteBuf.readInt();
+                    int[] tos = packetByteBuf.readIntArray();
+                    packetContext.getTaskQueue().execute(() -> {
+                        Entity entity = packetContext.getPlayer().world.getEntityById(from);
+                        if (entity instanceof ChainKnotEntity){
+                            ((ChainKnotEntity) entity).addHoldingEntityIds(tos);
+                        }
+                    });
+                }));
+
+        ClientSidePacketRegistry.INSTANCE.register(NetworkingPackages.S2C_MULTI_CHAIN_DETACH_PACKET_ID,
+                ((packetContext, packetByteBuf) -> {
+                    int from = packetByteBuf.readInt();
+                    int[] tos = packetByteBuf.readIntArray();
+                    packetContext.getTaskQueue().execute(() -> {
+                        Entity entity = packetContext.getPlayer().world.getEntityById(from);
+                        if (entity instanceof ChainKnotEntity){
+                            ((ChainKnotEntity) entity).removeHoldingEntityIds(tos);
                         }
                     });
                 }));
