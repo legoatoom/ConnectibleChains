@@ -1,4 +1,4 @@
-![png]()
+![png](https://raw.githubusercontent.com/legoatoom/ConnectibleChains/master/src/main/resources/assets/logo.png)
 
 ## Description
 Connect your fences with a decorative chain!
