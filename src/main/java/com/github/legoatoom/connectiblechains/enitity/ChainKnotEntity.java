@@ -1,3 +1,20 @@
+/*
+ *     Copyright (C) 2020 legoatoom
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.github.legoatoom.connectiblechains.enitity;
 
 import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
@@ -6,7 +23,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
 import net.fabricmc.fabric.api.server.PlayerStream;
-import net.minecraft.client.util.math.Vector3d;
 import net.minecraft.entity.*;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
@@ -28,7 +44,6 @@ import net.minecraft.util.math.*;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.system.CallbackI;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -423,30 +438,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
         watchingPlayers.forEach(playerEntity ->
                 ServerSidePacketRegistry.INSTANCE.sendToPlayer(playerEntity, NetworkingPackages.S2C_CHAIN_ATTACH_PACKET_ID, passedData));
-    }
-
-    public void sendAttachChainPacket(int[] entityIds){
-        Stream<PlayerEntity> watchingPlayers = PlayerStream.around(world, getBlockPos(), 1024d);
-        PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
-
-        //Write our id and the id of the one we connect to.
-        passedData.writeInt(this.getEntityId());
-        passedData.writeIntArray(entityIds);
-
-        watchingPlayers.forEach(playerEntity ->
-                ServerSidePacketRegistry.INSTANCE.sendToPlayer(playerEntity, NetworkingPackages.S2C_MULTI_CHAIN_ATTACH_PACKET_ID, passedData));
-    }
-
-    public void sendDetachChainPacket(int[] entityIds){
-        Stream<PlayerEntity> watchingPlayers = PlayerStream.around(world, getBlockPos(), 1024d);
-        PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
-
-        //Write our id and the id of the one we connect to.
-        passedData.writeInt(this.getEntityId());
-        passedData.writeIntArray(entityIds);
-
-        watchingPlayers.forEach(playerEntity ->
-                ServerSidePacketRegistry.INSTANCE.sendToPlayer(playerEntity, NetworkingPackages.S2C_MULTI_CHAIN_DETACH_PACKET_ID, passedData));
     }
 
     @Environment(EnvType.CLIENT)
