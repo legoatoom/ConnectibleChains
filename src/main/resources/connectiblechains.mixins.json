@@ -6,6 +6,7 @@
   "mixins": [
     "block.FenceBlockMixin",
     "item.ItemsMixin",
+    "server.network.EntityTrackerEntryMixin",
     "server.world.ThreadedAnvilChunkStorageMixin"
   ],
   "client": [

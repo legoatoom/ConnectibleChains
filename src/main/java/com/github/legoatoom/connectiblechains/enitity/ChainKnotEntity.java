@@ -116,6 +116,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                 listTag.add(compoundTag);
             }
         }
+        tag.putInt("holdersCount", holdersCount);
         if (b){
             tag.put("Chains", listTag);
         } else if (chainTags != null && !chainTags.isEmpty()) {
@@ -143,6 +144,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         if (tag.contains("Chains")){
             this.chainTags = tag.getList("Chains", 10);
         }
+        holdersCount = tag.getInt("holdersCount");
     }
 
     @Override
