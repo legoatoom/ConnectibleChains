@@ -51,9 +51,12 @@ import java.util.stream.Stream;
 public class ChainKnotEntity extends AbstractDecorationEntity {
 
     public static final double MAX_RANGE = 7d;
+    private final Map<Integer, ArrayList<Integer>> collisionEntityStorage;
+    private final static double collisionIncrement = .3d;
 
     public ChainKnotEntity(EntityType<? extends ChainKnotEntity> entityType, World world) {
         super(entityType, world);
+        this.collisionEntityStorage = new HashMap<>();
     }
 
     public ChainKnotEntity(World world, BlockPos pos) {
@@ -61,6 +64,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         this.updatePosition((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D);
         this.setBoundingBox(new Box(this.getX() - 0.1875D, this.getY() - 0.25D + 0.125D, this.getZ() - 0.1875D, this.getX() + 0.1875D, this.getY() + 0.25D + 0.125D, this.getZ() + 0.1875D));
         this.teleporting = true;
+        this.collisionEntityStorage = new HashMap<>();
     }
 
     public void updatePosition(double x, double y, double z) {
@@ -122,22 +126,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         } else if (chainTags != null && !chainTags.isEmpty()) {
             tag.put("Chains", chainTags.copy());
         }
-//        if (!this.holdingEntities.isEmpty()){
-//            CompoundTag compoundTag = new CompoundTag();
-//            if (this.holdingEntity instanceof PlayerEntity){
-//                UUID uuid = this.holdingEntity.getUuid();
-//                compoundTag.putUuid("UUID", uuid);
-//            } else if (this.holdingEntity instanceof AbstractDecorationEntity) {
-//                BlockPos blockPos = ((AbstractDecorationEntity) this.holdingEntity).getDecorationBlockPos();
-//                compoundTag.putInt("X", blockPos.getX());
-//                compoundTag.putInt("Y", blockPos.getY());
-//                compoundTag.putInt("Z", blockPos.getZ());
-//            }
-//
-//            tag.put("Chain", compoundTag);
-//        } else if (this.chainTag != null){
-//            tag.put("Chain", this.chainTag.copy());
-//        }
     }
 
     public void readCustomDataFromTag(CompoundTag tag) {
@@ -146,6 +134,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         }
         holdersCount = tag.getInt("holdersCount");
     }
+
+
 
     @Override
     public void tick() {
@@ -205,6 +195,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
             if (!this.world.isClient()) {
                 if (entity instanceof ChainKnotEntity && ((ChainKnotEntity) entity).holdersCount <= 1 && ((ChainKnotEntity) entity).getHoldingEntities().isEmpty()) {
                     entity.remove();
+                    this.deleteCollision(entity);
                 }
                 Vec3d middle = middleOf(getPos(), entity.getPos());
                 ItemEntity entity1 = new ItemEntity(world, middle.x, middle.y, middle.z, new ItemStack(Items.CHAIN));
@@ -233,22 +224,22 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class, new Box((double) i - 1.0D, (double) j - 1.0D, (double) k - 1.0D, (double) i + 1.0D, (double) j + 1.0D, (double) k + 1.0D));
         Iterator<ChainKnotEntity> var6 = list.iterator();
 
-        ChainKnotEntity leashKnotEntity;
+        ChainKnotEntity chainKnotEntity;
         do {
             if (!var6.hasNext()) {
                 if (hasToExist){
                     return null;
                 }
-                ChainKnotEntity leashKnotEntity2 = new ChainKnotEntity(world, pos);
-                world.spawnEntity(leashKnotEntity2);
-                leashKnotEntity2.onPlace();
-                return leashKnotEntity2;
+                ChainKnotEntity chainKnotEntity1 = new ChainKnotEntity(world, pos);
+                world.spawnEntity(chainKnotEntity1);
+                chainKnotEntity1.onPlace();
+                return chainKnotEntity1;
             }
 
-            leashKnotEntity = var6.next();
-        } while (leashKnotEntity == null || !leashKnotEntity.getDecorationBlockPos().equals(pos));
+            chainKnotEntity = var6.next();
+        } while (chainKnotEntity == null || !chainKnotEntity.getDecorationBlockPos().equals(pos));
 
-        return leashKnotEntity;
+        return chainKnotEntity;
     }
 
     public void onPlace() {
@@ -270,25 +261,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     public int holdersCount = 0;
 
     private ListTag chainTags;
-
-//    @Deprecated
-//    @Nullable
-//    private Entity holdingEntity;
-//    @Deprecated
-//    private int holdingEntityId;
-//
-//    @Deprecated
-//    @Nullable
-//    private CompoundTag chainTag;
-//
-//    @Deprecated
-//    @Nullable
-//    public Entity getHoldingEntity(){
-//        if (this.holdingEntity == null && this.holdingEntityId != 0 && this.world.isClient()){
-//            this.holdingEntity = this.world.getEntityById(this.holdingEntityId);
-//        }
-//        return this.holdingEntity;
-//    }
 
     public ArrayList<Entity> getHoldingEntities(){
         if (this.world.isClient()) {
@@ -321,21 +293,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         }
     }
 
-//    @Deprecated
-//    protected void updateChain(){
-//        if (this.chainTag != null){
-//            this.deserializeChainTag();
-//        }
-//
-//        if (this.holdingEntity != null){
-//            if (!this.isAlive() || !this.holdingEntity.isAlive()){
-//                this.detachChain(true, true);
-//            } else if (this.holdingEntity.getPos().squaredDistanceTo(this.getPos()) > MAX_RANGE*MAX_RANGE){
-//                this.detachChain(true, true);
-//            }
-//        }
-//    }
-
     public void detachChain(Entity entity, boolean sendPacket, boolean dropItem) {
         if (entity != null){
             if (this.holdingEntities.size() <= 1){
@@ -358,6 +315,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                 if (entity instanceof ChainKnotEntity){
                     ((ChainKnotEntity) entity).holdersCount--;
                     if (this.holdersCount <= 0 && getHoldingEntities().isEmpty()){
+                        deleteCollision(entity);
                         this.remove();
                     }
                 }
@@ -365,27 +323,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
             }
         }
     }
-
-//    @Deprecated
-//    public void detachChain(boolean sendPacket, boolean dropItem){
-//        if (this.holdingEntity != null){
-//            this.teleporting = false;
-//            if (!(this.holdingEntity instanceof PlayerEntity)){
-//                this.holdingEntity.teleporting = false;
-//            }
-//
-//            this.holdingEntity = null;
-//            this.chainTag = null;
-//            if (!this.world.isClient() && dropItem){
-//                this.dropItem(Items.CHAIN);
-//            }
-//
-//            if (!this.world.isClient() && sendPacket && this.world instanceof ServerWorld){
-//                sendAttachChainPacket(0);
-//
-//            }
-//        }
-//    }
 
     public void attachChain(Entity entity, boolean sendPacket, int fromPlayerEntityId){
         this.holdingEntities.put(entity.getEntityId(), entity);
@@ -401,23 +338,45 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         if (!this.world.isClient() && sendPacket && this.world instanceof ServerWorld){
             if (entity instanceof ChainKnotEntity){
                 ((ChainKnotEntity) entity).holdersCount++;
+                createCollision(entity);
             }
             sendAttachChainPacket(entity.getEntityId(), fromPlayerEntityId);
         }
+
     }
 
-//    public void attachChain(Entity entity, boolean sendPacket){
-//        this.holdingEntity = entity;
-//        this.chainTag = null;
-//        this.teleporting = true;
-//        if (!(this.holdingEntity instanceof PlayerEntity)){
-//            this.holdingEntity.teleporting = true;
-//        }
-//
-//        if (!this.world.isClient() && sendPacket && this.world instanceof ServerWorld){
-//            sendAttachChainPacket(this.holdingEntity.getEntityId());
-//        }
-//    }
+    private void createCollision(Entity entity) {
+        double v = 0.0;
+        double distance = this.getPos().distanceTo(entity.getPos());
+        ArrayList<Integer> entityIdList = new ArrayList<>();
+        double x,y,z;
+        while(v < distance - ChainKnotEntity.collisionIncrement){
+            x = MathHelper.lerp(v/distance, this.getX(), entity.getX());
+            y = MathHelper.lerp(v/distance, this.getY(), entity.getY());
+            z = MathHelper.lerp(v/distance, this.getZ(), entity.getZ());
+            ChainCollisionEntity c = new ChainCollisionEntity(this.world, x, y, z, this);
+
+            if (world.spawnEntity(c)){
+                entityIdList.add(c.getEntityId());
+            }
+            v = v + ChainKnotEntity.collisionIncrement;
+        }
+        this.collisionEntityStorage.put(entity.getEntityId(), entityIdList);
+    }
+
+    private void deleteCollision(Entity entity) {
+        int entityId = entity.getEntityId();
+        ArrayList<Integer> entityIdList = this.collisionEntityStorage.get(entityId);
+        if (entityIdList != null){
+            entityIdList.forEach(id -> {
+                Entity e = world.getEntityById(id);
+                if (e instanceof ChainCollisionEntity){
+                    e.remove();
+                }
+            });
+        }
+        this.collisionEntityStorage.remove(entityId);
+    }
 
     public void sendDetachChainPacket(int entityId){
         Stream<PlayerEntity> watchingPlayers = PlayerStream.around(world, getBlockPos(), 1024d);
@@ -465,16 +424,9 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         for (int id: ids) this.holdingEntities.remove(id);
     }
 
-    public void removePlayerWithId(int entityId) {
+    private void removePlayerWithId(int entityId) {
         this.holdingEntities.remove(entityId);
     }
-
-//    @Deprecated
-//    @Environment(EnvType.CLIENT)
-//    public void setHoldingEntityId(int id){
-//        this.holdingEntityId = id;
-//        this.detachChain(false, false);
-//    }
 
     private void deserializeChainTag(CompoundTag tag){
         if (tag != null && this.world instanceof ServerWorld){
@@ -505,36 +457,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         }
     }
 
-
-
-//    private void deserializeChainTag(){
-//        if (this.chainTag != null && this.world instanceof ServerWorld){
-//                if (this.chainTag.containsUuid("UUID")){
-//                    UUID uuid = this.chainTag.getUuid("UUID");
-//                    Entity entity = ((ServerWorld) this.world).getEntity(uuid);
-//                    if (entity != null){
-//                        this.attachChain(entity, true);
-//                        return;
-//                    }
-//                } else if (this.chainTag.contains("X")){
-//                    BlockPos blockPos = new BlockPos(chainTag.getInt("X"), this.chainTag.getInt("Y"), this.chainTag.getInt("Z"));
-//                    ChainKnotEntity entity = ChainKnotEntity.getOrCreate(this.world, blockPos, true);
-//                    if (entity != null) {
-//                        this.attachChain(ChainKnotEntity.getOrCreate(this.world, blockPos), true);
-//                    }
-//                    return;
-//                }
-//
-//                // At the start the server and client need to tell each other the info.
-//                // So we need to check if the object is old enough for these things to exist before we delete them.
-//                if (this.age > 100) {
-//                    this.dropItem(Items.CHAIN);
-//                    this.chainTag = null;
-//                }
-//        }
-//    }
-
-    public static Vec3d middleOf(Vec3d a, Vec3d b){
+    private static Vec3d middleOf(Vec3d a, Vec3d b){
         double x = (a.getX() - b.getX())/2d + b.getX();
         double y = (a.getY() - b.getY())/2d + b.getY();
         double z = (a.getZ() - b.getZ())/2d + b.getZ();

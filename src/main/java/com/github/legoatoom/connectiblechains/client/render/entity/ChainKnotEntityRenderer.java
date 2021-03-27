@@ -64,7 +64,6 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     }
 
     public void render(ChainKnotEntity chainKnotEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
-        super.render(chainKnotEntity, f, g, matrixStack, vertexConsumerProvider, i);
         matrixStack.push();
         matrixStack.scale(-0.9F, -0.9F, 0.9F);
         this.model.setAngles(chainKnotEntity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
@@ -75,6 +74,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         for (Entity entity : entities){
             this.createChainLine(chainKnotEntity, g, matrixStack, vertexConsumerProvider, entity);
         }
+        super.render(chainKnotEntity, f, g, matrixStack, vertexConsumerProvider, i);
     }
 
     @Override

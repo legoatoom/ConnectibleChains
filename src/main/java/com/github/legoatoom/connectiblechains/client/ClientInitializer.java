@@ -17,6 +17,7 @@
 
 package com.github.legoatoom.connectiblechains.client;
 
+import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
@@ -32,6 +33,10 @@ public class ClientInitializer implements ClientModInitializer {
     public void onInitializeClient() {
         EntityRendererRegistry.INSTANCE.register(ModEntityTypes.CHAIN_KNOT,
                 (entityRenderDispatcher, context) -> new ChainKnotEntityRenderer(entityRenderDispatcher));
+
+        EntityRendererRegistry.INSTANCE.register(ModEntityTypes.CHAIN_COLLISION,
+                (entityRenderDispatcher, context) -> new ChainCollisionEntityRenderer(entityRenderDispatcher));
+
 
         ClientSidePacketRegistry.INSTANCE.register(NetworkingPackages.S2C_CHAIN_ATTACH_PACKET_ID,
                 ((packetContext, packetByteBuf) -> {

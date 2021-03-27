@@ -17,6 +17,7 @@
 
 package com.github.legoatoom.connectiblechains.mixin.network;
 
+import com.github.legoatoom.connectiblechains.enitity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
@@ -49,6 +50,14 @@ public class ClientPlayerNetworkHandlerMixin {
         if (type == ModEntityTypes.CHAIN_KNOT) {
             entity = new ChainKnotEntity(this.world, new BlockPos(x, y, z));
         } // we can replicate this one here for all our other entities
+        if (type == ModEntityTypes.CHAIN_COLLISION){
+            if (packet instanceof ChainCollisionEntity.ChainCollisionEntitySpawnS2CPacket){
+                Entity owner = this.world.getEntityById(((ChainCollisionEntity.ChainCollisionEntitySpawnS2CPacket) packet).getOwnerID());
+                if (owner instanceof ChainKnotEntity){
+                    entity = new ChainCollisionEntity(this.world, x, y ,z, (ChainKnotEntity) owner);
+                }
+            }
+        }
         // entity would be null here when the type was not one for us
         if (entity != null) {
             int entityId = packet.getId();

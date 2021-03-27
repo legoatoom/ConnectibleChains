@@ -27,16 +27,31 @@ import net.minecraft.util.registry.Registry;
 public class ModEntityTypes {
 
     public static final EntityType<ChainKnotEntity> CHAIN_KNOT;
+    public static final EntityType<ChainCollisionEntity> CHAIN_COLLISION;
 
     static{
         CHAIN_KNOT = Registry.register(
-                            Registry.ENTITY_TYPE, Helper.identifier("chain_knot") ,
-                            FabricEntityTypeBuilder.create(SpawnGroup.MISC,
-                                    (EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new)
-                                    .trackable(10, Integer.MAX_VALUE, false)
-                                    .dimensions(EntityDimensions.fixed(0.5F, 0.5F))
-                                    .build()
-                    );
+                Registry.ENTITY_TYPE, Helper.identifier("chain_knot") ,
+                FabricEntityTypeBuilder.create(SpawnGroup.MISC,
+                        (EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new)
+                        .trackRangeBlocks(10).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
+                        .dimensions(EntityDimensions.fixed(0.5F, 0.5F))
+                        .spawnableFarFromPlayer()
+                        .fireImmune()
+                        .build()
+        );
+        CHAIN_COLLISION = Registry.register(
+                Registry.ENTITY_TYPE, Helper.identifier("chain_collision") ,
+                FabricEntityTypeBuilder.create(SpawnGroup.MISC,
+                        (EntityType.EntityFactory<ChainCollisionEntity>) ChainCollisionEntity::new)
+                        .trackRangeBlocks(10).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
+                        .dimensions(EntityDimensions.fixed(0.3F, 0.3F))
+                        .disableSaving()
+                        .fireImmune()
+                        .spawnableFarFromPlayer()
+                        .build()
+        );
+
     }
 
     @SuppressWarnings("EmptyMethod")
