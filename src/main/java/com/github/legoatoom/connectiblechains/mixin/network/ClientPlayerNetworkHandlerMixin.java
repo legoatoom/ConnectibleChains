@@ -1,23 +1,24 @@
 /*
- *     Copyright (C) 2020 legoatoom
+ * Copyright (C) 2021 legoatoom
  *
- *     This program is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU General Public License as published by
- *     the Free Software Foundation, either version 3 of the License, or
- *     (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     This program is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *     You should have received a copy of the GNU General Public License
- *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package com.github.legoatoom.connectiblechains.mixin.network;
 
 import com.github.legoatoom.connectiblechains.enitity.ChainCollisionEntity;
+import com.github.legoatoom.connectiblechains.network.packet.s2c.play.ChainCollisionEntitySpawnS2CPacket;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
@@ -51,11 +52,12 @@ public class ClientPlayerNetworkHandlerMixin {
             entity = new ChainKnotEntity(this.world, new BlockPos(x, y, z));
         } // we can replicate this one here for all our other entities
         if (type == ModEntityTypes.CHAIN_COLLISION){
-            if (packet instanceof ChainCollisionEntity.ChainCollisionEntitySpawnS2CPacket){
-                Entity owner = this.world.getEntityById(((ChainCollisionEntity.ChainCollisionEntitySpawnS2CPacket) packet).getOwnerID());
-                if (owner instanceof ChainKnotEntity){
-                    entity = new ChainCollisionEntity(this.world, x, y ,z, (ChainKnotEntity) owner);
-                }
+            if (packet instanceof ChainCollisionEntitySpawnS2CPacket){
+                /* In this method, it can be that the client does not yet know of the other chain, or even the owner of
+                collision entity, so we just have to store the id.*/
+                entity = new ChainCollisionEntity(this.world, x, y ,z,
+                        ((ChainCollisionEntitySpawnS2CPacket) packet).getStartOwnerID(),
+                        ((ChainCollisionEntitySpawnS2CPacket) packet).getEndOwnerID());
             }
         }
         // entity would be null here when the type was not one for us

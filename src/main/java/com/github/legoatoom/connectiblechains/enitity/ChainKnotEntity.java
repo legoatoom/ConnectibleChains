@@ -1,18 +1,18 @@
 /*
- *     Copyright (C) 2020 legoatoom
+ * Copyright (C) 2021 legoatoom
  *
- *     This program is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU General Public License as published by
- *     the Free Software Foundation, either version 3 of the License, or
- *     (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     This program is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *     You should have received a copy of the GNU General Public License
- *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package com.github.legoatoom.connectiblechains.enitity;
@@ -21,8 +21,9 @@ import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
-import net.fabricmc.fabric.api.server.PlayerStream;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.block.Block;
 import net.minecraft.entity.*;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
@@ -35,6 +36,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.tag.BlockTags;
@@ -51,8 +53,11 @@ import java.util.stream.Stream;
 public class ChainKnotEntity extends AbstractDecorationEntity {
 
     public static final double MAX_RANGE = 7d;
+
+    public static final double VISIBLE_RANGE = 2048.0D;
+
     private final Map<Integer, ArrayList<Integer>> collisionEntityStorage;
-    private final static double collisionIncrement = .3d;
+    private final static double collisionIncrement = .1d;
 
     public ChainKnotEntity(EntityType<? extends ChainKnotEntity> entityType, World world) {
         super(entityType, world);
@@ -93,7 +98,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
     @Environment(EnvType.CLIENT)
     public boolean shouldRender(double distance) {
-        return distance < 1024.0D;
+        return distance < VISIBLE_RANGE;
     }
 
     public void onBreak(@Nullable Entity entity) {
@@ -120,7 +125,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                 listTag.add(compoundTag);
             }
         }
-        tag.putInt("holdersCount", holdersCount);
         if (b){
             tag.put("Chains", listTag);
         } else if (chainTags != null && !chainTags.isEmpty()) {
@@ -132,17 +136,16 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         if (tag.contains("Chains")){
             this.chainTags = tag.getList("Chains", 10);
         }
-        holdersCount = tag.getInt("holdersCount");
     }
 
 
 
     @Override
     public void tick() {
-        super.tick();
         if (!this.world.isClient()){
             this.updateChains();
         }
+        super.tick();
     }
 
     public ActionResult interact(PlayerEntity player, Hand hand) {
@@ -189,25 +192,36 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
     @Override
     public boolean damage(DamageSource source, float amount) {
-        boolean bool = super.damage(source, amount);
         ArrayList<Entity> list = this.getHoldingEntities();
         for (Entity entity : list){
             if (!this.world.isClient()) {
                 if (entity instanceof ChainKnotEntity && ((ChainKnotEntity) entity).holdersCount <= 1 && ((ChainKnotEntity) entity).getHoldingEntities().isEmpty()) {
                     entity.remove();
-                    this.deleteCollision(entity);
                 }
+                this.deleteCollision(entity);
                 Vec3d middle = middleOf(getPos(), entity.getPos());
                 ItemEntity entity1 = new ItemEntity(world, middle.x, middle.y, middle.z, new ItemStack(Items.CHAIN));
                 entity1.setToDefaultPickupDelay();
                 this.world.spawnEntity(entity1);
             }
         }
-        return bool;
+        return super.damage(source, amount);
+    }
+
+    public void damageLink(int entityID){
+        Entity entity = this.world.getEntityById(entityID);
+        if (entity != null && !this.world.isClient){
+            this.detachChain(entity, true, true);
+            onBreak(null);
+        }
+        if (entity instanceof ChainKnotEntity && ((ChainKnotEntity) entity).holdersCount == 0 && ((ChainKnotEntity) entity).getHoldingEntities().isEmpty()) {
+            entity.remove();
+        }
     }
 
     public boolean canStayAttached() {
-        return this.world.getBlockState(this.attachmentPos).getBlock().isIn(BlockTags.FENCES);
+        Block block = this.world.getBlockState(this.attachmentPos).getBlock();
+        return block.isIn(BlockTags.WALLS) || block.isIn(BlockTags.FENCES);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -293,6 +307,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         }
     }
 
+
     public void detachChain(Entity entity, boolean sendPacket, boolean dropItem) {
         if (entity != null){
             if (this.holdingEntities.size() <= 1){
@@ -303,6 +318,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                     entity.teleporting = false;
                 }
             }
+
             this.holdingEntities.remove(entity.getEntityId());
             if (!this.world.isClient() && dropItem){
                 Vec3d middle = middleOf(getPos(), entity.getPos());
@@ -315,10 +331,10 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                 if (entity instanceof ChainKnotEntity){
                     ((ChainKnotEntity) entity).holdersCount--;
                     if (this.holdersCount <= 0 && getHoldingEntities().isEmpty()){
-                        deleteCollision(entity);
                         this.remove();
                     }
                 }
+                deleteCollision(entity);
                 sendDetachChainPacket(entity.getEntityId());
             }
         }
@@ -346,22 +362,34 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     }
 
     private void createCollision(Entity entity) {
-        double v = 0.0;
-        double distance = this.getPos().distanceTo(entity.getPos());
+        double distance = this.getDecorationBlockPos().getManhattanDistance(entity.getBlockPos());
+        double a = .5/distance;
+        double v = a;
+
         ArrayList<Integer> entityIdList = new ArrayList<>();
         double x,y,z;
-        while(v < distance - ChainKnotEntity.collisionIncrement){
-            x = MathHelper.lerp(v/distance, this.getX(), entity.getX());
-            y = MathHelper.lerp(v/distance, this.getY(), entity.getY());
-            z = MathHelper.lerp(v/distance, this.getZ(), entity.getZ());
-            ChainCollisionEntity c = new ChainCollisionEntity(this.world, x, y, z, this);
+        double offset = 0.2D;
+        while(v < 1){
+            x = MathHelper.lerp(v, this.getX(), entity.getX());
+            y = MathHelper.lerp(v, this.getY(), entity.getY()) + drip(v*distance, distance) + offset;
+            z = MathHelper.lerp(v, this.getZ(), entity.getZ());
+            ChainCollisionEntity c = new ChainCollisionEntity(this.world, x, y, z, this.getEntityId(), entity.getEntityId());
 
             if (world.spawnEntity(c)){
                 entityIdList.add(c.getEntityId());
+            } else {
+                LOGGER.warn("Tried to summon collision entity for a chain, failed to do so");
             }
-            v = v + ChainKnotEntity.collisionIncrement;
+            v = v + a;
         }
         this.collisionEntityStorage.put(entity.getEntityId(), entityIdList);
+    }
+
+    private static double drip(double x, double V){
+        double c = 1D;
+        double b = -c/V;
+        double a = c/(V*V);
+        return (a * (x*x) + b*x);
     }
 
     private void deleteCollision(Entity entity) {
@@ -379,18 +407,22 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     }
 
     public void sendDetachChainPacket(int entityId){
-        Stream<PlayerEntity> watchingPlayers = PlayerStream.around(world, getBlockPos(), 1024d);
+
+        Stream<ServerPlayerEntity> watchingPlayers =
+                PlayerLookup.around((ServerWorld) world, getBlockPos(), VISIBLE_RANGE).stream();
         PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
 
         //Write our id and the id of the one we connect to.
         passedData.writeIntArray(new int[]{this.getEntityId(), entityId});
 
         watchingPlayers.forEach(playerEntity ->
-                ServerSidePacketRegistry.INSTANCE.sendToPlayer(playerEntity, NetworkingPackages.S2C_CHAIN_DETACH_PACKET_ID, passedData));
+                ServerPlayNetworking.send(playerEntity,
+                        NetworkingPackages.S2C_CHAIN_DETACH_PACKET_ID, passedData));
     }
 
     public void sendAttachChainPacket(int entityId, int fromPlayerEntityId) {
-        Stream<PlayerEntity> watchingPlayers = PlayerStream.around(world, getBlockPos(), 1024d);
+        Stream<ServerPlayerEntity> watchingPlayers =
+                PlayerLookup.around((ServerWorld) world, getBlockPos(), VISIBLE_RANGE).stream();
         PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
 
         //Write our id and the id of the one we connect to.
@@ -398,7 +430,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         passedData.writeInt(fromPlayerEntityId);
 
         watchingPlayers.forEach(playerEntity ->
-                ServerSidePacketRegistry.INSTANCE.sendToPlayer(playerEntity, NetworkingPackages.S2C_CHAIN_ATTACH_PACKET_ID, passedData));
+                ServerPlayNetworking.send(playerEntity,
+                        NetworkingPackages.S2C_CHAIN_ATTACH_PACKET_ID, passedData));
     }
 
     @Environment(EnvType.CLIENT)
@@ -417,11 +450,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     @Environment(EnvType.CLIENT)
     public void addHoldingEntityIds(int[] ids){
         for(int id : ids) this.holdingEntities.put(id, null);
-    }
-
-    @Environment(EnvType.CLIENT)
-    public void removeHoldingEntityIds(int[] ids){
-        for (int id: ids) this.holdingEntities.remove(id);
     }
 
     private void removePlayerWithId(int entityId) {
@@ -463,4 +491,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         double z = (a.getZ() - b.getZ())/2d + b.getZ();
         return new Vec3d(x, y, z);
     }
+
+
 }

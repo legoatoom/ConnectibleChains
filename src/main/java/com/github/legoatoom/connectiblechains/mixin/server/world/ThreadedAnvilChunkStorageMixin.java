@@ -1,18 +1,18 @@
 /*
- *     Copyright (C) 2020 legoatoom
+ * Copyright (C) 2021 legoatoom
  *
- *     This program is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU General Public License as published by
- *     the Free Software Foundation, either version 3 of the License, or
- *     (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     This program is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *     You should have received a copy of the GNU General Public License
- *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package com.github.legoatoom.connectiblechains.mixin.server.world;
@@ -23,7 +23,7 @@ import com.google.common.collect.Lists;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
-import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
@@ -70,7 +70,7 @@ public abstract class ThreadedAnvilChunkStorageMixin {
                 if (ids.length > 0) {
                     passedData.writeInt(chainKnotEntity.getEntityId());
                     passedData.writeIntArray(ids);
-                    ServerSidePacketRegistry.INSTANCE.sendToPlayer(player, NetworkingPackages.S2C_MULTI_CHAIN_ATTACH_PACKET_ID, passedData);
+                    ServerPlayNetworking.send(player, NetworkingPackages.S2C_MULTI_CHAIN_ATTACH_PACKET_ID, passedData);
                 }
             }
         }
