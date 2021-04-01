@@ -24,6 +24,13 @@ import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.entity.model.CompositeEntityModel;
 import net.minecraft.entity.Entity;
 
+/**
+ * Model for the {@link com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity}.
+ * Similar to the {@link net.minecraft.client.render.entity.model.LeashKnotEntityModel} code.
+ *
+ * @see net.minecraft.client.render.entity.LeashKnotEntityRenderer
+ * @author legoatoom
+ */
 @Environment(EnvType.CLIENT)
 public class ChainKnotEntityModel<T extends Entity> extends CompositeEntityModel<T> {
     private final ModelPart chainKnot;

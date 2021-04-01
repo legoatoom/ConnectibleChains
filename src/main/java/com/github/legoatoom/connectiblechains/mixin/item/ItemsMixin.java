@@ -17,7 +17,8 @@
 
 package com.github.legoatoom.connectiblechains.mixin.item;
 
-import com.github.legoatoom.connectiblechains.items.ChainItem;
+import com.github.legoatoom.connectiblechains.item.ChainItem;
+import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.BlockItem;
@@ -31,9 +32,26 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/**
+ * This mixin edits the registry of the {@link Items#CHAIN} so that it instead makes the item a {@link ChainItem}.
+ *
+ * @author legoatoom
+ */
 @Mixin(Items.class)
 public abstract class ItemsMixin {
 
+    @Inject(
+            method = "register(Lnet/minecraft/block/Block;Lnet/minecraft/item/ItemGroup;)Lnet/minecraft/item/Item;",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private static void changeChainBlockItem(Block block, ItemGroup group, CallbackInfoReturnable<Item> cir) {
+        if (block == Blocks.CHAIN) {
+            cir.setReturnValue(ItemsMixin.register1(new ChainItem(Blocks.CHAIN, new Item.Settings().group(group))));
+        }
+    }
+
+    //Copying register function since they are private
     private static Item register1(BlockItem item) {
         return register1(item.getBlock(), item);
     }
@@ -44,20 +62,9 @@ public abstract class ItemsMixin {
 
     private static Item register1(Identifier id, Item item) {
         if (item instanceof BlockItem) {
-            ((BlockItem)item).appendBlocks(Item.BLOCK_ITEMS, item);
+            ((BlockItem) item).appendBlocks(Item.BLOCK_ITEMS, item);
         }
 
         return Registry.register(Registry.ITEM, id, item);
-    }
-
-    @Inject(
-            method = "register(Lnet/minecraft/block/Block;Lnet/minecraft/item/ItemGroup;)Lnet/minecraft/item/Item;",
-            at = @At("HEAD"),
-            cancellable = true
-    )
-    private static void changeChainBlockItem(Block block, ItemGroup group, CallbackInfoReturnable<Item> cir){
-        if (block == Blocks.CHAIN){
-            cir.setReturnValue(ItemsMixin.register1(new ChainItem(Blocks.CHAIN, new Item.Settings().group(group))));
-        }
     }
 }

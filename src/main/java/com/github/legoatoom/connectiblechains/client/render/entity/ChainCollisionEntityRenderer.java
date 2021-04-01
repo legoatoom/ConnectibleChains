@@ -24,6 +24,13 @@ import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.util.Identifier;
 
+/**
+ * Renderer for the {@link ChainCollisionEntity}.
+ * Entities are required to have a renderer. So this is the class that "renders" the entity.
+ * Since this entity does not have a texture, it does not need to render anything.
+ *
+ * @author legoatoom
+ */
 @Environment(EnvType.CLIENT)
 public class ChainCollisionEntityRenderer extends EntityRenderer<ChainCollisionEntity> {
 

@@ -19,8 +19,9 @@ package com.github.legoatoom.connectiblechains.mixin.block;
 
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.FenceBlock;
+import net.minecraft.block.WallBlock;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -28,9 +29,6 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * This mixin is needed to allow a player to right click on a fence without having a chain in hand and still
@@ -38,23 +36,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *
  * @author legoatoom.
  */
-@Mixin(FenceBlock.class)
-public abstract class FenceBlockMixin {
+@Mixin(WallBlock.class)
+public class WallBlockMixin {
 
-    @Inject(
-            method = "onUse",
-            at = @At("RETURN"),
-            cancellable = true
-    )
-    private void onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit, CallbackInfoReturnable<ActionResult> cir) {
-        if (world.isClient()) {
-            ActionResult result = player.getStackInHand(hand).getItem().equals(Items.CHAIN) ? ActionResult.SUCCESS : cir.getReturnValue();
-            cir.setReturnValue(result);
+    /**
+     * We create an onUse method here that overrides the onUse that {@link WallBlock} has inherited from {@link net.minecraft.block.AbstractBlock}.
+     * Yes, that apparently works this way.
+     */
+    @SuppressWarnings("unused")
+    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
+        if (world.isClient) {
+            ItemStack itemStack = player.getStackInHand(hand);
+            return itemStack.getItem() == Items.CHAIN ? ActionResult.SUCCESS : ActionResult.PASS;
         } else {
-            ActionResult result = ChainKnotEntity.tryAttachHeldChainsToBlock(player, world, pos, ChainKnotEntity.getOrCreate(world, pos, true)) ? ActionResult.SUCCESS : ActionResult.PASS;
-            if (result.isAccepted()) {
-                cir.setReturnValue(result);
-            }
+            return ChainKnotEntity.tryAttachHeldChainsToBlock(player, world, pos, ChainKnotEntity.getOrCreate(world, pos, true)) ? ActionResult.SUCCESS : ActionResult.PASS;
         }
     }
 }

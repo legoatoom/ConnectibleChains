@@ -19,20 +19,51 @@ package com.github.legoatoom.connectiblechains.client;
 
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
+import com.github.legoatoom.connectiblechains.enitity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
+import com.github.legoatoom.connectiblechains.util.PacketBufUtil;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendereregistry.v1.EntityRendererRegistry;
+import net.fabricmc.fabric.api.event.client.player.ClientPickBlockApplyCallback;
+import net.fabricmc.fabric.api.event.client.player.ClientPickBlockGatherCallback;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.registry.Registry;
 
+import java.util.UUID;
+
+/**
+ * ClientInitializer.
+ * This method is called when the game starts with a client.
+ * This registers the renderers for entities and how to handle packages between the server and client.
+ *
+ * @author legoatoom
+ */
 public class ClientInitializer implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
         initRenderers();
         registerReceiverClientPackages();
+    }
+
+    private void initRenderers() {
+        EntityRendererRegistry.INSTANCE.register(ModEntityTypes.CHAIN_KNOT,
+                (entityRenderDispatcher, context) -> new ChainKnotEntityRenderer(entityRenderDispatcher));
+
+        EntityRendererRegistry.INSTANCE.register(ModEntityTypes.CHAIN_COLLISION,
+                (entityRenderDispatcher, context) -> new ChainCollisionEntityRenderer(entityRenderDispatcher));
     }
 
     private void registerReceiverClientPackages() {
@@ -56,7 +87,7 @@ public class ClientInitializer implements ClientModInitializer {
                     client.execute(() -> {
                         if (client.world != null) {
                             Entity entity = client.world.getEntityById(fromTo[0]);
-                            if (entity instanceof ChainKnotEntity){
+                            if (entity instanceof ChainKnotEntity) {
                                 ((ChainKnotEntity) entity).removeHoldingEntityId(fromTo[1]);
                             }
                         }
@@ -70,19 +101,64 @@ public class ClientInitializer implements ClientModInitializer {
                     client.execute(() -> {
                         if (client.world != null) {
                             Entity entity = client.world.getEntityById(from);
-                            if (entity instanceof ChainKnotEntity){
+                            if (entity instanceof ChainKnotEntity) {
                                 ((ChainKnotEntity) entity).addHoldingEntityIds(tos);
                             }
                         }
                     });
                 });
-    }
 
-    private void initRenderers() {
-        EntityRendererRegistry.INSTANCE.register(ModEntityTypes.CHAIN_KNOT,
-                (entityRenderDispatcher, context) -> new ChainKnotEntityRenderer(entityRenderDispatcher));
+        ClientPlayNetworking.registerGlobalReceiver(NetworkingPackages.S2C_SPAWN_PACKET,
+                (client, handler, buf, responseSender) -> {
+                    int entityTypeID = buf.readVarInt();
+                    EntityType<?> entityType = Registry.ENTITY_TYPE.get(entityTypeID);
+                    UUID uuid = buf.readUuid();
+                    int entityId = buf.readVarInt();
+                    Vec3d pos = PacketBufUtil.readVec3d(buf);
+                    float pitch = PacketBufUtil.readAngle(buf);
+                    float yaw = PacketBufUtil.readAngle(buf);
 
-        EntityRendererRegistry.INSTANCE.register(ModEntityTypes.CHAIN_COLLISION,
-                (entityRenderDispatcher, context) -> new ChainCollisionEntityRenderer(entityRenderDispatcher));
+                    int startId = buf.readVarInt();
+                    int endId = buf.readVarInt();
+
+                    client.execute(() -> {
+                        if (MinecraftClient.getInstance().world == null){
+                            throw new IllegalStateException("Tried to spawn entity in a null world!");
+                        }
+                        Entity e = entityType.create(MinecraftClient.getInstance().world);
+                        if (e == null){
+                            throw new IllegalStateException("Failed to create instance of entity \"" + entityTypeID + "\"");
+                        }
+//                        e.updateTrackedPosition(pos);
+                        e.updatePosition(pos.x, pos.y, pos.z);
+                        e.pitch = pitch;
+                        e.yaw = yaw;
+                        e.setEntityId(entityId);
+                        e.setUuid(uuid);
+                        e.setVelocity(Vec3d.ZERO);
+                        if (e instanceof ChainCollisionEntity){
+                            ((ChainCollisionEntity) e).setStartOwnerId(startId);
+                            ((ChainCollisionEntity) e).setEndOwnerId(endId);
+                            e.setBoundingBox(new Box(pos, pos).expand(.01d, 0, .01d));
+                        }
+                        if (e instanceof ChainKnotEntity){
+                            e.setBoundingBox(new Box(pos.getX() - 0.1875D, pos.getY() - 0.25D + 0.125D, pos.getZ() - 0.1875D,
+                                    pos.getX() + 0.1875D, pos.getY() + 0.25D + 0.125D, pos.getZ() + 0.1875D));
+                            e.teleporting = true;
+                        }
+                        MinecraftClient.getInstance().world.addEntity(entityId, e);
+                    });
+                });
+
+        ClientPickBlockGatherCallback.EVENT.register((player, result) -> {
+            if (result instanceof EntityHitResult){
+                Entity entity = ((EntityHitResult) result).getEntity();
+                if (entity instanceof ChainKnotEntity || entity instanceof ChainCollisionEntity){
+                    return new ItemStack(Items.CHAIN);
+                }
+            }
+            return ItemStack.EMPTY;
+        });
+
     }
 }

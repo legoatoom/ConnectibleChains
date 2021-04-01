@@ -40,6 +40,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.github.legoatoom.connectiblechains.util.Helper.drip;
+
 /**
  * <p>This class renders the chain you see in game. The block around the fence and the chain.
  * You could use this code to start to understand how this is done.
@@ -52,7 +54,7 @@ import java.util.List;
  *
  * @see net.minecraft.client.render.entity.LeashKnotEntityRenderer
  * @see net.minecraft.client.render.entity.MobEntityRenderer
- *
+ * @author legoatoom
  */
 @Environment(EnvType.CLIENT)
 public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
@@ -66,14 +68,11 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     @Override
     public boolean shouldRender(ChainKnotEntity entity, Frustum frustum, double x, double y, double z) {
         boolean should = entity.getHoldingEntities().stream().anyMatch(entity1 -> {
-            if (entity1 instanceof ChainKnotEntity) return super.shouldRender((ChainKnotEntity) entity1, frustum, x, y, z);
+            if (entity1 instanceof ChainKnotEntity)
+                return super.shouldRender((ChainKnotEntity) entity1, frustum, x, y, z);
             else return entity1 instanceof PlayerEntity;
         });
         return super.shouldRender(entity, frustum, x, y, z) || should;
-    }
-
-    public Identifier getTexture(ChainKnotEntity chainKnotEntity) {
-        return TEXTURE;
     }
 
     public void render(ChainKnotEntity chainKnotEntity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
@@ -84,22 +83,26 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
         matrices.pop();
         ArrayList<Entity> entities = chainKnotEntity.getHoldingEntities();
-        for (Entity entity : entities){
+        for (Entity entity : entities) {
             this.createChainLine(chainKnotEntity, tickDelta, matrices, vertexConsumers, entity);
         }
         super.render(chainKnotEntity, yaw, tickDelta, matrices, vertexConsumers, light);
     }
 
+    public Identifier getTexture(ChainKnotEntity chainKnotEntity) {
+        return TEXTURE;
+    }
+
     /**
      * If I am honest I do not really know what is happening here most of the time, most of the code was 'inspired' by
-     * the {@link net.minecraft.client.render.entity.LeashKnotEntityRenderer}. Many variables therefore have simple names.
+     * the {@link net.minecraft.client.render.entity.LeashKnotEntityRenderer}.
+     * Many variables therefore have simple names. I tried my best to comment and explain what everything does.
      *
-     *
-     * @param fromEntity The origin Entity
-     * @param tickDelta Delta tick
-     * @param matrices The render matrix stack.
+     * @param fromEntity             The origin Entity
+     * @param tickDelta              Delta tick
+     * @param matrices               The render matrix stack.
      * @param vertexConsumerProvider The VertexConsumerProvider, whatever it does.
-     * @param toEntity The entity that we connect the chain to, this can be a {@link PlayerEntity} or a {@link ChainKnotEntity}.
+     * @param toEntity               The entity that we connect the chain to, this can be a {@link PlayerEntity} or a {@link ChainKnotEntity}.
      */
     private void createChainLine(ChainKnotEntity fromEntity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumerProvider, Entity toEntity) {
         matrices.push(); // We push here to start new I think.
@@ -112,7 +115,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         double i = Math.sin(e);
 
         // Now we have to know whether we connect to a player or a chain to define the start and end points of the chain.
-        float lerpDistanceZ,lerpDistanceX,lerpDistanceY;
+        float lerpDistanceZ, lerpDistanceX, lerpDistanceY;
         if (toEntity instanceof AbstractDecorationEntity) {
             // If the chain is connected to another chain
             double toLerpX = MathHelper.lerp(tickDelta, toEntity.prevX, toEntity.getX());
@@ -140,7 +143,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             lerpDistanceY = (float) (l - p);
             lerpDistanceZ = (float) (m - q);
         }
-        matrices.translate(0,0.3F, 0); // TODO is this needed?
+        matrices.translate(0, 0.3F, 0); // TODO is this needed?
 
         VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(RenderLayer.getLeash());
 
@@ -159,42 +162,44 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
         float distance = toEntity.distanceTo(fromEntity);
         Matrix4f matrix4f = matrices.peek().getModel();
-        lineBuilder(distance, vertexConsumer, matrix4f, lerpDistanceX, lerpDistanceY, lerpDistanceZ, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd, xOffset, zOffset);
+        chainDrawer(distance, vertexConsumer, matrix4f, lerpDistanceX, lerpDistanceY, lerpDistanceZ, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd, xOffset, zOffset);
         matrices.pop();
     }
 
 
-    private static void lineBuilder(float distance, VertexConsumer vertexConsumer, Matrix4f matrix4f,
+    /**
+     * This method is the big drawer of the chain.
+     */
+    @SuppressWarnings("DuplicateExpressions")
+    private static void chainDrawer(float distance, VertexConsumer vertexConsumer, Matrix4f matrix4f,
                                     float lerpDistanceX, float lerpDistanceY, float lerpDistanceZ,
                                     int blockLightLevelOfStart, int blockLightLevelOfEnd,
                                     int skylightLevelOfStart, int skylightLevelOfEnd,
                                     float xOffset, float zOffset) {
 
-        /*
-        Can you see the chain here?
-         */
+        /*Can you see the chain here?*/
         List<Integer> topLineA, middleLineA, bottomLineA, topLineB, middleLineB, bottomLineB;
-        topLineA     = Arrays.asList(  1,2,3,    6,7,8,9,      12,13,14   );
-        middleLineA  = Arrays.asList(  1,  3,    6,    9,      12,   14   );
-        bottomLineA  = Arrays.asList(  1,2,3,    6,7,8,9,      12,13,14   );
+        topLineA    = Arrays.asList(   1, 2, 3,       6, 7, 8, 9,         12, 13, 14);
+        middleLineA = Arrays.asList(   1,    3,       6,       9,         12,     14);
+        bottomLineA = Arrays.asList(   1, 2, 3,       6, 7, 8, 9,         12, 13, 14);
 
-        topLineB     = Arrays.asList(0,1,  3,4,5,6,    9,10,11,12,   14,15);
-        middleLineB  = Arrays.asList(  1,  3,    6,    9,      12,   14   );
-        bottomLineB  = Arrays.asList(0,1,  3,4,5,6,    9,10,11,12,   14,15);
+        topLineB    = Arrays.asList(0, 1,    3, 4, 5, 6,       9, 10, 11, 12,     14, 15);
+        middleLineB = Arrays.asList(   1,    3,       6,       9,         12,     14    );
+        bottomLineB = Arrays.asList(0, 1,    3, 4, 5, 6,       9, 10, 11, 12,     14, 15);
 
         int length = (int) Math.floor(distance * 24); //This number specifies the number of pixels on the chain.
 
         // LightLevel Stuff
-        float s = (float)skylightLevelOfEnd / (length - 1);
-        int t = (int)MathHelper.lerp(s, (float)blockLightLevelOfStart, (float)blockLightLevelOfEnd);
-        int u = (int)MathHelper.lerp(s, (float)skylightLevelOfStart, (float)skylightLevelOfEnd);
+        float s = (float) skylightLevelOfEnd / (length - 1);
+        int t = (int) MathHelper.lerp(s, (float) blockLightLevelOfStart, (float) blockLightLevelOfEnd);
+        int u = (int) MathHelper.lerp(s, (float) skylightLevelOfStart, (float) skylightLevelOfEnd);
         int pack = LightmapTextureManager.pack(t, u);
 
         float[] rotate = rotator(lerpDistanceX, lerpDistanceY, lerpDistanceZ);
 
-        for(int step = 0; step < length; ++step) {
-            float startDrip = drip(step, length);
-            float endDrip = drip(step+1, length);
+        for (int step = 0; step < length; ++step) {
+            float startDrip = (float) drip(step, length);
+            float endDrip = (float) drip(step + 1, length);
             float startStepFraction = ((float) step / (float) length);
             float endStepFraction = ((float) (step + 1) / (float) length);
             float v1 = (rotate[3] != 1.0F) ? 1.0F : -1.0F;
@@ -204,7 +209,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             float endRootX = lerpDistanceX * endStepFraction;
             float endRootY = lerpDistanceY * endStepFraction;
             float endRootZ = lerpDistanceZ * endStepFraction;
-            float R,G,B;
+            float R, G, B;
 
             float rotate0 = rotate[0];
             float rotate1 = rotate[1];
@@ -212,7 +217,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
             // First Line
             float chainHeight = 0.0125F;
-            if(topLineA.contains(step % 16)) {
+            if (topLineA.contains(step % 16)) {
                 Vec3f startA, endA, startB, endB;
                 startA = new Vec3f(
                         startRootX - rotate0 + xOffset,
@@ -220,9 +225,9 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
                         startRootZ - rotate2 - zOffset
                 );
                 startB = new Vec3f(
-                        startRootX - (rotate0 - xOffset)*3,
-                        startRootY + chainHeight + rotate1 *3 + startDrip,
-                        startRootZ - (rotate2 + zOffset)*3
+                        startRootX - (rotate0 - xOffset) * 3,
+                        startRootY + chainHeight + rotate1 * 3 + startDrip,
+                        startRootZ - (rotate2 + zOffset) * 3
                 );
                 endA = new Vec3f(
                         endRootX - rotate0 + xOffset,
@@ -230,16 +235,16 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
                         endRootZ - rotate2 - zOffset
                 );
                 endB = new Vec3f(
-                        endRootX - (rotate0 - xOffset)*3,
-                        endRootY + chainHeight + rotate1*3 + endDrip,
-                        endRootZ - (rotate2 + zOffset)*3
+                        endRootX - (rotate0 - xOffset) * 3,
+                        endRootY + chainHeight + rotate1 * 3 + endDrip,
+                        endRootZ - (rotate2 + zOffset) * 3
                 );
                 R = 0.16F;
                 G = 0.17F;
                 B = 0.21F;
                 renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
             }
-            if(middleLineA.contains(step%16)) {
+            if (middleLineA.contains(step % 16)) {
                 Vec3f startA, endA, startB, endB;
                 startA = new Vec3f(
                         startRootX + rotate0 + xOffset,
@@ -261,17 +266,17 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
                         endRootY + chainHeight + rotate1 + endDrip,
                         endRootZ - rotate2 + zOffset
                 );
-                R = 0.12F*0.7F;
-                G = 0.12F*0.7F;
-                B = 0.17F*0.7F;
+                R = 0.12F * 0.7F;
+                G = 0.12F * 0.7F;
+                B = 0.17F * 0.7F;
                 renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
             }
-            if(bottomLineA.contains(step%16)) {
+            if (bottomLineA.contains(step % 16)) {
                 Vec3f startA, endA, startB, endB;
                 startA = new Vec3f(
-                        startRootX + (rotate0 - xOffset)*3,
-                        startRootY + chainHeight - rotate1 *3 + startDrip,
-                        startRootZ + (rotate2 + zOffset)*3
+                        startRootX + (rotate0 - xOffset) * 3,
+                        startRootY + chainHeight - rotate1 * 3 + startDrip,
+                        startRootZ + (rotate2 + zOffset) * 3
                 );
                 startB = new Vec3f(
                         startRootX + rotate0 - xOffset,
@@ -279,9 +284,9 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
                         startRootZ + rotate2 + zOffset
                 );
                 endA = new Vec3f(
-                        endRootX + (rotate0 - xOffset)*3,
-                        endRootY + chainHeight - rotate1 *3 + endDrip,
-                        endRootZ + (rotate2 + zOffset)*3
+                        endRootX + (rotate0 - xOffset) * 3,
+                        endRootY + chainHeight - rotate1 * 3 + endDrip,
+                        endRootZ + (rotate2 + zOffset) * 3
                 );
                 endB = new Vec3f(
                         endRootX + rotate0 - xOffset,
@@ -294,52 +299,52 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
                 renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
             }
             // Second Line
-            if(topLineB.contains(step%16)){
+            if (topLineB.contains(step % 16)) {
                 Vec3f startA, endA, startB, endB;
                 startA = new Vec3f(
-                        startRootX - (rotate0 *v1) - xOffset,
+                        startRootX - (rotate0 * v1) - xOffset,
                         startRootY + chainHeight + rotate1 + startDrip,
                         startRootZ - rotate2 + zOffset
                 );
                 startB = new Vec3f(
-                        startRootX - ((rotate0 *v1) + xOffset)*3,
-                        startRootY + chainHeight + rotate1*3 + startDrip,
-                        startRootZ - (rotate2 - zOffset)*3
+                        startRootX - ((rotate0 * v1) + xOffset) * 3,
+                        startRootY + chainHeight + rotate1 * 3 + startDrip,
+                        startRootZ - (rotate2 - zOffset) * 3
                 );
                 endA = new Vec3f(
-                        endRootX - (rotate0 *v1) - xOffset,
+                        endRootX - (rotate0 * v1) - xOffset,
                         endRootY + chainHeight + rotate1 + endDrip,
                         endRootZ - rotate2 + zOffset
                 );
                 endB = new Vec3f(
-                        endRootX - ((rotate0 *v1) + xOffset)*3,
-                        endRootY + chainHeight + rotate1*3 + endDrip,
-                        endRootZ - (rotate2 - zOffset)*3
+                        endRootX - ((rotate0 * v1) + xOffset) * 3,
+                        endRootY + chainHeight + rotate1 * 3 + endDrip,
+                        endRootZ - (rotate2 - zOffset) * 3
                 );
                 R = 0.16F * 0.8F;
                 G = 0.17F * 0.8F;
                 B = 0.21F * 0.8F;
                 renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
             }
-            if(middleLineB.contains(step%16)){
+            if (middleLineB.contains(step % 16)) {
                 Vec3f startA, endA, startB, endB;
                 startA = new Vec3f(
-                        startRootX + (rotate0 *v1) - xOffset,
+                        startRootX + (rotate0 * v1) - xOffset,
                         startRootY + chainHeight - rotate1 + startDrip,
                         startRootZ + rotate2 + zOffset
                 );
                 startB = new Vec3f(
-                        startRootX - (rotate0 *v1) + xOffset,
+                        startRootX - (rotate0 * v1) + xOffset,
                         startRootY + chainHeight + rotate1 + startDrip,
                         startRootZ - rotate2 - zOffset
                 );
                 endA = new Vec3f(
-                        endRootX + (rotate0 *v1) - xOffset,
+                        endRootX + (rotate0 * v1) - xOffset,
                         endRootY + chainHeight - rotate1 + endDrip,
                         endRootZ + rotate2 + zOffset
                 );
                 endB = new Vec3f(
-                        endRootX - (rotate0 *v1) + xOffset,
+                        endRootX - (rotate0 * v1) + xOffset,
                         endRootY + chainHeight + rotate1 + endDrip,
                         endRootZ - rotate2 - zOffset
                 );
@@ -348,25 +353,25 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
                 B = 0.17F;
                 renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
             }
-            if(bottomLineB.contains(step%16)){
+            if (bottomLineB.contains(step % 16)) {
                 Vec3f startA, endA, startB, endB;
                 startA = new Vec3f(
-                        startRootX + ((rotate0 *v1) + xOffset)*3,
-                        startRootY + chainHeight - rotate1 *3 + startDrip,
-                        startRootZ + (rotate2 - zOffset)*3
+                        startRootX + ((rotate0 * v1) + xOffset) * 3,
+                        startRootY + chainHeight - rotate1 * 3 + startDrip,
+                        startRootZ + (rotate2 - zOffset) * 3
                 );
                 startB = new Vec3f(
-                        startRootX + (rotate0 *v1) + xOffset,
+                        startRootX + (rotate0 * v1) + xOffset,
                         startRootY + chainHeight - rotate1 + startDrip,
                         startRootZ + rotate2 - zOffset
                 );
                 endA = new Vec3f(
-                        endRootX + ((rotate0 *v1) + xOffset)*3,
-                        endRootY + chainHeight - rotate1 *3 + endDrip,
-                        endRootZ + (rotate2 - zOffset)*3
+                        endRootX + ((rotate0 * v1) + xOffset) * 3,
+                        endRootY + chainHeight - rotate1 * 3 + endDrip,
+                        endRootZ + (rotate2 - zOffset) * 3
                 );
                 endB = new Vec3f(
-                        endRootX + (rotate0 *v1) + xOffset,
+                        endRootX + (rotate0 * v1) + xOffset,
                         endRootY + chainHeight - rotate1 + endDrip,
                         endRootZ + rotate2 - zOffset
                 );
@@ -379,24 +384,32 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     }
 
 
-    private static float[] rotator(double x, double y, double z){
-        double x2 = x*x;
-        double z2 = z*z;
+    /**
+     * Fancy math, it deals with the rotation of the x,y,z coordinates based on the direction of the chain. So that
+     * in every direction the pixels look the same size.
+     *
+     */
+    private static float[] rotator(double x, double y, double z) {
+        double x2 = x * x;
+        double z2 = z * z;
         double zx = Math.sqrt(x2 + z2);
-        double arc1 = Math.atan2(y,zx);
-        double arc2 = Math.atan2(x,z);
+        double arc1 = Math.atan2(y, zx);
+        double arc2 = Math.atan2(x, z);
         double d = Math.sin(arc1) * 0.0125F;
         float y_new = (float) (Math.cos(arc1) * 0.0125F);
         float z_new = (float) (Math.cos(arc2) * d);
         float x_new = (float) (Math.sin(arc2) * d);
         float v = 0.0F;
-        if (zx == 0.0F){
+        if (zx == 0.0F) {
             x_new = z_new;
             v = 1.0F;
         }
         return new float[]{x_new, y_new, z_new, v};
     }
 
+    /**
+     * Draw a pixel with 4 vector locations and the other information.
+     */
     private static void renderPixel(Vec3f startA, Vec3f startB, Vec3f endA, Vec3f endB,
                                     VertexConsumer vertexConsumer, Matrix4f matrix4f, int lightPack,
                                     float R, float G, float B) {
@@ -405,16 +418,6 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
         vertexConsumer.vertex(matrix4f, endB.x, endB.y, endB.z).color(R, G, B, 1.0F).light(lightPack).next();
         vertexConsumer.vertex(matrix4f, endA.x, endA.y, endA.z).color(R, G, B, 1.0F).light(lightPack).next();
-    }
-
-
-
-
-    private static float drip(int step, float length){
-        float c = 1F;
-        float b = -c/length;
-        float a = c/(length*length);
-        return (a * (step*step) + b*step);
     }
 
 }

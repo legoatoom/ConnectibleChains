@@ -39,30 +39,39 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
+/**
+ * Mixin is used to keep track of the connections when the ChainKnot is loaded again.
+ *
+ * If we do not do this, the client does not know about connections that are loaded in new chunks.
+ *
+ * @author legoatoom
+ */
 @Mixin(ThreadedAnvilChunkStorage.class)
 public abstract class ThreadedAnvilChunkStorageMixin {
 
-    @Shadow @Final private Int2ObjectMap<ThreadedAnvilChunkStorage.EntityTracker> entityTrackers;
+    @Shadow
+    @Final
+    private Int2ObjectMap<ThreadedAnvilChunkStorage.EntityTracker> entityTrackers;
 
     @Inject(
             method = "sendChunkDataPackets",
             at = @At(value = "TAIL")
     )
-    public void sendAttachChainPackets(ServerPlayerEntity player, Packet<?>[] packets, WorldChunk chunk, CallbackInfo ci){
+    public void sendAttachChainPackets(ServerPlayerEntity player, Packet<?>[] packets, WorldChunk chunk, CallbackInfo ci) {
         ObjectIterator<ThreadedAnvilChunkStorage.EntityTracker> var6 = this.entityTrackers.values().iterator();
         List<ChainKnotEntity> list = Lists.newArrayList();
 
-        while(var6.hasNext()) {
+        while (var6.hasNext()) {
             ThreadedAnvilChunkStorage.EntityTracker entityTracker = var6.next();
             Entity entity = entityTracker.entity;
             if (entity != player && entity.chunkX == chunk.getPos().x && entity.chunkZ == chunk.getPos().z) {
-                if (entity instanceof ChainKnotEntity && !((ChainKnotEntity)entity).getHoldingEntities().isEmpty()) {
+                if (entity instanceof ChainKnotEntity && !((ChainKnotEntity) entity).getHoldingEntities().isEmpty()) {
                     list.add((ChainKnotEntity) entity);
                 }
             }
         }
 
-        if (!list.isEmpty()){
+        if (!list.isEmpty()) {
             for (ChainKnotEntity chainKnotEntity : list) {
                 PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
                 //Write our id and the id of the one we connect to.

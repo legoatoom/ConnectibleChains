@@ -24,6 +24,12 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.util.registry.Registry;
 
+/**
+ * This class keeps track of all entities that this mod has.
+ * It also registers them.
+ *
+ * @author legoatoom
+ */
 public class ModEntityTypes {
 
     public static final EntityType<ChainKnotEntity> CHAIN_KNOT;
@@ -45,7 +51,7 @@ public class ModEntityTypes {
                 FabricEntityTypeBuilder.create(SpawnGroup.MISC,
                         (EntityType.EntityFactory<ChainCollisionEntity>) ChainCollisionEntity::new)
                         .trackRangeBlocks(10).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
-                        .dimensions(EntityDimensions.fixed(0.3F, 0.3F))
+                        .dimensions(EntityDimensions.changing(0.3F, 0.3F))
                         .disableSaving()
                         .disableSummon()
                         .fireImmune()

@@ -5,13 +5,9 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "block.FenceBlockMixin",
+    "block.WallBlockMixin",
     "item.ItemsMixin",
-    "server.network.EntityTrackerEntryMixin",
     "server.world.ThreadedAnvilChunkStorageMixin"
-  ],
-  "client": [
-    "client.MinecraftClientMixin",
-    "network.ClientPlayerNetworkHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
