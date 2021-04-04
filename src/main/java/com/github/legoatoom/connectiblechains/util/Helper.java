@@ -28,7 +28,7 @@ public class Helper {
     }
 
     public static double drip(double x, double V) {
-        double c = 1D;
+        double c = 1.3D;
         double b = -c / V;
         double a = c / (V * V);
         return (a * (x * x) + b * x);

@@ -21,6 +21,9 @@ package com.github.legoatoom.connectiblechains;
 import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
 import net.fabricmc.api.ModInitializer;
 
+/**
+ * Mod Initializer for Connectible chains.
+ */
 public class ConnectibleChains implements ModInitializer {
 
     public static final String MODID = "connectiblechains";

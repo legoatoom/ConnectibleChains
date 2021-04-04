@@ -28,7 +28,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
@@ -192,7 +191,7 @@ public class ChainCollisionEntity extends Entity {
             packetByteBuf.writeVarInt(endOwnerId);
             return packetByteBuf;
         };
-        return EntitySpawnPacketCreator.create(this, NetworkingPackages.S2C_SPAWN_PACKET, extraData);
+        return EntitySpawnPacketCreator.create(this, NetworkingPackages.S2C_SPAWN_CHAIN_COLLISION_PACKET, extraData);
     }
 
     public void setStartOwnerId(int startOwnerId) {

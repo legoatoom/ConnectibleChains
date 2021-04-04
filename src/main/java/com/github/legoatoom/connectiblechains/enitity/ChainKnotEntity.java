@@ -20,7 +20,6 @@ package com.github.legoatoom.connectiblechains.enitity;
 import com.github.legoatoom.connectiblechains.util.EntitySpawnPacketCreator;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
-import com.github.legoatoom.connectiblechains.util.PacketBufUtil;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -32,6 +31,7 @@ import net.minecraft.entity.*;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundTag;
@@ -631,7 +631,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                     onBreak(null);
                     detachChain(player, true, false);
                     if (!player.isCreative()) {
-                        player.getStackInHand(hand).increment(1);
+                        player.giveItemStack(new ItemStack(Items.CHAIN));
                     }
                 } else if (player.getStackInHand(hand).getItem().equals(Items.CHAIN)) {
                     onPlace();
@@ -662,11 +662,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      */
     @Override
     public Packet<?> createSpawnPacket() {
-        Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> {
-            PacketBufUtil.writeBlockPos(packetByteBuf, this.getDecorationBlockPos());
-            return packetByteBuf;
-        };
-        return EntitySpawnPacketCreator.create(this, NetworkingPackages.S2C_SPAWN_PACKET, extraData);
+        Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> packetByteBuf; // I have no extra data to send.
+        return EntitySpawnPacketCreator.create(this, NetworkingPackages.S2C_SPAWN_CHAIN_KNOT_PACKET, extraData);
     }
 
     /**
