@@ -1,23 +1,21 @@
-<p style="text-align:center"><img src="https://raw.githubusercontent.com/legoatoom/ConnectibleChains/master/src/main/resources/assets/logo.png" height="128"></p>
-<h3 style="text-align:center">Connectible Chains</h3>
-<p style="text-align:center">Connect your fences and walls with a decorative chain!</p>
-<div style="text-align:center">
+<p align="center"><img src="https://raw.githubusercontent.com/legoatoom/ConnectibleChains/master/src/main/resources/assets/logo.png" height="128"></p>
+<h3 align="center">Connectible Chains</h3>
+<p align="center">Connect your fences and walls with a decorative chain!</p>
+<p align="center">
   <a title="Fabric API" href="https://github.com/FabricMC/fabric">
     <img src="https://i.imgur.com/Ol1Tcf8.png" width="151" height="50">
   </a>
-</div>
-<div style="text-align:center">
-    <div>
-        <a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img alt="GitHub" src="https://img.shields.io/github/license/legoatoom/ConnectibleChains"></a>
+</p>
+<br>
+<p align="center">
+      <a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img alt="GitHub" src="https://img.shields.io/github/license/legoatoom/ConnectibleChains"></a>
         <a href="https://github.com/legoatoom/ConnectibleChains/releases"><img src="https://img.shields.io/github/v/release/legoatoom/ConnectibleChains"></a>
         <a href="https://github.com/legoatoom/ConnectibleChains/issues"><img src="https://img.shields.io/github/issues-raw/legoatoom/ConnectibleChains"></a>
-    </div>
-    <div>
+        <br>
         <a href="https://www.curseforge.com/minecraft/mc-mods/connectible-chains"><img src="https://img.shields.io/badge/-CurseForge-f16436?logo=CurseForge&style=CurseForge"></a>
         <a href="https://modrinth.com/mod/connectible_chains"><img src="https://img.shields.io/badge/-Modrinth-5DA426?logo=Modrinth"></a>
         <a href="https://github.com/legoatoom/ConnectibleChains"><img src="https://img.shields.io/badge/-GitHub-grey?logo=github"></a>
-    </div>
-</div>
+</p>
 
 
 ## Description
