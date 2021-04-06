@@ -18,7 +18,6 @@
 package com.github.legoatoom.connectiblechains.mixin.item;
 
 import com.github.legoatoom.connectiblechains.item.ChainItem;
-import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.BlockItem;
@@ -40,6 +39,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Items.class)
 public abstract class ItemsMixin {
 
+
     @Inject(
             method = "register(Lnet/minecraft/block/Block;Lnet/minecraft/item/ItemGroup;)Lnet/minecraft/item/Item;",
             at = @At("HEAD"),
@@ -47,24 +47,10 @@ public abstract class ItemsMixin {
     )
     private static void changeChainBlockItem(Block block, ItemGroup group, CallbackInfoReturnable<Item> cir) {
         if (block == Blocks.CHAIN) {
-            cir.setReturnValue(ItemsMixin.register1(new ChainItem(Blocks.CHAIN, new Item.Settings().group(group))));
+            BlockItem item = new ChainItem(Blocks.CHAIN, new Item.Settings().group(group));
+            item.appendBlocks(Item.BLOCK_ITEMS, item);
+            Identifier id = Registry.BLOCK.getId(item.getBlock());
+            cir.setReturnValue(Registry.register(Registry.ITEM, id, item));
         }
-    }
-
-    //Copying register function since they are private
-    private static Item register1(BlockItem item) {
-        return register1(item.getBlock(), item);
-    }
-
-    private static Item register1(Block block, Item item) {
-        return register1(Registry.BLOCK.getId(block), item);
-    }
-
-    private static Item register1(Identifier id, Item item) {
-        if (item instanceof BlockItem) {
-            ((BlockItem) item).appendBlocks(Item.BLOCK_ITEMS, item);
-        }
-
-        return Registry.register(Registry.ITEM, id, item);
     }
 }

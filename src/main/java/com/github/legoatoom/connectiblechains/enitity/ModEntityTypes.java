@@ -57,6 +57,7 @@ public class ModEntityTypes {
                         .fireImmune()
                         .build()
         );
+        //TODO: Change trackRangeBlocks for entity collision to 1 or something? Probably helps with lag.
 
     }
 

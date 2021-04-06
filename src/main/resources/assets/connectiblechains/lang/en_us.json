@@ -1,3 +1,4 @@
 {
-  "entity.connectiblechains.chain_knot" : "Chain Knot"
+  "entity.connectiblechains.chain_knot" : "Chain Knot",
+  "entity.connectiblechains.chain_collision" : "Chain Collision"
 }
