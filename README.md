@@ -21,7 +21,7 @@
 ## Description
 Connect your fences/walls with a decorative chain!
 
-Use the normal vanilla chain item on fences or walls, and you can create a chain for up to 7 blocks long.
+Use the normal vanilla chain item on fences or walls, and you can create a chain for up to 7 blocks long (Configurable to 32 with AutoConfig).
 
 These chains have collision but can be broken when attacking it with a shear. \
 Sneak on fences if you do want to place them normally.
