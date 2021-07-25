@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [1.2.2] - 12021-07-25
+### Changed
+- Mobs also effected by chain collision
+- Better Rendering Chain
+- Arrows bounce off
+
+### Fixed
+- Rendering Chain Issue
+
+### Added
+- Support for mod-menu and auto config. (Drag and Max Range) 
+
+
 ## [1.2.1] - 12021-04-01
 ### Changed
 - Chains can now only be broken by a player holding a shear.

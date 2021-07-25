@@ -1,6 +1,17 @@
 plugins {
-	id 'fabric-loom' version '0.5-SNAPSHOT'
+	id 'fabric-loom' version '0.6-SNAPSHOT'
 	id 'maven-publish'
+	id 'java-library'
+	id 'idea'
+}
+
+repositories{
+	maven {
+		url "https://maven.shedaniel.me"
+	}
+	maven{
+		url "https://maven.terraformersmc.com"
+	}
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -20,8 +31,9 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
-	// You may need to force-disable transitiveness on them.
+	modImplementation "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}"
+
+	modImplementation "com.terraformersmc:modmenu:${project.mod_menu_version}"
 }
 
 minecraft{
@@ -52,7 +64,7 @@ tasks.withType(JavaCompile) {
 // if it is present.
 // If you remove this task, sources will not be generated.
 task sourcesJar(type: Jar, dependsOn: classes) {
-	classifier = "sources"
+	getArchiveClassifier().set("sources")
 	from sourceSets.main.allSource
 }
 

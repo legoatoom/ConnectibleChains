@@ -57,7 +57,7 @@ public abstract class ThreadedAnvilChunkStorageMixin {
             method = "sendChunkDataPackets",
             at = @At(value = "TAIL")
     )
-    public void sendAttachChainPackets(ServerPlayerEntity player, Packet<?>[] packets, WorldChunk chunk, CallbackInfo ci) {
+    private void sendAttachChainPackets(ServerPlayerEntity player, Packet<?>[] packets, WorldChunk chunk, CallbackInfo ci) {
         ObjectIterator<ThreadedAnvilChunkStorage.EntityTracker> var6 = this.entityTrackers.values().iterator();
         List<ChainKnotEntity> list = Lists.newArrayList();
 

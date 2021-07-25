@@ -20,7 +20,6 @@ package com.github.legoatoom.connectiblechains.client.render.entity;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.util.Helper;
-import com.sun.javafx.geom.Vec3f;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.*;
@@ -31,16 +30,14 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Matrix4f;
+import net.minecraft.util.math.*;
 import net.minecraft.world.LightType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.github.legoatoom.connectiblechains.util.Helper.drip;
+import static com.github.legoatoom.connectiblechains.util.Helper.drip2;
 
 /**
  * <p>This class renders the chain you see in game. The block around the fence and the chain.
@@ -61,20 +58,50 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     private static final Identifier TEXTURE = Helper.identifier("textures/entity/chain_knot.png");
     private final ChainKnotEntityModel<ChainKnotEntity> model = new ChainKnotEntityModel<>();
 
+
     public ChainKnotEntityRenderer(EntityRenderDispatcher entityRenderDispatcher) {
         super(entityRenderDispatcher);
+    }
+
+    /**
+     * Draw a pixel with 4 vector locations and the other information.
+     */
+    private static void renderPixel(Vec3f startA, Vec3f startB, Vec3f endA, Vec3f endB,
+                                    VertexConsumer vertexConsumer, Matrix4f matrix4f, int lightPack,
+                                    float R, float G, float B) {
+        vertexConsumer.vertex(matrix4f, startA.getX(), startA.getY(), startA.getZ()).color(R, G, B, 1.0F).light(lightPack).next();
+        vertexConsumer.vertex(matrix4f, startB.getX(), startB.getY(), startB.getZ()).color(R, G, B, 1.0F).light(lightPack).next();
+
+        vertexConsumer.vertex(matrix4f, endB.getX(), endB.getY(), endB.getZ()).color(R, G, B, 1.0F).light(lightPack).next();
+        vertexConsumer.vertex(matrix4f, endA.getX(), endA.getY(), endA.getZ()).color(R, G, B, 1.0F).light(lightPack).next();
     }
 
     @Override
     public boolean shouldRender(ChainKnotEntity entity, Frustum frustum, double x, double y, double z) {
         boolean should = entity.getHoldingEntities().stream().anyMatch(entity1 -> {
-            if (entity1 instanceof ChainKnotEntity)
-                return super.shouldRender((ChainKnotEntity) entity1, frustum, x, y, z);
-            else return entity1 instanceof PlayerEntity;
+            if (entity1 instanceof ChainKnotEntity) {
+                if (!entity1.shouldRender(x, y, z)) {
+                    return false;
+                } else if (entity1.ignoreCameraFrustum) {
+                    return true;
+                } else {
+                    Box box = entity1.getVisibilityBoundingBox().expand(entity.distanceTo(entity1) / 2D);
+                    if (box.isValid() || box.getAverageSideLength() == 0.0D) {
+                        box = new Box(entity1.getX() - 2.0D, entity1.getY() - 2.0D, entity1.getZ() - 2.0D, entity1.getX() + 2.0D, entity1.getY() + 2.0D, entity1.getZ() + 2.0D);
+                    }
+
+                    return frustum.isVisible(box);
+                }
+            } else return entity1 instanceof PlayerEntity;
         });
         return super.shouldRender(entity, frustum, x, y, z) || should;
     }
 
+    public Identifier getTexture(ChainKnotEntity chainKnotEntity) {
+        return TEXTURE;
+    }
+
+    @Override
     public void render(ChainKnotEntity chainKnotEntity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
         matrices.push();
         matrices.scale(-0.9F, -0.9F, 0.9F);
@@ -84,13 +111,12 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         matrices.pop();
         ArrayList<Entity> entities = chainKnotEntity.getHoldingEntities();
         for (Entity entity : entities) {
+            if (entity == null || !entity.isAlive() || entity.removed) {
+                break;
+            }
             this.createChainLine(chainKnotEntity, tickDelta, matrices, vertexConsumers, entity);
         }
         super.render(chainKnotEntity, yaw, tickDelta, matrices, vertexConsumers, light);
-    }
-
-    public Identifier getTexture(ChainKnotEntity chainKnotEntity) {
-        return TEXTURE;
     }
 
     /**
@@ -143,7 +169,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             lerpDistanceY = (float) (l - p);
             lerpDistanceZ = (float) (m - q);
         }
-        matrices.translate(0, 0.3F, 0); // TODO is this needed?
+        matrices.translate(0, 0.3F, 0);
 
         VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(RenderLayer.getLeash());
 
@@ -162,225 +188,10 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
         float distance = toEntity.distanceTo(fromEntity);
         Matrix4f matrix4f = matrices.peek().getModel();
+
+        //This number specifies the number of pixels on the chain.
         chainDrawer(distance, vertexConsumer, matrix4f, lerpDistanceX, lerpDistanceY, lerpDistanceZ, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd, xOffset, zOffset);
         matrices.pop();
-    }
-
-
-    /**
-     * This method is the big drawer of the chain.
-     */
-    @SuppressWarnings("DuplicateExpressions")
-    private static void chainDrawer(float distance, VertexConsumer vertexConsumer, Matrix4f matrix4f,
-                                    float lerpDistanceX, float lerpDistanceY, float lerpDistanceZ,
-                                    int blockLightLevelOfStart, int blockLightLevelOfEnd,
-                                    int skylightLevelOfStart, int skylightLevelOfEnd,
-                                    float xOffset, float zOffset) {
-
-        /*Can you see the chain here?*/
-        List<Integer> topLineA, middleLineA, bottomLineA, topLineB, middleLineB, bottomLineB;
-        topLineA    = Arrays.asList(   1, 2, 3,       6, 7, 8, 9,         12, 13, 14);
-        middleLineA = Arrays.asList(   1,    3,       6,       9,         12,     14);
-        bottomLineA = Arrays.asList(   1, 2, 3,       6, 7, 8, 9,         12, 13, 14);
-
-        topLineB    = Arrays.asList(0, 1,    3, 4, 5, 6,       9, 10, 11, 12,     14, 15);
-        middleLineB = Arrays.asList(   1,    3,       6,       9,         12,     14    );
-        bottomLineB = Arrays.asList(0, 1,    3, 4, 5, 6,       9, 10, 11, 12,     14, 15);
-
-        int length = (int) Math.floor(distance * 24); //This number specifies the number of pixels on the chain.
-
-        // LightLevel Stuff
-        float s = (float) skylightLevelOfEnd / (length - 1);
-        int t = (int) MathHelper.lerp(s, (float) blockLightLevelOfStart, (float) blockLightLevelOfEnd);
-        int u = (int) MathHelper.lerp(s, (float) skylightLevelOfStart, (float) skylightLevelOfEnd);
-        int pack = LightmapTextureManager.pack(t, u);
-
-        float[] rotate = rotator(lerpDistanceX, lerpDistanceY, lerpDistanceZ);
-
-        for (int step = 0; step < length; ++step) {
-            float startDrip = (float) drip(step, length);
-            float endDrip = (float) drip(step + 1, length);
-            float startStepFraction = ((float) step / (float) length);
-            float endStepFraction = ((float) (step + 1) / (float) length);
-            float v1 = (rotate[3] != 1.0F) ? 1.0F : -1.0F;
-            float startRootX = lerpDistanceX * startStepFraction;
-            float startRootY = lerpDistanceY * startStepFraction;
-            float startRootZ = lerpDistanceZ * startStepFraction;
-            float endRootX = lerpDistanceX * endStepFraction;
-            float endRootY = lerpDistanceY * endStepFraction;
-            float endRootZ = lerpDistanceZ * endStepFraction;
-            float R, G, B;
-
-            float rotate0 = rotate[0];
-            float rotate1 = rotate[1];
-            float rotate2 = rotate[2];
-
-            // First Line
-            float chainHeight = 0.0125F;
-            if (topLineA.contains(step % 16)) {
-                Vec3f startA, endA, startB, endB;
-                startA = new Vec3f(
-                        startRootX - rotate0 + xOffset,
-                        startRootY + chainHeight + rotate1 + startDrip,
-                        startRootZ - rotate2 - zOffset
-                );
-                startB = new Vec3f(
-                        startRootX - (rotate0 - xOffset) * 3,
-                        startRootY + chainHeight + rotate1 * 3 + startDrip,
-                        startRootZ - (rotate2 + zOffset) * 3
-                );
-                endA = new Vec3f(
-                        endRootX - rotate0 + xOffset,
-                        endRootY + chainHeight + rotate1 + endDrip,
-                        endRootZ - rotate2 - zOffset
-                );
-                endB = new Vec3f(
-                        endRootX - (rotate0 - xOffset) * 3,
-                        endRootY + chainHeight + rotate1 * 3 + endDrip,
-                        endRootZ - (rotate2 + zOffset) * 3
-                );
-                R = 0.16F;
-                G = 0.17F;
-                B = 0.21F;
-                renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
-            }
-            if (middleLineA.contains(step % 16)) {
-                Vec3f startA, endA, startB, endB;
-                startA = new Vec3f(
-                        startRootX + rotate0 + xOffset,
-                        startRootY + chainHeight - rotate1 + startDrip,
-                        startRootZ + rotate2 - zOffset
-                );
-                startB = new Vec3f(
-                        startRootX - rotate0 - xOffset,
-                        startRootY + chainHeight + rotate1 + startDrip,
-                        startRootZ - rotate2 + zOffset
-                );
-                endA = new Vec3f(
-                        endRootX + rotate0 + xOffset,
-                        endRootY + chainHeight - rotate1 + endDrip,
-                        endRootZ + rotate2 - zOffset
-                );
-                endB = new Vec3f(
-                        endRootX - rotate0 - xOffset,
-                        endRootY + chainHeight + rotate1 + endDrip,
-                        endRootZ - rotate2 + zOffset
-                );
-                R = 0.12F * 0.7F;
-                G = 0.12F * 0.7F;
-                B = 0.17F * 0.7F;
-                renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
-            }
-            if (bottomLineA.contains(step % 16)) {
-                Vec3f startA, endA, startB, endB;
-                startA = new Vec3f(
-                        startRootX + (rotate0 - xOffset) * 3,
-                        startRootY + chainHeight - rotate1 * 3 + startDrip,
-                        startRootZ + (rotate2 + zOffset) * 3
-                );
-                startB = new Vec3f(
-                        startRootX + rotate0 - xOffset,
-                        startRootY + chainHeight - rotate1 + startDrip,
-                        startRootZ + rotate2 + zOffset
-                );
-                endA = new Vec3f(
-                        endRootX + (rotate0 - xOffset) * 3,
-                        endRootY + chainHeight - rotate1 * 3 + endDrip,
-                        endRootZ + (rotate2 + zOffset) * 3
-                );
-                endB = new Vec3f(
-                        endRootX + rotate0 - xOffset,
-                        endRootY + chainHeight - rotate1 + endDrip,
-                        endRootZ + rotate2 + zOffset
-                );
-                R = 0.16F;
-                G = 0.17F;
-                B = 0.21F;
-                renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
-            }
-            // Second Line
-            if (topLineB.contains(step % 16)) {
-                Vec3f startA, endA, startB, endB;
-                startA = new Vec3f(
-                        startRootX - (rotate0 * v1) - xOffset,
-                        startRootY + chainHeight + rotate1 + startDrip,
-                        startRootZ - rotate2 + zOffset
-                );
-                startB = new Vec3f(
-                        startRootX - ((rotate0 * v1) + xOffset) * 3,
-                        startRootY + chainHeight + rotate1 * 3 + startDrip,
-                        startRootZ - (rotate2 - zOffset) * 3
-                );
-                endA = new Vec3f(
-                        endRootX - (rotate0 * v1) - xOffset,
-                        endRootY + chainHeight + rotate1 + endDrip,
-                        endRootZ - rotate2 + zOffset
-                );
-                endB = new Vec3f(
-                        endRootX - ((rotate0 * v1) + xOffset) * 3,
-                        endRootY + chainHeight + rotate1 * 3 + endDrip,
-                        endRootZ - (rotate2 - zOffset) * 3
-                );
-                R = 0.16F * 0.8F;
-                G = 0.17F * 0.8F;
-                B = 0.21F * 0.8F;
-                renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
-            }
-            if (middleLineB.contains(step % 16)) {
-                Vec3f startA, endA, startB, endB;
-                startA = new Vec3f(
-                        startRootX + (rotate0 * v1) - xOffset,
-                        startRootY + chainHeight - rotate1 + startDrip,
-                        startRootZ + rotate2 + zOffset
-                );
-                startB = new Vec3f(
-                        startRootX - (rotate0 * v1) + xOffset,
-                        startRootY + chainHeight + rotate1 + startDrip,
-                        startRootZ - rotate2 - zOffset
-                );
-                endA = new Vec3f(
-                        endRootX + (rotate0 * v1) - xOffset,
-                        endRootY + chainHeight - rotate1 + endDrip,
-                        endRootZ + rotate2 + zOffset
-                );
-                endB = new Vec3f(
-                        endRootX - (rotate0 * v1) + xOffset,
-                        endRootY + chainHeight + rotate1 + endDrip,
-                        endRootZ - rotate2 - zOffset
-                );
-                R = 0.12F;
-                G = 0.12F;
-                B = 0.17F;
-                renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
-            }
-            if (bottomLineB.contains(step % 16)) {
-                Vec3f startA, endA, startB, endB;
-                startA = new Vec3f(
-                        startRootX + ((rotate0 * v1) + xOffset) * 3,
-                        startRootY + chainHeight - rotate1 * 3 + startDrip,
-                        startRootZ + (rotate2 - zOffset) * 3
-                );
-                startB = new Vec3f(
-                        startRootX + (rotate0 * v1) + xOffset,
-                        startRootY + chainHeight - rotate1 + startDrip,
-                        startRootZ + rotate2 - zOffset
-                );
-                endA = new Vec3f(
-                        endRootX + ((rotate0 * v1) + xOffset) * 3,
-                        endRootY + chainHeight - rotate1 * 3 + endDrip,
-                        endRootZ + (rotate2 - zOffset) * 3
-                );
-                endB = new Vec3f(
-                        endRootX + (rotate0 * v1) + xOffset,
-                        endRootY + chainHeight - rotate1 + endDrip,
-                        endRootZ + rotate2 - zOffset
-                );
-                R = 0.16F * 0.8F;
-                G = 0.17F * 0.8F;
-                B = 0.21F * 0.8F;
-                renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
-            }
-        }
     }
 
 
@@ -408,16 +219,216 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     }
 
     /**
-     * Draw a pixel with 4 vector locations and the other information.
+     * This method is the big drawer of the chain.
      */
-    private static void renderPixel(Vec3f startA, Vec3f startB, Vec3f endA, Vec3f endB,
-                                    VertexConsumer vertexConsumer, Matrix4f matrix4f, int lightPack,
-                                    float R, float G, float B) {
-        vertexConsumer.vertex(matrix4f, startA.x, startA.y, startA.z).color(R, G, B, 1.0F).light(lightPack).next();
-        vertexConsumer.vertex(matrix4f, startB.x, startB.y, startB.z).color(R, G, B, 1.0F).light(lightPack).next();
+    @SuppressWarnings("DuplicatedCode")
+    private void chainDrawer(float distance, VertexConsumer vertexConsumer, Matrix4f matrix4f,
+                             float lerpDistanceX, float lerpDistanceY, float lerpDistanceZ,
+                             int blockLightLevelOfStart, int blockLightLevelOfEnd,
+                             int skylightLevelOfStart, int skylightLevelOfEnd,
+                             float xOffset, float zOffset) {
 
-        vertexConsumer.vertex(matrix4f, endB.x, endB.y, endB.z).color(R, G, B, 1.0F).light(lightPack).next();
-        vertexConsumer.vertex(matrix4f, endA.x, endA.y, endA.z).color(R, G, B, 1.0F).light(lightPack).next();
+        /*Can you see the chain here?*/
+        List<Integer> topLineA, middleLineA, bottomLineA, topLineB, middleLineB, bottomLineB;
+        topLineA    = Arrays.asList(   1, 2, 3,       6, 7, 8, 9,         12, 13, 14);
+        middleLineA = Arrays.asList(   1,    3,       6,       9,         12,     14);
+        bottomLineA = Arrays.asList(   1, 2, 3,       6, 7, 8, 9,         12, 13, 14);
+
+        topLineB    = Arrays.asList(0, 1,    3, 4, 5, 6,       9, 10, 11, 12,     14, 15);
+        middleLineB = Arrays.asList(   1,    3,       6,       9,         12,     14    );
+        bottomLineB = Arrays.asList(0, 1,    3, 4, 5, 6,       9, 10, 11, 12,     14, 15);
+
+        int length = (int) Math.floor(distance * 24); //This number specifies the number of pixels on the chain.
+
+        // LightLevel Stuff
+        float s = (float) skylightLevelOfEnd / (length - 1);
+        int t = (int) MathHelper.lerp(s, (float) blockLightLevelOfStart, (float) blockLightLevelOfEnd);
+        int u = (int) MathHelper.lerp(s, (float) skylightLevelOfStart, (float) skylightLevelOfEnd);
+        int pack = LightmapTextureManager.pack(t, u);
+
+        for (int step = 0; step < length; ++step) {
+
+            float startStepFraction = ((float) step / (float) length);
+            float endStepFraction = ((float) (step + 1) / (float) length);
+            float startDrip = (float) drip2(startStepFraction * distance, distance, lerpDistanceY);
+            float endDrip = (float) drip2(endStepFraction * distance, distance, lerpDistanceY);
+            float startRootX = lerpDistanceX * startStepFraction;
+            float startRootZ = lerpDistanceZ * startStepFraction;
+            float endRootX = lerpDistanceX * endStepFraction;
+            float endRootZ = lerpDistanceZ * endStepFraction;
+            float[] rotateStartEnd = rotator(startRootX - endRootX, (startDrip - endDrip), startRootZ - endRootZ);
+            float v1 = (rotateStartEnd[3] != 1.0F) ? 1.0F : -1.0F;
+            float R, G, B;
+
+            float rotate0 = rotateStartEnd[0];
+            float rotate1 = rotateStartEnd[1];
+            float rotate2 = rotateStartEnd[2];
+            // First Line
+            float chainHeight = 0.0125F;
+            if (topLineA.contains(step % 16)) {
+                Vec3f startA, endA, startB, endB;
+                startA = new Vec3f(
+                        startRootX - rotate0 + xOffset,
+                        chainHeight + rotate1 + startDrip,
+                        startRootZ - rotate2 - zOffset
+                );
+                startB = new Vec3f(
+                        startRootX - (rotate0 - xOffset) * 3,
+                        chainHeight + rotate1 * 3 + startDrip,
+                        startRootZ - (rotate2 + zOffset) * 3
+                );
+                endA = new Vec3f(
+                        endRootX - rotate0 + xOffset,
+                        chainHeight + rotate1 + endDrip,
+                        endRootZ - rotate2 - zOffset
+                );
+                endB = new Vec3f(
+                        endRootX - (rotate0 - xOffset) * 3,
+                        chainHeight + rotate1 * 3 + endDrip,
+                        endRootZ - (rotate2 + zOffset) * 3
+                );
+                R = 0.16F;
+                G = 0.17F;
+                B = 0.21F;
+                renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
+            }
+            if (middleLineA.contains(step % 16)) {
+                Vec3f startA, endA, startB, endB;
+                startA = new Vec3f(
+                        startRootX + rotate0 + xOffset,
+                        chainHeight - rotate1 + startDrip,
+                        startRootZ + rotate2 - zOffset
+                );
+                startB = new Vec3f(
+                        startRootX - rotate0 - xOffset,
+                        chainHeight + rotate1 + startDrip,
+                        startRootZ - rotate2 + zOffset
+                );
+                endA = new Vec3f(
+                        endRootX + rotate0 + xOffset,
+                        chainHeight - rotate1 + endDrip,
+                        endRootZ + rotate2 - zOffset
+                );
+                endB = new Vec3f(
+                        endRootX - rotate0 - xOffset,
+                        chainHeight + rotate1 + endDrip,
+                        endRootZ - rotate2 + zOffset
+                );
+                R = 0.12F * 0.7F;
+                G = 0.12F * 0.7F;
+                B = 0.17F * 0.7F;
+                renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
+            }
+            if (bottomLineA.contains(step % 16)) {
+                Vec3f startA, endA, startB, endB;
+                startA = new Vec3f(
+                        startRootX + (rotate0 - xOffset) * 3,
+                        chainHeight - rotate1 * 3 + startDrip,
+                        startRootZ + (rotate2 + zOffset) * 3
+                );
+                startB = new Vec3f(
+                        startRootX + rotate0 - xOffset,
+                        chainHeight - rotate1 + startDrip,
+                        startRootZ + rotate2 + zOffset
+                );
+                endA = new Vec3f(
+                        endRootX + (rotate0 - xOffset) * 3,
+                        chainHeight - rotate1 * 3 + endDrip,
+                        endRootZ + (rotate2 + zOffset) * 3
+                );
+                endB = new Vec3f(
+                        endRootX + rotate0 - xOffset,
+                        chainHeight - rotate1 + endDrip,
+                        endRootZ + rotate2 + zOffset
+                );
+                R = 0.16F;
+                G = 0.17F;
+                B = 0.21F;
+                renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
+            }
+            // Second Line
+            if (topLineB.contains(step % 16)) {
+                Vec3f startA, endA, startB, endB;
+                startA = new Vec3f(
+                        startRootX - (rotate0 * v1) - xOffset,
+                        chainHeight + rotate1 + startDrip,
+                        startRootZ - rotate2 + zOffset
+                );
+                startB = new Vec3f(
+                        startRootX - ((rotate0 * v1) + xOffset) * 3,
+                        chainHeight + rotate1 * 3 + startDrip,
+                        startRootZ - (rotate2 - zOffset) * 3
+                );
+                endA = new Vec3f(
+                        endRootX - (rotate0 * v1) - xOffset,
+                        chainHeight + rotate1 + endDrip,
+                        endRootZ - rotate2 + zOffset
+                );
+                endB = new Vec3f(
+                        endRootX - ((rotate0 * v1) + xOffset) * 3,
+                        chainHeight + rotate1 * 3 + endDrip,
+                        endRootZ - (rotate2 - zOffset) * 3
+                );
+                R = 0.16F * 0.8F;
+                G = 0.17F * 0.8F;
+                B = 0.21F * 0.8F;
+                renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
+            }
+            if (middleLineB.contains(step % 16)) {
+                Vec3f startA, endA, startB, endB;
+                startA = new Vec3f(
+                        startRootX + (rotate0 * v1) - xOffset,
+                        chainHeight - rotate1 + startDrip,
+                        startRootZ + rotate2 + zOffset
+                );
+                startB = new Vec3f(
+                        startRootX - (rotate0 * v1) + xOffset,
+                        chainHeight + rotate1 + startDrip,
+                        startRootZ - rotate2 - zOffset
+                );
+                endA = new Vec3f(
+                        endRootX + (rotate0 * v1) - xOffset,
+                        chainHeight - rotate1 + endDrip,
+                        endRootZ + rotate2 + zOffset
+                );
+                endB = new Vec3f(
+                        endRootX - (rotate0 * v1) + xOffset,
+                        chainHeight + rotate1 + endDrip,
+                        endRootZ - rotate2 - zOffset
+                );
+                R = 0.12F;
+                G = 0.12F;
+                B = 0.17F;
+                renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
+            }
+            if (bottomLineB.contains(step % 16)) {
+                Vec3f startA, endA, startB, endB;
+                startA = new Vec3f(
+                        startRootX + ((rotate0 * v1) + xOffset) * 3,
+                        chainHeight - rotate1 * 3 + startDrip,
+                        startRootZ + (rotate2 - zOffset) * 3
+                );
+                startB = new Vec3f(
+                        startRootX + (rotate0 * v1) + xOffset,
+                        chainHeight - rotate1 + startDrip,
+                        startRootZ + rotate2 - zOffset
+                );
+                endA = new Vec3f(
+                        endRootX + ((rotate0 * v1) + xOffset) * 3,
+                        chainHeight - rotate1 * 3 + endDrip,
+                        endRootZ + (rotate2 - zOffset) * 3
+                );
+                endB = new Vec3f(
+                        endRootX + (rotate0 * v1) + xOffset,
+                        chainHeight - rotate1 + endDrip,
+                        endRootZ + rotate2 - zOffset
+                );
+                R = 0.16F * 0.8F;
+                G = 0.17F * 0.8F;
+                B = 0.21F * 0.8F;
+                renderPixel(startA, startB, endA, endB, vertexConsumer, matrix4f, pack, R, G, B);
+            }
+        }
     }
 
 }

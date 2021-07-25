@@ -1,4 +1,8 @@
 {
   "entity.connectiblechains.chain_knot" : "Chain Knot",
-  "entity.connectiblechains.chain_collision" : "Chain Collision"
+  "entity.connectiblechains.chain_collision" : "Chain Collision",
+  "text.autoconfig.connectiblechains.option.chainHangAmount" : "Chain Drip",
+  "text.autoconfig.connectiblechains.option.maxChainRange" : "Max Chain Distance",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip" : "Effects how long a chain can be. This settings only effects client side. Warning: Increasing the length beyond 7 may cause unexpected rendering behaviour!",
+  "text.autoconfig.connectiblechains.title": "Connectible Chains Configs"
 }

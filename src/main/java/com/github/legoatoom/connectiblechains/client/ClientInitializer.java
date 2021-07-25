@@ -37,6 +37,7 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.UUID;
 
@@ -73,6 +74,8 @@ public class ClientInitializer implements ClientModInitializer {
                             Entity entity = client.world.getEntityById(fromTo[0]);
                             if (entity instanceof ChainKnotEntity) {
                                 ((ChainKnotEntity) entity).addHoldingEntityId(fromTo[1], fromPlayer);
+                            } else {
+                                LogManager.getLogger().warn("Received Attach Chain Package to unknown Entity.");
                             }
                         }
                     });
@@ -127,7 +130,7 @@ public class ClientInitializer implements ClientModInitializer {
                             throw new IllegalStateException("Failed to create instance of entity \"" + entityTypeID + "\"");
                         }
 //                        e.updateTrackedPosition(pos);
-                        e.updatePosition(pos.x, pos.y, pos.z);
+                        e.setPosition(pos.x, pos.y, pos.z);
                         e.pitch = pitch;
                         e.yaw = yaw;
                         e.setEntityId(entityId);
@@ -162,7 +165,7 @@ public class ClientInitializer implements ClientModInitializer {
                             throw new IllegalStateException("Failed to create instance of entity \"" + entityTypeID + "\"");
                         }
 //                        e.updateTrackedPosition(pos);
-                        e.updatePosition(pos.x, pos.y, pos.z);
+                        e.setPosition(pos.x, pos.y, pos.z);
                         e.pitch = pitch;
                         e.yaw = yaw;
                         e.setEntityId(entityId);

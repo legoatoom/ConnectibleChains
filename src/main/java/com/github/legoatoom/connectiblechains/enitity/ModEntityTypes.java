@@ -23,6 +23,7 @@ import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.util.registry.Registry;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * This class keeps track of all entities that this mod has.
@@ -57,10 +58,11 @@ public class ModEntityTypes {
                         .fireImmune()
                         .build()
         );
-        //TODO: Change trackRangeBlocks for entity collision to 1 or something? Probably helps with lag.
 
     }
 
     @SuppressWarnings("EmptyMethod")
-    public static void init(){}
+    public static void init() {
+        LogManager.getLogger().info("Initializing ModentityTypes...");
+    }
 }

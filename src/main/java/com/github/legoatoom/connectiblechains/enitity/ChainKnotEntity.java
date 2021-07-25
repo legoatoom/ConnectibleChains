@@ -17,6 +17,7 @@
 
 package com.github.legoatoom.connectiblechains.enitity;
 
+import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.util.EntitySpawnPacketCreator;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
@@ -31,11 +32,12 @@ import net.minecraft.entity.*;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -65,18 +67,18 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     /**
      * The max range of the chain.
      */
-    private static final double MAX_RANGE = 7d;
+    private static final double MAX_RANGE = ConnectibleChains.config.getMaxChainRange();
 
     /**
      * The distance when it is visible.
      */
-    public static final double VISIBLE_RANGE = 2048.0D;
+    private static final double VISIBLE_RANGE = 2048.0D;
 
     /**
      * A map that holds a list of entity ids. These entities should be {@link ChainCollisionEntity ChainCollisionEntities}
      * The key is the entity id of the ChainKnot that this is connected to.
      */
-    private final Map<Integer, ArrayList<Integer>> COLLISION_STORAGE;
+    public final Map<Integer, ArrayList<Integer>> COLLISION_STORAGE;
 
     /**
      * A map of entities that this chain is connected to.
@@ -92,7 +94,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     /**
      * The Tag that stores everything
      */
-    private ListTag chainTags;
+    private NbtList chainTags;
 
     /**
      * A timer integer for destroying this entity if it isn't connected anything.
@@ -106,7 +108,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
     public ChainKnotEntity(World world, BlockPos pos) {
         super(ModEntityTypes.CHAIN_KNOT, world, pos);
-        this.updatePosition((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D);
+        this.setPosition((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D);
         this.setBoundingBox(new Box(this.getX() - 0.1875D, this.getY() - 0.25D + 0.125D, this.getZ() - 0.1875D, this.getX() + 0.1875D, this.getY() + 0.25D + 0.125D, this.getZ() + 0.1875D));
         this.teleporting = true;
         this.COLLISION_STORAGE = new HashMap<>();
@@ -174,7 +176,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     public void tick() {
         if (!this.world.isClient) {
             if (this.getY() < -64.0D) {
-                this.destroy();
+                this.tickInVoid();
             }
             this.updateChains();
 
@@ -222,6 +224,9 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
             return false;
         } else if (!this.world.isClient && !this.removed) {
             Entity sourceEntity = source.getAttacker();
+            if (source.getSource() instanceof PersistentProjectileEntity) {
+                return false;
+            }
             if (sourceEntity instanceof PlayerEntity) {
                 boolean isCreative = ((PlayerEntity) sourceEntity).isCreative();
                 if (!((PlayerEntity) sourceEntity).getMainHandStack().isEmpty()
@@ -238,24 +243,24 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
             }
             return true;
         } else {
-            return true;
+            return !(source.getSource() instanceof PersistentProjectileEntity);
         }
     }
 
     /**
-     * Method to write all connections in a {@link CompoundTag} when we save the game.
+     * Method to write all connections in a {@link NbtCompound} when we save the game.
      * It doesn't store the {@link #holdersCount} or {@link #COLLISION_STORAGE} since
      * they will be updated when connection are being remade when we read it.
      *
      * @param tag the tag to write info in.
      */
     @Override
-    public void writeCustomDataToTag(CompoundTag tag) {
+    public void writeCustomDataToNbt(NbtCompound tag) {
         boolean b = false;
-        ListTag listTag = new ListTag();
+        NbtList listTag = new NbtList();
         for (Entity entity : this.holdingEntities.values()) {
             if (entity != null) {
-                CompoundTag compoundTag = new CompoundTag();
+                NbtCompound compoundTag = new NbtCompound();
                 if (entity instanceof PlayerEntity) {
                     UUID uuid = entity.getUuid();
                     compoundTag.putUuid("UUID", uuid);
@@ -283,7 +288,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      *
      * @param tag the tag to read from.
      */
-    public void readCustomDataFromTag(CompoundTag tag) {
+    public void readCustomDataFromNbt(NbtCompound tag) {
         if (tag.contains("Chains")) {
             this.chainTags = tag.getList("Chains", 10);
         }
@@ -305,20 +310,20 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         this.playSound(SoundEvents.BLOCK_CHAIN_PLACE, 1.0F, 1.0F);
     }
 
-    public void updatePosition(double x, double y, double z) {
-        super.updatePosition((double) MathHelper.floor(x) + 0.5D, (double) MathHelper.floor(y) + 0.5D, (double) MathHelper.floor(z) + 0.5D);
+    public void setPosition(double x, double y, double z) {
+        super.setPosition((double) MathHelper.floor(x) + 0.5D, (double) MathHelper.floor(y) + 0.5D, (double) MathHelper.floor(z) + 0.5D);
     }
 
     /**
-     * This method will call {@link #deserializeChainTag(CompoundTag)} if the {@link #chainTags} has any tags.
+     * This method will call {@link #deserializeChainTag(NbtCompound)} if the {@link #chainTags} has any tags.
      * It will also break all connections that are larger than the {@link #MAX_RANGE}
      */
-    protected void updateChains() {
+    private void updateChains() {
         if (chainTags != null) {
-            ListTag copy = chainTags.copy();
-            for (Tag tag : copy) {
-                assert tag instanceof CompoundTag;
-                this.deserializeChainTag(((CompoundTag) tag));
+            NbtList copy = chainTags.copy();
+            for (NbtElement tag : copy) {
+                assert tag instanceof NbtCompound;
+                this.deserializeChainTag(((NbtCompound) tag));
             }
         }
 
@@ -350,29 +355,32 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
     /**
      * Destroy the collisions between two chains, and delete the endpoint if it doesn't have any other connection.
+     *
      * @param doNotDrop if we should not drop an item.
-     * @param endChain the entity that this is connected to.
+     * @param endChain  the entity that this is connected to.
      */
-    public void damageLink(boolean doNotDrop, ChainKnotEntity endChain) {
-        if (!this.getHoldingEntities().contains(endChain)) return; // We cannot destroy a connection that does not exist.
+    void damageLink(boolean doNotDrop, ChainKnotEntity endChain) {
+        if (!this.getHoldingEntities().contains(endChain))
+            return; // We cannot destroy a connection that does not exist.
         if (endChain.holdersCount <= 1 && endChain.getHoldingEntities().isEmpty()) {
             endChain.remove();
         }
         this.deleteCollision(endChain);
-        this.detachChain(endChain, true,  !doNotDrop);
+        this.detachChain(endChain, true, !doNotDrop);
         onBreak(null);
     }
 
     /**
      * This method tries to connect to an entity that is in the {@link #chainTags}.
      * If they do not exist yet, we skip them. If they do, make a connection and remove it from the tag.
-     *
+     * <p>
      * If when the {@link #age} of this entity is bigger than 100, we remove the tag from the {@link #chainTags}
      * meaning that we cannot find the connection anymore and we assume that it will not be loaded in the future.
-     * @see #updateChains()
+     *
      * @param tag the tag that contains a single connection.
+     * @see #updateChains()
      */
-    private void deserializeChainTag(CompoundTag tag) {
+    private void deserializeChainTag(NbtCompound tag) {
         if (tag != null && this.world instanceof ServerWorld) {
             if (tag.contains("UUID")) {
                 UUID uuid = tag.getUuid("UUID");
@@ -474,21 +482,30 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      * @param entity the entity to create collisions too.
      */
     private void createCollision(Entity entity) {
-        double distance = this.getDecorationBlockPos().getManhattanDistance(entity.getBlockPos());
-        double a = .5 / distance;
+        double distance = this.distanceTo(entity);
+        double a = .69 / distance;
         double v = a;
 
         ArrayList<Integer> entityIdList = new ArrayList<>();
-        double x, y, z;
+        double x1, x2, y1, y2, z1, z2;
         double offset = 0.2D;
-        while (v <= 1 - (a/2)) {
-            x = MathHelper.lerp(v, this.getX(), entity.getX());
-            y = MathHelper.lerp(v, this.getY(), entity.getY()) + Helper.drip(v * distance, distance) + offset;
-            z = MathHelper.lerp(v, this.getZ(), entity.getZ());
-            ChainCollisionEntity c = new ChainCollisionEntity(this.world, x - .15, y, z - .15, this.getEntityId(), entity.getEntityId());
+        while (v <= 1 - (a / 2)) {
+            x1 = MathHelper.lerp(v, this.getX(), entity.getX());
+            y1 = this.getY() + Helper.drip2((v * distance), distance, entity.getY() - this.getY()) + offset;
+            z1 = MathHelper.lerp(v, this.getZ(), entity.getZ());
+            x2 = MathHelper.lerp(v, entity.getX(), this.getX());
+            y2 = entity.getY() + Helper.drip2((v * distance), distance, this.getY() - entity.getY()) + offset;
+            z2 = MathHelper.lerp(v, entity.getZ(), this.getZ());
+            ChainCollisionEntity c1 = new ChainCollisionEntity(this.world, x1 - .15, y1, z1 - .15, this.getEntityId(), entity.getEntityId());
+            ChainCollisionEntity c2 = new ChainCollisionEntity(this.world, x2 - .15, y2, z2 - .15, this.getEntityId(), entity.getEntityId());
 
-            if (world.spawnEntity(c)) {
-                entityIdList.add(c.getEntityId());
+            if (world.spawnEntity(c1)) {
+                entityIdList.add(c1.getEntityId());
+            } else {
+                LOGGER.warn("Tried to summon collision entity for a chain, failed to do so");
+            }
+            if (world.spawnEntity(c2)) {
+                entityIdList.add(c2.getEntityId());
             } else {
                 LOGGER.warn("Tried to summon collision entity for a chain, failed to do so");
             }
@@ -554,10 +571,11 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
     /**
      * Send to all players around that this chain wants to attach to another entity.
-     * @param entityId the entity to connect to.
+     *
+     * @param entityId           the entity to connect to.
      * @param fromPlayerEntityId the {@link PlayerEntity} id that made the connection.
      */
-    public void sendAttachChainPacket(int entityId, int fromPlayerEntityId) {
+    private void sendAttachChainPacket(int entityId, int fromPlayerEntityId) {
         Stream<ServerPlayerEntity> watchingPlayers =
                 PlayerLookup.around((ServerWorld) world, getBlockPos(), VISIBLE_RANGE).stream();
         PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
@@ -714,6 +732,4 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     public void addHoldingEntityIds(int[] ids) {
         for (int id : ids) this.holdingEntities.put(id, null);
     }
-
-
 }

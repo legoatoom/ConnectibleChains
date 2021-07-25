@@ -28,10 +28,12 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.entity.projectile.PersistentProjectileEntity;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 
 import java.util.function.Function;
@@ -53,17 +55,19 @@ public class ChainCollisionEntity extends Entity {
      */
     private int endOwnerId;
 
+    @SuppressWarnings("WeakerAccess")
     public ChainCollisionEntity(EntityType<? extends ChainCollisionEntity> entityType, World world) {
         super(entityType, world);
         this.teleporting = true;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public ChainCollisionEntity(World world, double x, double y, double z, int startOwnerId, int endOwnerId) {
         this(ModEntityTypes.CHAIN_COLLISION, world);
         this.startOwnerId = startOwnerId;
         this.endOwnerId = endOwnerId;
         this.setPos(x, y, z);
-//        this.setBoundingBox(new Box(x, y, z, x, y, z).expand(.01d, 0, .01d));
+        this.setBoundingBox(new Box(x, y, z, x, y, z).expand(.01d, 0, .01d));
     }
 
     @Override
@@ -89,11 +93,13 @@ public class ChainCollisionEntity extends Entity {
     public boolean damage(DamageSource source, float amount) {
         if (this.isInvulnerableTo(source)) {
             return false;
-        } else if (!this.world.isClient && !this.removed) {
+        } else if (!this.world.isClient) {
             Entity startOwner = this.world.getEntityById(startOwnerId);
             Entity endOwner = this.world.getEntityById(endOwnerId);
             Entity sourceEntity = source.getAttacker();
-            if (sourceEntity instanceof PlayerEntity
+            if (source.getSource() instanceof PersistentProjectileEntity) {
+                return false;
+            } else if (sourceEntity instanceof PlayerEntity
                     && startOwner instanceof ChainKnotEntity && endOwner instanceof ChainKnotEntity) {
                 boolean isCreative = ((PlayerEntity) sourceEntity).isCreative();
                 if (!((PlayerEntity) sourceEntity).getMainHandStack().isEmpty() && ((PlayerEntity) sourceEntity).getMainHandStack().getItem().isIn(FabricToolTags.SHEARS)) {
@@ -102,7 +108,7 @@ public class ChainCollisionEntity extends Entity {
             }
             return true;
         } else {
-            return true;
+            return !(source.getSource() instanceof PersistentProjectileEntity);
         }
     }
 
@@ -136,7 +142,7 @@ public class ChainCollisionEntity extends Entity {
     @Override
     public boolean shouldRender(double distance) {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player != null && !player.getMainHandStack().isEmpty() && player.getMainHandStack().getItem().isIn(FabricToolTags.SHEARS)){
+        if (player != null && player.isHolding(item -> item.isIn(FabricToolTags.SHEARS))) {
             return super.shouldRender(distance);
         } else {
             return false;
@@ -144,12 +150,12 @@ public class ChainCollisionEntity extends Entity {
     }
 
     @Override
-    protected void readCustomDataFromTag(CompoundTag tag) {
+    protected void readCustomDataFromNbt(NbtCompound tag) {
         // Required by Entity, but does nothing.
     }
 
     @Override
-    protected void writeCustomDataToTag(CompoundTag tag) {
+    protected void writeCustomDataToNbt(NbtCompound tag) {
         // Required by Entity, but does nothing.
     }
 

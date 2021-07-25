@@ -27,11 +27,23 @@ public class Helper {
         return new Identifier(ConnectibleChains.MODID, name);
     }
 
-    public static double drip(double x, double V) {
-        double c = 1.3D;
-        double b = -c / V;
-        double a = c / (V * V);
+    @Deprecated
+    public static double drip(double x, double d) {
+        double c = ConnectibleChains.config.getChainHangAmount();
+        double b = -c / d;
+        double a = c / (d * d);
         return (a * (x * x) + b * x);
+    }
+
+    public static double drip2(double x, double d, double h) {
+        double a = ConnectibleChains.config.getChainHangAmount();
+        double p1 = a * asinh((h / (2D * a)) * (1D / Math.sinh(d / (2D * a))));
+        double p2 = -a * Math.cosh((2D * p1 - d) / (2D * a));
+        return p2 + a * Math.cosh((((2D * x) + (2D * p1)) - d) / (2D * a));
+    }
+
+    private static double asinh(double x) {
+        return Math.log(x + Math.sqrt(x * x + 1.0));
     }
 
     public static Vec3d middleOf(Vec3d a, Vec3d b) {

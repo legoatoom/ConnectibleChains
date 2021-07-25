@@ -23,6 +23,9 @@
     ],
     "client": [
       "com.github.legoatoom.connectiblechains.client.ClientInitializer"
+    ],
+    "modmenu": [
+      "com.github.legoatoom.connectiblechains.config.ModMenuIntegration"
     ]
   },
   "mixins": [
@@ -33,7 +36,8 @@
   "depends": {
     "fabricloader": ">=0.11.3",
     "fabric": "*",
-    "minecraft": "1.16.x"
+    "minecraft": "1.16.x",
+    "cloth-config2": ">=4.11.19"
   },
   "breaks": {
     "chains": "*"
