@@ -110,7 +110,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         super(ModEntityTypes.CHAIN_KNOT, world, pos);
         this.setPosition((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D);
         this.setBoundingBox(new Box(this.getX() - 0.1875D, this.getY() - 0.25D + 0.125D, this.getZ() - 0.1875D, this.getX() + 0.1875D, this.getY() + 0.25D + 0.125D, this.getZ() + 0.1875D));
-//        this.teleporting = true;
+        this.teleporting = true;
         this.COLLISION_STORAGE = new HashMap<>();
     }
 
@@ -144,7 +144,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                         chain.onPlace();
                     }
 
-                    otherKnots.attachChain(chain, true, playerEntity.getId());
+                    otherKnots.attachChain(chain, true, playerEntity.getEntityId());
                     hasMadeConnection = true;
                 }
             }
@@ -182,14 +182,14 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
             if (this.obstructionCheckCounter++ == 100) {
                 this.obstructionCheckCounter = 0;
-                if (!isRemoved() && !this.canStayAttached()) {
+                if (!this.removed && !this.canStayAttached()) {
                     ArrayList<Entity> list = this.getHoldingEntities();
                     for (Entity entity : list) {
                         if (entity instanceof ChainKnotEntity) {
                             damageLink(false, (ChainKnotEntity) entity);
                         }
                     }
-                    this.remove(RemovalReason.KILLED);
+                    this.remove();
                     this.onBreak(null);
                 }
             }
@@ -211,17 +211,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      * @return boolean if is allowed or not.
      */
     public static boolean canConnectTo(Block block){
-        return BlockTags.WALLS.contains(block) || BlockTags.FENCES.contains(block);
-    }
-
-    @Override
-    public boolean handleAttack(Entity attacker) {
-        playSound(SoundEvents.BLOCK_CHAIN_HIT, 0.5F, 1.0F);
-        if (attacker instanceof PlayerEntity playerEntity) {
-            return this.damage(DamageSource.player(playerEntity), 0.0F);
-        } else {
-            return false;
-        }
+        return block.isIn(BlockTags.WALLS) || block.isIn(BlockTags.FENCES);
     }
 
     /**
@@ -232,7 +222,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     public boolean damage(DamageSource source, float amount) {
         if (this.isInvulnerableTo(source)) {
             return false;
-        } else if (!this.world.isClient && !isRemoved()) {
+        } else if (!this.world.isClient && !this.removed) {
             Entity sourceEntity = source.getAttacker();
             if (source.getSource() instanceof PersistentProjectileEntity) {
                 return false;
@@ -240,7 +230,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
             if (sourceEntity instanceof PlayerEntity) {
                 boolean isCreative = ((PlayerEntity) sourceEntity).isCreative();
                 if (!((PlayerEntity) sourceEntity).getMainHandStack().isEmpty()
-                        && FabricToolTags.SHEARS.contains(((PlayerEntity) sourceEntity).getMainHandStack().getItem())) {
+                        && ((PlayerEntity) sourceEntity).getMainHandStack().getItem().isIn(FabricToolTags.SHEARS)) {
                     ArrayList<Entity> list = this.getHoldingEntities();
                     for (Entity entity : list) {
                         if (entity instanceof ChainKnotEntity) {
@@ -248,7 +238,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                         }
                     }
                     this.onBreak(null);
-                    this.remove(RemovalReason.KILLED);
+                    this.remove();
                 }
             }
             return true;
@@ -373,7 +363,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         if (!this.getHoldingEntities().contains(endChain))
             return; // We cannot destroy a connection that does not exist.
         if (endChain.holdersCount <= 1 && endChain.getHoldingEntities().isEmpty()) {
-            endChain.remove(RemovalReason.KILLED);
+            endChain.remove();
         }
         this.deleteCollision(endChain);
         this.detachChain(endChain, true, !doNotDrop);
@@ -426,11 +416,11 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      * @param fromPlayerEntityId the entityID of the player that this connects to. 0 if it a chainKnot.
      */
     public void attachChain(Entity entity, boolean sendPacket, int fromPlayerEntityId) {
-        this.holdingEntities.put(entity.getId(), entity);
-//        this.teleporting = true;
-//        if (!(entity instanceof PlayerEntity)) {
-//            entity.teleporting = true;
-//        }
+        this.holdingEntities.put(entity.getEntityId(), entity);
+        this.teleporting = true;
+        if (!(entity instanceof PlayerEntity)) {
+            entity.teleporting = true;
+        }
 
         if (fromPlayerEntityId != 0) {
             removePlayerWithId(fromPlayerEntityId);
@@ -441,7 +431,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                 ((ChainKnotEntity) entity).holdersCount++;
                 createCollision(entity);
             }
-            sendAttachChainPacket(entity.getId(), fromPlayerEntityId);
+            sendAttachChainPacket(entity.getEntityId(), fromPlayerEntityId);
         }
     }
 
@@ -453,8 +443,16 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      */
     public void detachChain(Entity entity, boolean sendPacket, boolean dropItem) {
         if (entity != null) {
+            if (this.holdingEntities.size() <= 1) {
+                this.teleporting = false;
+            }
+            if (entity instanceof ChainKnotEntity) {
+                if (((ChainKnotEntity) entity).holdingEntities.isEmpty()) {
+                    entity.teleporting = false;
+                }
+            }
 
-            this.holdingEntities.remove(entity.getId());
+            this.holdingEntities.remove(entity.getEntityId());
             if (!this.world.isClient() && dropItem && this.world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
                 Vec3d middle = Helper.middleOf(getPos(), entity.getPos());
                 ItemEntity entity1 = new ItemEntity(world, middle.x, middle.y, middle.z, new ItemStack(Items.CHAIN));
@@ -466,11 +464,11 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                 if (entity instanceof ChainKnotEntity) {
                     ((ChainKnotEntity) entity).holdersCount--;
                     if (this.holdersCount <= 0 && getHoldingEntities().isEmpty()) {
-                        this.remove(RemovalReason.DISCARDED);
+                        this.remove();
                     }
                 }
                 deleteCollision(entity);
-                sendDetachChainPacket(entity.getId());
+                sendDetachChainPacket(entity.getEntityId());
             }
         }
     }
@@ -498,22 +496,22 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
             x2 = MathHelper.lerp(v, entity.getX(), this.getX());
             y2 = entity.getY() + Helper.drip2((v * distance), distance, this.getY() - entity.getY()) + offset;
             z2 = MathHelper.lerp(v, entity.getZ(), this.getZ());
-            ChainCollisionEntity c1 = new ChainCollisionEntity(this.world, x1, y1, z1, this.getId(), entity.getId());
-            ChainCollisionEntity c2 = new ChainCollisionEntity(this.world, x2, y2, z2, this.getId(), entity.getId());
+            ChainCollisionEntity c1 = new ChainCollisionEntity(this.world, x1 - .15, y1, z1 - .15, this.getEntityId(), entity.getEntityId());
+            ChainCollisionEntity c2 = new ChainCollisionEntity(this.world, x2 - .15, y2, z2 - .15, this.getEntityId(), entity.getEntityId());
 
             if (world.spawnEntity(c1)) {
-                entityIdList.add(c1.getId());
+                entityIdList.add(c1.getEntityId());
             } else {
                 LOGGER.warn("Tried to summon collision entity for a chain, failed to do so");
             }
             if (world.spawnEntity(c2)) {
-                entityIdList.add(c2.getId());
+                entityIdList.add(c2.getEntityId());
             } else {
                 LOGGER.warn("Tried to summon collision entity for a chain, failed to do so");
             }
             v = v + a;
         }
-        this.COLLISION_STORAGE.put(entity.getId(), entityIdList);
+        this.COLLISION_STORAGE.put(entity.getEntityId(), entityIdList);
     }
 
     /**
@@ -521,13 +519,13 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      * @param entity the entity in question.
      */
     private void deleteCollision(Entity entity) {
-        int entityId = entity.getId();
+        int entityId = entity.getEntityId();
         ArrayList<Integer> entityIdList = this.COLLISION_STORAGE.get(entityId);
         if (entityIdList != null) {
             entityIdList.forEach(id -> {
                 Entity e = world.getEntityById(id);
                 if (e instanceof ChainCollisionEntity) {
-                    e.remove(RemovalReason.DISCARDED);
+                    e.remove();
                 }
             });
         }
@@ -583,7 +581,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
 
         //Write our id and the id of the one we connect to.
-        passedData.writeIntArray(new int[]{this.getId(), entityId});
+        passedData.writeIntArray(new int[]{this.getEntityId(), entityId});
         passedData.writeInt(fromPlayerEntityId);
 
         watchingPlayers.forEach(playerEntity ->
@@ -603,7 +601,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
 
         //Write our id and the id of the one we connect to.
-        passedData.writeIntArray(new int[]{this.getId(), entityId});
+        passedData.writeIntArray(new int[]{this.getEntityId(), entityId});
 
         watchingPlayers.forEach(playerEntity ->
                 ServerPlayNetworking.send(playerEntity,
@@ -691,7 +689,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     @Environment(EnvType.CLIENT)
     @Override
     public Vec3d method_30951(float f) {
-        return this.getLerpedPos(f).add(0.0D, 0.2D, 0.0D);
+        return this.method_30950(f).add(0.0D, 0.2D, 0.0D);
     }
 
     /**

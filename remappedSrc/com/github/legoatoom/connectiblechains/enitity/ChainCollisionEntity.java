@@ -58,7 +58,7 @@ public class ChainCollisionEntity extends Entity {
     @SuppressWarnings("WeakerAccess")
     public ChainCollisionEntity(EntityType<? extends ChainCollisionEntity> entityType, World world) {
         super(entityType, world);
-
+        this.teleporting = true;
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -73,6 +73,15 @@ public class ChainCollisionEntity extends Entity {
     @Override
     protected void initDataTracker() {
         // Required by Entity
+    }
+
+    /**
+     * We don't want this entity to be able to climb.
+     * @return false
+     */
+    @Override
+    protected boolean canClimb() {
+        return false;
     }
 
     /**
@@ -93,7 +102,7 @@ public class ChainCollisionEntity extends Entity {
             } else if (sourceEntity instanceof PlayerEntity
                     && startOwner instanceof ChainKnotEntity && endOwner instanceof ChainKnotEntity) {
                 boolean isCreative = ((PlayerEntity) sourceEntity).isCreative();
-                if (!((PlayerEntity) sourceEntity).getMainHandStack().isEmpty() && FabricToolTags.SHEARS.contains(((PlayerEntity) sourceEntity).getMainHandStack().getItem())) {
+                if (!((PlayerEntity) sourceEntity).getMainHandStack().isEmpty() && ((PlayerEntity) sourceEntity).getMainHandStack().getItem().isIn(FabricToolTags.SHEARS)) {
                     ((ChainKnotEntity) startOwner).damageLink(isCreative, (ChainKnotEntity) endOwner);
                 }
             }
@@ -111,7 +120,7 @@ public class ChainCollisionEntity extends Entity {
      */
     @Override
     public boolean collides() {
-        return !isRemoved();
+        return !this.removed;
     }
 
     /**
@@ -166,7 +175,8 @@ public class ChainCollisionEntity extends Entity {
     @Override
     public boolean handleAttack(Entity attacker) {
         playSound(SoundEvents.BLOCK_CHAIN_HIT, 0.5F, 1.0F);
-        if (attacker instanceof PlayerEntity playerEntity) {
+        if (attacker instanceof PlayerEntity) {
+            PlayerEntity playerEntity = (PlayerEntity) attacker;
             return this.damage(DamageSource.player(playerEntity), 0.0F);
         } else {
             return false;

@@ -64,7 +64,7 @@ public abstract class ThreadedAnvilChunkStorageMixin {
         while (var6.hasNext()) {
             ThreadedAnvilChunkStorage.EntityTracker entityTracker = var6.next();
             Entity entity = entityTracker.entity;
-            if (entity != player && entity.getChunkPos().equals(chunk.getPos())) {
+            if (entity != player && entity.chunkX == chunk.getPos().x && entity.chunkZ == chunk.getPos().z) {
                 if (entity instanceof ChainKnotEntity && !((ChainKnotEntity) entity).getHoldingEntities().isEmpty()) {
                     list.add((ChainKnotEntity) entity);
                 }
@@ -75,9 +75,9 @@ public abstract class ThreadedAnvilChunkStorageMixin {
             for (ChainKnotEntity chainKnotEntity : list) {
                 PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
                 //Write our id and the id of the one we connect to.
-                int[] ids = chainKnotEntity.getHoldingEntities().stream().mapToInt(Entity::getId).toArray();
+                int[] ids = chainKnotEntity.getHoldingEntities().stream().mapToInt(Entity::getEntityId).toArray();
                 if (ids.length > 0) {
-                    passedData.writeInt(chainKnotEntity.getId());
+                    passedData.writeInt(chainKnotEntity.getEntityId());
                     passedData.writeIntArray(ids);
                     ServerPlayNetworking.send(player, NetworkingPackages.S2C_MULTI_CHAIN_ATTACH_PACKET_ID, passedData);
                 }

@@ -20,9 +20,8 @@ package com.github.legoatoom.connectiblechains.client.render.entity.model;
 import com.google.common.collect.ImmutableList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.model.*;
+import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.entity.model.CompositeEntityModel;
-import net.minecraft.client.render.entity.model.SinglePartEntityModel;
 import net.minecraft.entity.Entity;
 
 /**
@@ -33,29 +32,23 @@ import net.minecraft.entity.Entity;
  * @author legoatoom
  */
 @Environment(EnvType.CLIENT)
-public class ChainKnotEntityModel<T extends Entity> extends SinglePartEntityModel<T> {
+public class ChainKnotEntityModel<T extends Entity> extends CompositeEntityModel<T> {
     private final ModelPart chainKnot;
-    private final ModelPart root;
 
-    public ChainKnotEntityModel(ModelPart root) {
-        this.root = root;
-        this.chainKnot = root.getChild("knot");
+    public ChainKnotEntityModel() {
+        this.textureWidth = 32;
+        this.textureHeight = 32;
+        this.chainKnot = new ModelPart(this, 0, 0);
+        this.chainKnot.addCuboid(-3.0F, -6.0F, -3.0F, 6.0F, 3.0F, 6.0F, 0.0F);
+        this.chainKnot.setPivot(0.0F, 0.0F, 0.0F);
     }
 
-    public static TexturedModelData getTexturedModelData() {
-        ModelData modelData = new ModelData();
-        ModelPartData modelPartData = modelData.getRoot();
-        modelPartData.addChild("knot", ModelPartBuilder.create().uv(0, 0).cuboid(-3.0F, -8.0F, -3.0F, 6.0F, 8.0F, 6.0F), ModelTransform.NONE);
-        return TexturedModelData.of(modelData, 32, 32);
+    public Iterable<ModelPart> getParts() {
+        return ImmutableList.of(this.chainKnot);
     }
 
     public void setAngles(T entity, float limbAngle, float limbDistance, float customAngle, float headYaw, float headPitch) {
         this.chainKnot.yaw = headYaw * 0.017453292F;
         this.chainKnot.pitch = headPitch * 0.017453292F;
-    }
-
-    @Override
-    public ModelPart getPart() {
-        return chainKnot;
     }
 }

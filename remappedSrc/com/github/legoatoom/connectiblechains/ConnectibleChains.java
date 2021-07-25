@@ -75,7 +75,7 @@ public class ConnectibleChains implements ModInitializer {
                     return ActionResult.success(world.isClient);
                 }
             }
-            if (ChainKnotEntity.canConnectTo(block)) {
+            if (block.isIn(BlockTags.FENCES) || block.isIn(BlockTags.WALLS)) {
                 if (world.isClient) {
                     ItemStack itemStack = player.getStackInHand(hand);
                     return itemStack.getItem() == Items.CHAIN ? ActionResult.SUCCESS : ActionResult.PASS;

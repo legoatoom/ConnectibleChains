@@ -63,6 +63,6 @@ public class ModEntityTypes {
 
     @SuppressWarnings("EmptyMethod")
     public static void init() {
-        LogManager.getLogger("ConnectibleChains").info("Initializing ModEntityTypes...");
+        LogManager.getLogger().info("Initializing ModentityTypes...");
     }
 }

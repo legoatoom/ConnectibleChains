@@ -3,6 +3,11 @@
   "entity.connectiblechains.chain_collision" : "Chain Collision",
   "text.autoconfig.connectiblechains.option.chainHangAmount" : "Chain Drip",
   "text.autoconfig.connectiblechains.option.maxChainRange" : "Max Chain Distance",
-  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip" : "Effects how long a chain can be. This settings only effects client side. Warning: Increasing the length beyond 7 may cause unexpected rendering behaviour!",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[0]" : "Effects how much the Chain Hangs.",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[1]" : "Only Client Side visually on servers",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[2]" : "In SinglePlayer, collision will only update on new chains.",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[0]" : "Effects how long a chain can be.",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[1]" : "This settings only effects client side.",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[2]" : "Warning: Increasing the length beyond 7 may cause unexpected rendering behaviour!",
   "text.autoconfig.connectiblechains.title": "Connectible Chains Configs"
 }

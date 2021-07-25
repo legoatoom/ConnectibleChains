@@ -25,12 +25,13 @@ abstract class EntityTrackerEntryMixin {
 
     @Inject(method = "sendPackets", at = @At("TAIL"))
     private void sendPackages(Consumer<Packet<?>> sender, CallbackInfo ci) {
-        if (this.entity instanceof ChainKnotEntity chainKnotEntity) {
+        if (this.entity instanceof ChainKnotEntity) {
+            ChainKnotEntity chainKnotEntity = (ChainKnotEntity) this.entity;
             PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
             //Write our id and the id of the one we connect to.
-            int[] ids = chainKnotEntity.getHoldingEntities().stream().mapToInt(Entity::getId).toArray();
+            int[] ids = chainKnotEntity.getHoldingEntities().stream().mapToInt(Entity::getEntityId).toArray();
             if (ids.length > 0) {
-                passedData.writeInt(chainKnotEntity.getId());
+                passedData.writeInt(chainKnotEntity.getEntityId());
                 passedData.writeIntArray(ids);
                 sender.accept(ServerPlayNetworking.createS2CPacket(NetworkingPackages.S2C_MULTI_CHAIN_ATTACH_PACKET_ID, passedData));
             }

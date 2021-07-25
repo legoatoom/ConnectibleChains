@@ -17,23 +17,18 @@
 
 package com.github.legoatoom.connectiblechains.client;
 
-import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
-import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
 import com.github.legoatoom.connectiblechains.enitity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
-import com.github.legoatoom.connectiblechains.util.Helper;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
 import com.github.legoatoom.connectiblechains.util.PacketBufUtil;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.rendereregistry.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendereregistry.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPickBlockGatherCallback;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.ItemStack;
@@ -55,8 +50,6 @@ import java.util.UUID;
  */
 public class ClientInitializer implements ClientModInitializer {
 
-    public static final EntityModelLayer CHAIN_KNOT = new EntityModelLayer(Helper.identifier("chain_knot"), "main");
-
     @Override
     public void onInitializeClient() {
         initRenderers();
@@ -65,11 +58,10 @@ public class ClientInitializer implements ClientModInitializer {
 
     private void initRenderers() {
         EntityRendererRegistry.INSTANCE.register(ModEntityTypes.CHAIN_KNOT,
-                ChainKnotEntityRenderer::new);
+                (entityRenderDispatcher, context) -> new ChainKnotEntityRenderer(context));
 
         EntityRendererRegistry.INSTANCE.register(ModEntityTypes.CHAIN_COLLISION,
-                ChainCollisionEntityRenderer::new);
-        EntityModelLayerRegistry.registerModelLayer(CHAIN_KNOT, ChainKnotEntityModel::getTexturedModelData);
+                (entityRenderDispatcher, context) -> new ChainCollisionEntityRenderer(context));
     }
 
     private void registerReceiverClientPackages() {
@@ -139,9 +131,9 @@ public class ClientInitializer implements ClientModInitializer {
                         }
 //                        e.updateTrackedPosition(pos);
                         e.setPosition(pos.x, pos.y, pos.z);
-                        e.setPitch(pitch);
-                        e.setYaw(yaw);
-                        e.setId(entityId);
+                        e.pitch = pitch;
+                        e.yaw = yaw;
+                        e.setEntityId(entityId);
                         e.setUuid(uuid);
                         e.setVelocity(Vec3d.ZERO);
                         if (e instanceof ChainCollisionEntity){
@@ -182,6 +174,7 @@ public class ClientInitializer implements ClientModInitializer {
                         if (e instanceof ChainKnotEntity){
                             e.setBoundingBox(new Box(pos.getX() - 0.1875D, pos.getY() - 0.25D + 0.125D, pos.getZ() - 0.1875D,
                                     pos.getX() + 0.1875D, pos.getY() + 0.25D + 0.125D, pos.getZ() + 0.1875D));
+                            e.teleporting = true;
                         }
                         MinecraftClient.getInstance().world.addEntity(entityId, e);
                     });

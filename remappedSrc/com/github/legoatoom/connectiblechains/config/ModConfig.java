@@ -8,10 +8,9 @@ import me.shedaniel.autoconfig.annotation.ConfigEntry;
 @Config(name = ConnectibleChains.MODID)
 public class ModConfig implements ConfigData {
 
-    @ConfigEntry.Gui.Tooltip(count = 3)
     private float chainHangAmount = 9.0F;
     @ConfigEntry.BoundedDiscrete(max = 32)
-    @ConfigEntry.Gui.Tooltip(count = 3)
+    @ConfigEntry.Gui.Tooltip()
     private int maxChainRange = 7;
 
     public float getChainHangAmount() {

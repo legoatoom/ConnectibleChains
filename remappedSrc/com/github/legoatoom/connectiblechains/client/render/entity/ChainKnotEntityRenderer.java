@@ -17,7 +17,6 @@
 
 package com.github.legoatoom.connectiblechains.client.render.entity;
 
-import com.github.legoatoom.connectiblechains.client.ClientInitializer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.util.Helper;
@@ -27,9 +26,6 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.model.EntityModel;
-import net.minecraft.client.render.entity.model.EntityModelLayer;
-import net.minecraft.client.render.entity.model.EntityModelLayers;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
@@ -61,12 +57,11 @@ import static com.github.legoatoom.connectiblechains.util.Helper.drip2;
 @Environment(EnvType.CLIENT)
 public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     private static final Identifier TEXTURE = Helper.identifier("textures/entity/chain_knot.png");
-    private final ChainKnotEntityModel<ChainKnotEntity> model;
+    private final ChainKnotEntityModel<ChainKnotEntity> model = new ChainKnotEntityModel<>();
 
 
-    public ChainKnotEntityRenderer(EntityRendererFactory.Context context) {
-        super(context);
-        this.model = new ChainKnotEntityModel<>(context.getPart(ClientInitializer.CHAIN_KNOT));
+    public ChainKnotEntityRenderer(EntityRendererFactory.Context entityRenderDispatcher) {
+        super(entityRenderDispatcher);
     }
 
     /**
@@ -75,13 +70,11 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     private static void renderPixel(Vec3f startA, Vec3f startB, Vec3f endA, Vec3f endB,
                                     VertexConsumer vertexConsumer, Matrix4f matrix4f, int lightPack,
                                     float R, float G, float B) {
-
         vertexConsumer.vertex(matrix4f, startA.getX(), startA.getY(), startA.getZ()).color(R, G, B, 1.0F).light(lightPack).next();
-        vertexConsumer.vertex(matrix4f, startA.getX(), startA.getY(), startA.getZ()).color(R, G, B, 1.0F).light(lightPack).next();
-        vertexConsumer.vertex(matrix4f, endA.getX(), endA.getY(), endA.getZ()).color(R, G, B, 1.0F).light(lightPack).next();
         vertexConsumer.vertex(matrix4f, startB.getX(), startB.getY(), startB.getZ()).color(R, G, B, 1.0F).light(lightPack).next();
+
         vertexConsumer.vertex(matrix4f, endB.getX(), endB.getY(), endB.getZ()).color(R, G, B, 1.0F).light(lightPack).next();
-        vertexConsumer.vertex(matrix4f, endB.getX(), endB.getY(), endB.getZ()).color(R, G, B, 1.0F).light(lightPack).next();
+        vertexConsumer.vertex(matrix4f, endA.getX(), endA.getY(), endA.getZ()).color(R, G, B, 1.0F).light(lightPack).next();
     }
 
     @Override
@@ -119,6 +112,9 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         matrices.pop();
         ArrayList<Entity> entities = chainKnotEntity.getHoldingEntities();
         for (Entity entity : entities) {
+            if (entity == null || !entity.isAlive() || entity.removed) {
+                break;
+            }
             this.createChainLine(chainKnotEntity, tickDelta, matrices, vertexConsumers, entity);
         }
         super.render(chainKnotEntity, yaw, tickDelta, matrices, vertexConsumers, light);
@@ -139,8 +135,8 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         matrices.push(); // We push here to start new I think.
 
         // Some math that has to do with the direction and yaw of the entity to know where to start and end.
-        double d = MathHelper.lerp(tickDelta * 0.5F, toEntity.getYaw(), toEntity.prevYaw) * 0.017453292F;
-        double e = MathHelper.lerp(tickDelta * 0.5F, toEntity.getPitch(), toEntity.prevPitch) * 0.017453292F;
+        double d = MathHelper.lerp(tickDelta * 0.5F, toEntity.yaw, toEntity.prevYaw) * 0.017453292F;
+        double e = MathHelper.lerp(tickDelta * 0.5F, toEntity.pitch, toEntity.prevPitch) * 0.017453292F;
         double g = Math.cos(d);
         double h = Math.sin(d);
         double i = Math.sin(e);

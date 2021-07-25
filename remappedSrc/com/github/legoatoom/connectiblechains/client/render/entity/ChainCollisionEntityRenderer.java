@@ -22,7 +22,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.util.Identifier;
 
 /**
@@ -35,7 +34,7 @@ import net.minecraft.util.Identifier;
 @Environment(EnvType.CLIENT)
 public class ChainCollisionEntityRenderer extends EntityRenderer<ChainCollisionEntity> {
 
-    public ChainCollisionEntityRenderer(EntityRendererFactory.Context dispatcher) {
+    public ChainCollisionEntityRenderer(EntityRenderDispatcher dispatcher) {
         super(dispatcher);
     }
 
