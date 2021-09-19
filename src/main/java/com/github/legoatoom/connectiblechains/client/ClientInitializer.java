@@ -17,7 +17,6 @@
 
 package com.github.legoatoom.connectiblechains.client;
 
-import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
