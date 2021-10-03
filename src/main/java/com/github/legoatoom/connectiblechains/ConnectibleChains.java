@@ -26,19 +26,84 @@ import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.block.Block;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
 /**
  * Mod Initializer for Connectible chains.
  */
 public class ConnectibleChains implements ModInitializer {
 
+    /**
+     * All mods need to have an ID, that is what tells the game and fabric what each mod is.
+     * These need to be unique for all mods, and always stay the same in your mod, so by creating a field
+     * it will be a lot easier!
+     */
     public static final String MODID = "connectiblechains";
+    /**
+     * ModConfigs are helpful if people keep demanding for your chains to get longer...
+     */
     public static ModConfig config;
 
+    /**
+     * Because of how mods work, this function is called always when a player uses right click.
+     * But if the right click doesn't involve this mod (No chain/block to connect to) then we ignore immediately.
+     * <p>
+     * If it does involve us, then we have work to do, we create connections remove items from inventory and such.
+     *
+     * @param player    PlayerEntity that right-clicked on a block.
+     * @param world     The world the player is in.
+     * @param hand      What hand the player used.
+     * @param hitResult General information about the block that was clicked.
+     * @return An ActionResult.
+     */
+    private static ActionResult chainUseEvent(PlayerEntity player, World world, Hand hand, BlockHitResult hitResult) {
+        if (player == null) return ActionResult.PASS;
+        ItemStack stack = player.getStackInHand(hand);
+        BlockPos blockPos = hitResult.getBlockPos();
+        Block block = world.getBlockState(blockPos).getBlock();
+        if (stack.getItem() == Items.CHAIN) {
+            if (ChainKnotEntity.canConnectTo(block) && !player.isSneaking()) {
+                if (!world.isClient) {
+                    ChainKnotEntity knot = ChainKnotEntity.getOrCreate(world, blockPos, false);
+                    if (!ChainKnotEntity.tryAttachHeldChainsToBlock(player, world, blockPos, knot)) {
+                        // If this didn't work connect the player to the new chain instead.
+                        assert knot != null; // This can never happen as long as getOrCreate has false as parameter.
+                        if (knot.getHoldingEntities().contains(player)) {
+                            knot.detachChain(player, true, false);
+                            knot.onBreak(null);
+                            if (!player.isCreative())
+                                stack.increment(1);
+                        } else if (knot.attachChain(player, true, 0)) {
+                            knot.onPlace();
+                            if (!player.isCreative())
+                                stack.decrement(1);
+                        }
+                    }
+                }
+                return ActionResult.success(world.isClient);
+            }
+        }
+        if (ChainKnotEntity.canConnectTo(block)) {
+            if (world.isClient) {
+                ItemStack itemStack = player.getStackInHand(hand);
+                return itemStack.getItem() == Items.CHAIN ? ActionResult.SUCCESS : ActionResult.PASS;
+            } else {
+                return ChainKnotEntity.tryAttachHeldChainsToBlock(player, world, blockPos, ChainKnotEntity.getOrCreate(world, blockPos, true)) ? ActionResult.SUCCESS : ActionResult.PASS;
+            }
+        }
+        return ActionResult.PASS;
+    }
+
+    /**
+     * Here is where the fun begins.
+     */
     @Override
     public void onInitialize() {
 
@@ -46,44 +111,7 @@ public class ConnectibleChains implements ModInitializer {
         AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
         config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
 
-        UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
-            if (player == null) return ActionResult.PASS;
-            ItemStack stack = player.getStackInHand(hand);
-            BlockPos blockPos = hitResult.getBlockPos();
-            Block block = world.getBlockState(blockPos).getBlock();
-            if (stack.getItem() == Items.CHAIN) {
-                if (ChainKnotEntity.canConnectTo(block) && !player.isSneaking()) {
-                    if (!world.isClient) {
-                        ChainKnotEntity knot = ChainKnotEntity.getOrCreate(world, blockPos, false);
-                        if (!ChainKnotEntity.tryAttachHeldChainsToBlock(player, world, blockPos, knot)) {
-                            // If this didn't work connect the player to the new chain instead.
-                            assert knot != null; // This can never happen as long as getOrCreate has false as parameter.
-                            if (knot.getHoldingEntities().contains(player)) {
-                                knot.detachChain(player, true, false);
-                                knot.onBreak(null);
-                                if (!player.isCreative())
-                                    stack.increment(1);
-                            } else {
-                                knot.attachChain(player, true, 0);
-                                knot.onPlace();
-                                if (!player.isCreative())
-                                    stack.decrement(1);
-                            }
-                        }
-                    }
-                    return ActionResult.success(world.isClient);
-                }
-            }
-            if (ChainKnotEntity.canConnectTo(block)) {
-                if (world.isClient) {
-                    ItemStack itemStack = player.getStackInHand(hand);
-                    return itemStack.getItem() == Items.CHAIN ? ActionResult.SUCCESS : ActionResult.PASS;
-                } else {
-                    return ChainKnotEntity.tryAttachHeldChainsToBlock(player, world, blockPos, ChainKnotEntity.getOrCreate(world, blockPos, true)) ? ActionResult.SUCCESS : ActionResult.PASS;
-                }
-            }
-            return ActionResult.PASS;
-        });
+        UseBlockCallback.EVENT.register(ConnectibleChains::chainUseEvent);
     }
 
 }

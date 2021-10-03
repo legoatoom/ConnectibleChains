@@ -57,7 +57,7 @@ import java.util.stream.Stream;
 
 /**
  * The ChainKnotEntity is the main entity of this mod.
- * It has connections between others of it's kind, and is a combination of {@link net.minecraft.entity.mob.MobEntity}
+ * It has connections between others of its kind, and is a combination of {@link net.minecraft.entity.mob.MobEntity}
  * and {@link net.minecraft.entity.decoration.LeashKnotEntity}.
  *
  * @author legoatoom
@@ -404,7 +404,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                 BlockPos blockPos = new BlockPos(tag.getInt("X"), tag.getInt("Y"), tag.getInt("Z"));
                 ChainKnotEntity entity = ChainKnotEntity.getOrCreate(this.world, blockPos, true);
                 if (entity != null) {
-                    this.attachChain(ChainKnotEntity.getOrCreate(this.world, blockPos, false), true, 0);
+                    this.attachChain(Objects.requireNonNull(ChainKnotEntity.getOrCreate(this.world, blockPos, false)), true, 0);
                     this.chainTags.remove(tag);
                 }
                 return;
@@ -421,16 +421,21 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
     /**
      * Attach this chain to an entity.
-     * @param entity The entity to connect to.
-     * @param sendPacket Whether we send a packet to the client.
-     * @param fromPlayerEntityId the entityID of the player that this connects to. 0 if it a chainKnot.
+     *
+     * @param entity             The entity to connect to.
+     * @param sendPacket         Whether we send a packet to the client.
+     * @param fromPlayerEntityId the entityID of the player that this connects to. 0 if it is a chainKnot.
+     * @return Returns false if the entity already has a connection with us or vice versa.
      */
-    public void attachChain(Entity entity, boolean sendPacket, int fromPlayerEntityId) {
+    public boolean attachChain(Entity entity, boolean sendPacket, int fromPlayerEntityId) {
+        if (this.holdingEntities.containsKey((entity.getId()))) {
+            return false;
+        }
+        if (entity instanceof ChainKnotEntity knot && knot.holdingEntities.containsKey(this.getId())) {
+            return false;
+        }
+
         this.holdingEntities.put(entity.getId(), entity);
-//        this.teleporting = true;
-//        if (!(entity instanceof PlayerEntity)) {
-//            entity.teleporting = true;
-//        }
 
         if (fromPlayerEntityId != 0) {
             removePlayerWithId(fromPlayerEntityId);
@@ -443,6 +448,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
             }
             sendAttachChainPacket(entity.getId(), fromPlayerEntityId);
         }
+        return true;
     }
 
     /**
@@ -484,6 +490,9 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      * @param entity the entity to create collisions too.
      */
     private void createCollision(Entity entity) {
+        //Safety check!
+        if (COLLISION_STORAGE.containsKey(entity.getId())) return;
+
         double distance = this.distanceTo(entity);
         double a = .69 / distance;
         double v = a;

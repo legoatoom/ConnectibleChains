@@ -28,8 +28,8 @@ import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
 import com.github.legoatoom.connectiblechains.util.PacketBufUtil;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.rendereregistry.v1.EntityModelLayerRegistry;
-import net.fabricmc.fabric.api.client.rendereregistry.v1.EntityRendererRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPickBlockGatherCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
@@ -63,11 +63,12 @@ public class ClientInitializer implements ClientModInitializer {
     }
 
     private void initRenderers() {
-        EntityRendererRegistry.INSTANCE.register(ModEntityTypes.CHAIN_KNOT,
-                ChainKnotEntityRenderer::new);
 
-        EntityRendererRegistry.INSTANCE.register(ModEntityTypes.CHAIN_COLLISION,
+        EntityRendererRegistry.register(ModEntityTypes.CHAIN_KNOT,
+                ChainKnotEntityRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.CHAIN_COLLISION,
                 ChainCollisionEntityRenderer::new);
+
         EntityModelLayerRegistry.registerModelLayer(CHAIN_KNOT, ChainKnotEntityModel::getTexturedModelData);
     }
 
