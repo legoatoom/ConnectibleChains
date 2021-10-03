@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [1.2.3] - 12021-10-03
+### Fixed
+- Issue of connecting chains twice
+- Rendering Crash
+
 ## [1.2.2] - 12021-07-25
 ### Changed
 - Mobs also effected by chain collision
