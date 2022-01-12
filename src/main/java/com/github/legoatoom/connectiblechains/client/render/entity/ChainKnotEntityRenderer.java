@@ -27,7 +27,6 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.model.BakedModelManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
@@ -39,11 +38,6 @@ import net.minecraft.util.math.*;
 import net.minecraft.world.LightType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static com.github.legoatoom.connectiblechains.util.Helper.drip2;
-import static com.github.legoatoom.connectiblechains.util.Helper.drip2prime;
 
 /**
  * <p>This class renders the chain you see in game. The block around the fence and the chain.

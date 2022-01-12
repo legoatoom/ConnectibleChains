@@ -33,7 +33,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 
 import java.util.function.Function;
