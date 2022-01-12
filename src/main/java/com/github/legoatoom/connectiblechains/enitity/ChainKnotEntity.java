@@ -70,6 +70,12 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     private static final double VISIBLE_RANGE = 2048.0D;
 
     /**
+     * The x/z distance between {@link ChainCollisionEntity ChainCollisionEntities}.
+     * A value of 1 means they are "shoulder to shoulder"
+     */
+    private static final float COLLIDER_SPACING = 1.5f;
+
+    /**
      * A map that holds a list of entity ids. These entities should be {@link ChainCollisionEntity ChainCollisionEntities}
      * The key is the entity id of the ChainKnot that this is connected to.
      */
@@ -504,7 +510,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         if (COLLISION_STORAGE.containsKey(entity.getId())) return;
 
         double distance = this.distanceTo(entity);
-        double step = 1.5*Math.sqrt(Math.pow(ModEntityTypes.CHAIN_COLLISION.getWidth(), 2)*2) / distance;
+        double step = COLLIDER_SPACING*Math.sqrt(Math.pow(ModEntityTypes.CHAIN_COLLISION.getWidth(), 2)*2) / distance;
         double v = step;
         double centerHoldout = ModEntityTypes.CHAIN_COLLISION.getWidth() / distance;
 

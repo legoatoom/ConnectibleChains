@@ -11,7 +11,7 @@ import static com.github.legoatoom.connectiblechains.util.Helper.drip2;
 import static com.github.legoatoom.connectiblechains.util.Helper.drip2prime;
 
 public class ChainRenderer {
-    private final Object2ObjectOpenHashMap<BakeKey, ChainModel.BakedChainModel> models = new Object2ObjectOpenHashMap<>(256);
+    private final Object2ObjectOpenHashMap<BakeKey, ChainModel> models = new Object2ObjectOpenHashMap<>(256);
     private static final float CHAIN_SCALE = 1f;
     private static final float CHAIN_SIZE = CHAIN_SCALE * 3/16f;
     private static final int MAX_SEGMENTS = 2048;
@@ -40,44 +40,43 @@ public class ChainRenderer {
             if (o == null || getClass() != o.getClass()) return false;
 
             BakeKey bakeKey = (BakeKey) o;
-
             return hash == bakeKey.hash;
         }
     }
 
     public void renderBaked(VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vec3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
-        ChainModel.BakedChainModel model;
+        ChainModel model;
         if(models.containsKey(key)) {
             model = models.get(key);
         } else {
-            model = bakeModel(chainVec);
+            model = buildModel(chainVec);
             models.put(key, model);
         }
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
     }
 
     public void render(VertexConsumer buffer, MatrixStack matrices, Vec3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
-        ChainModel.BakedChainModel model = bakeModel(chainVec);
+        ChainModel model = buildModel(chainVec);
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
     }
 
-    private ChainModel.BakedChainModel bakeModel(Vec3f chainVec) {
+    private ChainModel buildModel(Vec3f chainVec) {
         float desiredSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
         int initialCapacity = (int) (2f * Helper.lengthOf(chainVec) / desiredSegmentLength);
-        ChainModel model = new ChainModel(initialCapacity);
+        ChainModel.Builder builder = ChainModel.builder(initialCapacity);
 
         if(chainVec.getX() == 0 && chainVec.getZ() == 0) {
-            buildFaceVertical(model, chainVec, 45, 0);
-            buildFaceVertical(model, chainVec, -45, 3);
+            buildFaceVertical(builder, chainVec, 45, 0);
+            buildFaceVertical(builder, chainVec, -45, 3);
         } else {
-            buildFace(model, chainVec, 45, 0);
-            buildFace(model, chainVec, -45, 3);
+            buildFace(builder, chainVec, 45, 0);
+            buildFace(builder, chainVec, -45, 3);
         }
 
-        return model.bake();
+        return builder.build();
     }
 
-    private void buildFaceVertical(ChainModel model, Vec3f v, float angle, int uvu) {
+    private void buildFaceVertical(ChainModel.Builder builder, Vec3f v, float angle, int uvu) {
         float actualSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
         Vec3f normal = new Vec3f((float)Math.cos(Math.toRadians(angle)), 0, (float)Math.sin(Math.toRadians(angle)));
         normal.scale(CHAIN_SIZE);
@@ -100,10 +99,10 @@ public class ChainRenderer {
 
             uvv1 += actualSegmentLength / CHAIN_SCALE;
 
-            model.vertex(vert00).uv(uvu/16f, uvv0).next();
-            model.vertex(vert01).uv((uvu+3)/16f, uvv0).next();
-            model.vertex(vert11).uv((uvu+3)/16f, uvv1).next();
-            model.vertex(vert10).uv(uvu/16f, uvv1).next();
+            builder.vertex(vert00).uv(uvu/16f, uvv0).next();
+            builder.vertex(vert01).uv((uvu+3)/16f, uvv0).next();
+            builder.vertex(vert11).uv((uvu+3)/16f, uvv1).next();
+            builder.vertex(vert10).uv(uvu/16f, uvv1).next();
 
             if(lastIter_) break;
 
@@ -114,7 +113,7 @@ public class ChainRenderer {
         }
     }
 
-    private void buildFace(ChainModel model, Vec3f v, float angle, int uvu) {
+    private void buildFace(ChainModel.Builder builder, Vec3f v, float angle, int uvu) {
         float actualSegmentLength, desiredSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
         float distance = Helper.lengthOf(v), distanceXZ = (float) Math.sqrt(v.getX()*v.getX() + v.getZ()*v.getZ());
         // Original code used total distance between start and end instead of horizontal distance
@@ -174,10 +173,10 @@ public class ChainRenderer {
             uvv0 = uvv1;
             uvv1 = uvv0 + actualSegmentLength / CHAIN_SCALE;
 
-            model.vertex(vert00).uv(uvu/16f, uvv0).next();
-            model.vertex(vert01).uv((uvu+3)/16f, uvv0).next();
-            model.vertex(vert11).uv((uvu+3)/16f, uvv1).next();
-            model.vertex(vert10).uv(uvu/16f, uvv1).next();
+            builder.vertex(vert00).uv(uvu/16f, uvv0).next();
+            builder.vertex(vert01).uv((uvu+3)/16f, uvv0).next();
+            builder.vertex(vert11).uv((uvu+3)/16f, uvv1).next();
+            builder.vertex(vert10).uv(uvu/16f, uvv1).next();
 
             if(lastIter_) break;
 
