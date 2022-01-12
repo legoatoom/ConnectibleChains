@@ -42,7 +42,7 @@ public class ModEntityTypes {
                 FabricEntityTypeBuilder.create(SpawnGroup.MISC,
                         (EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new)
                         .trackRangeBlocks(10).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
-                        .dimensions(EntityDimensions.fixed(0.5F, 0.5F))
+                        .dimensions(EntityDimensions.fixed(6/16f, 0.5F))
                         .spawnableFarFromPlayer()
                         .fireImmune()
                         .build()
@@ -52,7 +52,8 @@ public class ModEntityTypes {
                 FabricEntityTypeBuilder.create(SpawnGroup.MISC,
                         (EntityType.EntityFactory<ChainCollisionEntity>) ChainCollisionEntity::new)
                         .trackRangeBlocks(10).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
-                        .dimensions(EntityDimensions.changing(0.3F, 0.3F))
+                        // 4/16 is the width of a fence
+                        .dimensions(EntityDimensions.fixed(4/16f, 0.3F))
                         .disableSaving()
                         .disableSummon()
                         .fireImmune()

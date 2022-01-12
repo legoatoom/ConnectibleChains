@@ -17,6 +17,7 @@
 
 package com.github.legoatoom.connectiblechains.client;
 
+import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
@@ -27,6 +28,7 @@ import com.github.legoatoom.connectiblechains.util.Helper;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
 import com.github.legoatoom.connectiblechains.util.PacketBufUtil;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
@@ -55,17 +57,21 @@ import java.util.UUID;
 public class ClientInitializer implements ClientModInitializer {
 
     public static final EntityModelLayer CHAIN_KNOT = new EntityModelLayer(Helper.identifier("chain_knot"), "main");
+    private static ChainKnotEntityRenderer chainKnotEntityRenderer = null;
+    private static ClientInitializer instance;
 
     @Override
     public void onInitializeClient() {
+        instance = this;
         initRenderers();
         registerReceiverClientPackages();
     }
 
     private void initRenderers() {
-
-        EntityRendererRegistry.register(ModEntityTypes.CHAIN_KNOT,
-                ChainKnotEntityRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.CHAIN_KNOT, ctx -> {
+            chainKnotEntityRenderer = new ChainKnotEntityRenderer(ctx);
+            return chainKnotEntityRenderer;
+        });
         EntityRendererRegistry.register(ModEntityTypes.CHAIN_COLLISION,
                 ChainCollisionEntityRenderer::new);
 
@@ -137,7 +143,6 @@ public class ClientInitializer implements ClientModInitializer {
                         if (e == null){
                             throw new IllegalStateException("Failed to create instance of entity \"" + entityTypeID + "\"");
                         }
-//                        e.updateTrackedPosition(pos);
                         e.setPosition(pos.x, pos.y, pos.z);
                         e.setPitch(pitch);
                         e.setYaw(yaw);
@@ -148,7 +153,6 @@ public class ClientInitializer implements ClientModInitializer {
 
                             ((ChainCollisionEntity) e).setStartOwnerId(startId);
                             ((ChainCollisionEntity) e).setEndOwnerId(endId);
-                            e.setBoundingBox(new Box(pos, pos).expand(.01d, 0, .01d));
                         }
                         MinecraftClient.getInstance().world.addEntity(entityId, e);
                     });
@@ -172,19 +176,34 @@ public class ClientInitializer implements ClientModInitializer {
                         if (e == null){
                             throw new IllegalStateException("Failed to create instance of entity \"" + entityTypeID + "\"");
                         }
-//                        e.updateTrackedPosition(pos);
                         e.setPosition(pos.x, pos.y, pos.z);
                         e.setPitch(pitch);
                         e.setYaw(yaw);
                         e.setId(entityId);
                         e.setUuid(uuid);
                         e.setVelocity(Vec3d.ZERO);
-                        if (e instanceof ChainKnotEntity){
-                            e.setBoundingBox(new Box(pos.getX() - 0.1875D, pos.getY() - 0.25D + 0.125D, pos.getZ() - 0.1875D,
-                                    pos.getX() + 0.1875D, pos.getY() + 0.25D + 0.125D, pos.getZ() + 0.1875D));
-                        }
                         MinecraftClient.getInstance().world.addEntity(entityId, e);
                     });
+                });
+
+        ClientPlayConnectionEvents.INIT.register((handler, client) -> {
+            // Load client config
+            ConnectibleChains.runtimeConfig.copyFrom(ConnectibleChains.fileConfig);
+            getChainKnotEntityRenderer().getChainRenderer().purge();
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(NetworkingPackages.S2C_CONFIG_SYNC_PACKET,
+                (client, handler, packetByteBuf, responseSender) -> {
+                    // Apply server config
+                    if(client.isInSingleplayer()) {
+                        return;
+                    }
+                    try {
+                        ConnectibleChains.runtimeConfig.readPacket(packetByteBuf);
+                    } catch (Exception e) {
+                        LogManager.getLogger().error("Could not deserialize config: ", e);
+                    }
+                    getChainKnotEntityRenderer().getChainRenderer().purge();
                 });
 
         ClientPickBlockGatherCallback.EVENT.register((player, result) -> {
@@ -196,6 +215,13 @@ public class ClientInitializer implements ClientModInitializer {
             }
             return ItemStack.EMPTY;
         });
+    }
 
+    public ChainKnotEntityRenderer getChainKnotEntityRenderer() {
+        return chainKnotEntityRenderer;
+    }
+
+    public static ClientInitializer getInstance() {
+        return instance;
     }
 }

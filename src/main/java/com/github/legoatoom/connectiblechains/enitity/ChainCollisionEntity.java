@@ -66,8 +66,7 @@ public class ChainCollisionEntity extends Entity {
         this(ModEntityTypes.CHAIN_COLLISION, world);
         this.startOwnerId = startOwnerId;
         this.endOwnerId = endOwnerId;
-        this.setPos(x, y, z);
-        this.setBoundingBox(new Box(x, y, z, x, y, z).expand(.01d, 0, .01d));
+        this.setPosition(x, y, z);
     }
 
     @Override
