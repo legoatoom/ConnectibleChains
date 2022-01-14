@@ -8,7 +8,7 @@
 </p>
 <br>
 <p align="center">
-      <a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img alt="GitHub" src="https://img.shields.io/github/license/legoatoom/ConnectibleChains"></a>
+      <a href="https://www.gnu.org/licenses/lgpl-3.0.en.html"><img alt="GitHub" src="https://img.shields.io/github/license/legoatoom/ConnectibleChains"></a>
         <a href="https://github.com/legoatoom/ConnectibleChains/releases"><img src="https://img.shields.io/github/v/release/legoatoom/ConnectibleChains"></a>
         <a href="https://github.com/legoatoom/ConnectibleChains/issues"><img src="https://img.shields.io/github/issues-raw/legoatoom/ConnectibleChains"></a>
         <br>
@@ -38,7 +38,7 @@ Sneak on fences if you do want to place them normally.
 If you have encountered any bugs or have some feedback, go to the GitHub [issues](https://github.com/legoatoom/ConnectibleChains/issues) page.
 
 #### Forge?
-There is a Forge Port that is currently doesn't have collisions. Made by lilypuree \
+There is a Forge Port made for 1.16.5 and is considered outdated. Made by lilypuree \
 https://www.curseforge.com/minecraft/mc-mods/connectible-chains-forge
 
 
