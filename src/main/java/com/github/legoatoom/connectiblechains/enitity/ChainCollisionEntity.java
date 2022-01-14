@@ -33,7 +33,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 
 import java.util.function.Function;
@@ -66,8 +65,7 @@ public class ChainCollisionEntity extends Entity {
         this(ModEntityTypes.CHAIN_COLLISION, world);
         this.startOwnerId = startOwnerId;
         this.endOwnerId = endOwnerId;
-        this.setPos(x, y, z);
-        this.setBoundingBox(new Box(x, y, z, x, y, z).expand(.01d, 0, .01d));
+        this.setPosition(x, y, z);
     }
 
     @Override

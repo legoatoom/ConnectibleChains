@@ -27,5 +27,6 @@ public class NetworkingPackages {
     public static final Identifier S2C_MULTI_CHAIN_ATTACH_PACKET_ID = Helper.identifier("s2c_multi_chain_attach_packet_id");
     public static final Identifier S2C_SPAWN_CHAIN_COLLISION_PACKET = Helper.identifier("s2c_spawn_chain_collision_packet_id");
     public static final Identifier S2C_SPAWN_CHAIN_KNOT_PACKET = Helper.identifier("s2c_spawn_chain_knot_packet_id");
+    public static final Identifier S2C_CONFIG_SYNC_PACKET = Helper.identifier("s2c_config_sync_packet_id");
 
 }

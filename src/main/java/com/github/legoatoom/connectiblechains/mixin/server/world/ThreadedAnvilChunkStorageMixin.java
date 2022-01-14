@@ -25,11 +25,12 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
-import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import net.minecraft.world.chunk.WorldChunk;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -57,7 +58,7 @@ public abstract class ThreadedAnvilChunkStorageMixin {
             method = "sendChunkDataPackets",
             at = @At(value = "TAIL")
     )
-    private void sendAttachChainPackets(ServerPlayerEntity player, Packet<?>[] packets, WorldChunk chunk, CallbackInfo ci) {
+    private void sendAttachChainPackets(ServerPlayerEntity player, MutableObject<ChunkDataS2CPacket> cachedDataPacket, WorldChunk chunk, CallbackInfo ci) {
         ObjectIterator<ThreadedAnvilChunkStorage.EntityTracker> var6 = this.entityTrackers.values().iterator();
         List<ChainKnotEntity> list = Lists.newArrayList();
 

@@ -63,16 +63,17 @@ import java.util.stream.Stream;
  * @author legoatoom
  */
 public class ChainKnotEntity extends AbstractDecorationEntity {
-
-    /**
-     * The max range of the chain.
-     */
-    private static final double MAX_RANGE = ConnectibleChains.config.getMaxChainRange();
-
+    
     /**
      * The distance when it is visible.
      */
     private static final double VISIBLE_RANGE = 2048.0D;
+
+    /**
+     * The x/z distance between {@link ChainCollisionEntity ChainCollisionEntities}.
+     * A value of 1 means they are "shoulder to shoulder"
+     */
+    private static final float COLLIDER_SPACING = 1.5f;
 
     /**
      * A map that holds a list of entity ids. These entities should be {@link ChainCollisionEntity ChainCollisionEntities}
@@ -109,8 +110,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     public ChainKnotEntity(World world, BlockPos pos) {
         super(ModEntityTypes.CHAIN_KNOT, world, pos);
         this.setPosition((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D);
-        this.setBoundingBox(new Box(this.getX() - 0.1875D, this.getY() - 0.25D + 0.125D, this.getZ() - 0.1875D, this.getX() + 0.1875D, this.getY() + 0.25D + 0.125D, this.getZ() + 0.1875D));
-//        this.teleporting = true;
         this.COLLISION_STORAGE = new HashMap<>();
     }
 
@@ -131,8 +130,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         double j = pos.getY();
         double k = pos.getZ();
         List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class,
-                new Box(i - MAX_RANGE, j - MAX_RANGE, k - MAX_RANGE,
-                        i + MAX_RANGE, j + MAX_RANGE, k + MAX_RANGE));
+                new Box(i - getMaxRange(), j - getMaxRange(), k - getMaxRange(),
+                        i + getMaxRange(), j + getMaxRange(), k + getMaxRange()));
 
         for (ChainKnotEntity otherKnots : list) {
             if (otherKnots.getHoldingEntities().contains(playerEntity)) {
@@ -153,6 +152,13 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     }
 
     /**
+     * The max range of the chain.
+     */
+    public static double getMaxRange() {
+        return ConnectibleChains.runtimeConfig.getMaxChainRange();
+    }
+
+    /**
      * This entity does not want to set a facing.
      */
     public void setFacing(Direction facing) {
@@ -163,7 +169,9 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      */
     protected void updateAttachmentPosition() {
         this.setPos((double) this.attachmentPos.getX() + 0.5D, (double) this.attachmentPos.getY() + 0.5D, (double) this.attachmentPos.getZ() + 0.5D);
-        this.setBoundingBox(new Box(this.getX() - 0.1875D, this.getY() - 0.25D + 0.125D, this.getZ() - 0.1875D, this.getX() + 0.1875D, this.getY() + 0.25D + 0.125D, this.getZ() + 0.1875D));
+        double w = this.getType().getWidth() / 2.0;
+        double h = this.getType().getHeight();
+        this.setBoundingBox(new Box(this.getX() - w, this.getY(), this.getZ() - w, this.getX() + w, this.getY() + h, this.getZ() + w));
     }
 
     /**
@@ -174,24 +182,25 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      */
     @Override
     public void tick() {
-        if (!this.world.isClient) {
-            if (this.getY() < -64.0D) {
-                this.tickInVoid();
-            }
-            this.updateChains();
+        if (this.world.isClient) {
+            return;
+        }
+        if (this.getY() < -64.0D) {
+            this.tickInVoid();
+        }
+        this.updateChains();
 
-            if (this.obstructionCheckCounter++ == 100) {
-                this.obstructionCheckCounter = 0;
-                if (!isRemoved() && !this.canStayAttached()) {
-                    ArrayList<Entity> list = this.getHoldingEntities();
-                    for (Entity entity : list) {
-                        if (entity instanceof ChainKnotEntity) {
-                            damageLink(false, (ChainKnotEntity) entity);
-                        }
+        if (this.obstructionCheckCounter++ == 100) {
+            this.obstructionCheckCounter = 0;
+            if (!isRemoved() && !this.canStayAttached()) {
+                ArrayList<Entity> list = this.getHoldingEntities();
+                for (Entity entity : list) {
+                    if (entity instanceof ChainKnotEntity) {
+                        damageLink(false, (ChainKnotEntity) entity);
                     }
-                    this.remove(RemovalReason.KILLED);
-                    this.onBreak(null);
                 }
+                this.remove(RemovalReason.KILLED);
+                this.onBreak(null);
             }
         }
     }
@@ -237,10 +246,10 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
             if (source.getSource() instanceof PersistentProjectileEntity) {
                 return false;
             }
-            if (sourceEntity instanceof PlayerEntity) {
+            if (sourceEntity instanceof PlayerEntity player) {
                 boolean isCreative = ((PlayerEntity) sourceEntity).isCreative();
-                if (!((PlayerEntity) sourceEntity).getMainHandStack().isEmpty()
-                        && FabricToolTags.SHEARS.contains(((PlayerEntity) sourceEntity).getMainHandStack().getItem())) {
+                if (!player.getMainHandStack().isEmpty()
+                        && FabricToolTags.SHEARS.contains(player.getMainHandStack().getItem())) {
                     ArrayList<Entity> list = this.getHoldingEntities();
                     for (Entity entity : list) {
                         if (entity instanceof ChainKnotEntity) {
@@ -326,7 +335,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
     /**
      * This method will call {@link #deserializeChainTag(NbtCompound)} if the {@link #chainTags} has any tags.
-     * It will also break all connections that are larger than the {@link #MAX_RANGE}
+     * It will also break all connections that are larger than the {@link #getMaxRange()}
      */
     private void updateChains() {
         if (chainTags != null) {
@@ -339,11 +348,19 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
         Entity[] entitySet = holdingEntities.values().toArray(new Entity[0]).clone();
         for (Entity entity : entitySet) {
-            if (entity != null) {
-                if (!this.isAlive() || !entity.isAlive() || entity.getPos().squaredDistanceTo(this.getPos()) > MAX_RANGE * MAX_RANGE) {
-                    this.detachChain(entity, true,  !(entity instanceof PlayerEntity && ((PlayerEntity) entity).isCreative()));
-                    onBreak(null);
+            if (entity == null) continue;
+            if (!this.isAlive() || !entity.isAlive() || entity.getPos().squaredDistanceTo(this.getPos()) > getMaxRange() * getMaxRange()) {
+                if (entity instanceof ChainKnotEntity knot) {
+                    damageLink(false, knot);
+                    continue;
                 }
+
+                boolean drop = true;
+                if(entity instanceof PlayerEntity player) {
+                     drop = !player.isCreative();
+                }
+                this.detachChain(entity, true, drop);
+                onBreak(null);
             }
         }
     }
@@ -458,26 +475,25 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      * @param dropItem should we drop an item?
      */
     public void detachChain(Entity entity, boolean sendPacket, boolean dropItem) {
-        if (entity != null) {
+        if (entity == null) return;
 
-            this.holdingEntities.remove(entity.getId());
-            if (!this.world.isClient() && dropItem && this.world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
-                Vec3d middle = Helper.middleOf(getPos(), entity.getPos());
-                ItemEntity entity1 = new ItemEntity(world, middle.x, middle.y, middle.z, new ItemStack(Items.CHAIN));
-                entity1.setToDefaultPickupDelay();
-                this.world.spawnEntity(entity1);
-            }
+        this.holdingEntities.remove(entity.getId());
+        if (!this.world.isClient() && dropItem && this.world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
+            Vec3d middle = Helper.middleOf(getPos(), entity.getPos());
+            ItemEntity entity1 = new ItemEntity(world, middle.x, middle.y, middle.z, new ItemStack(Items.CHAIN));
+            entity1.setToDefaultPickupDelay();
+            this.world.spawnEntity(entity1);
+        }
 
-            if (!this.world.isClient() && sendPacket && this.world instanceof ServerWorld) {
-                if (entity instanceof ChainKnotEntity) {
-                    ((ChainKnotEntity) entity).holdersCount--;
-                    if (this.holdersCount <= 0 && getHoldingEntities().isEmpty()) {
-                        this.remove(RemovalReason.DISCARDED);
-                    }
-                }
-                deleteCollision(entity);
-                sendDetachChainPacket(entity.getId());
+        if (!this.world.isClient() && sendPacket && this.world instanceof ServerWorld) {
+            if (entity instanceof ChainKnotEntity) {
+                ((ChainKnotEntity) entity).holdersCount--;
             }
+            if (this.holdersCount <= 0 && getHoldingEntities().isEmpty()) {
+                this.remove(RemovalReason.DISCARDED);
+            }
+            deleteCollision(entity);
+            sendDetachChainPacket(entity.getId());
         }
     }
 
@@ -494,35 +510,64 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         if (COLLISION_STORAGE.containsKey(entity.getId())) return;
 
         double distance = this.distanceTo(entity);
-        double a = .69 / distance;
-        double v = a;
+        double step = COLLIDER_SPACING*Math.sqrt(Math.pow(ModEntityTypes.CHAIN_COLLISION.getWidth(), 2)*2) / distance;
+        double v = step;
+        double centerHoldout = ModEntityTypes.CHAIN_COLLISION.getWidth() / distance;
 
         ArrayList<Integer> entityIdList = new ArrayList<>();
-        double x1, x2, y1, y2, z1, z2;
-        double offset = 0.2D;
-        while (v <= 1 - (a / 2)) {
-            x1 = MathHelper.lerp(v, this.getX(), entity.getX());
-            y1 = this.getY() + Helper.drip2((v * distance), distance, entity.getY() - this.getY()) + offset;
-            z1 = MathHelper.lerp(v, this.getZ(), entity.getZ());
-            x2 = MathHelper.lerp(v, entity.getX(), this.getX());
-            y2 = entity.getY() + Helper.drip2((v * distance), distance, this.getY() - entity.getY()) + offset;
-            z2 = MathHelper.lerp(v, entity.getZ(), this.getZ());
-            ChainCollisionEntity c1 = new ChainCollisionEntity(this.world, x1, y1, z1, this.getId(), entity.getId());
-            ChainCollisionEntity c2 = new ChainCollisionEntity(this.world, x2, y2, z2, this.getId(), entity.getId());
+        while (v < 0.5 - centerHoldout) {
+            Entity collider1 = spawnCollision(false, this, entity, v);
+            if(collider1 != null) entityIdList.add(collider1.getId());
+            Entity collider2 = spawnCollision(true, this, entity, v);
+            if(collider2 != null) entityIdList.add(collider2.getId());
 
-            if (world.spawnEntity(c1)) {
-                entityIdList.add(c1.getId());
-            } else {
-                LOGGER.warn("Tried to summon collision entity for a chain, failed to do so");
-            }
-            if (world.spawnEntity(c2)) {
-                entityIdList.add(c2.getId());
-            } else {
-                LOGGER.warn("Tried to summon collision entity for a chain, failed to do so");
-            }
-            v = v + a;
+            v += step;
         }
+
+        Entity centerCollider = spawnCollision(false,this, entity, 0.5);
+        if(centerCollider != null) entityIdList.add(centerCollider.getId());
+
         this.COLLISION_STORAGE.put(entity.getId(), entityIdList);
+    }
+
+    /**
+     * Spawns a collider at v percent between entity1 and entity2
+     * @param reverse Reverse start and end
+     * @param start the entity at v=0
+     * @param end the entity at v=1
+     * @param v percent of the distance
+     * @return {@link ChainCollisionEntity} or null
+     */
+    @Nullable
+    private Entity spawnCollision(boolean reverse, Entity start, Entity end, double v) {
+        Vec3d startPos = start.getPos().add(start.getLeashOffset());
+        Vec3d endPos = end.getPos().add(end.getLeashOffset());
+
+        Vec3d tmp = endPos;
+        if(reverse) {
+            endPos = startPos;
+            startPos = tmp;
+        }
+
+        Vec3f offset = Helper.getChainOffset(startPos, endPos);
+        startPos = startPos.add(offset.getX(), 0, offset.getZ());
+        endPos = endPos.add(-offset.getX(), 0, -offset.getZ());
+
+        double distance = startPos.distanceTo(endPos);
+
+        double x = MathHelper.lerp(v, startPos.getX(), endPos.getX());
+        double y = startPos.getY() + Helper.drip2((v * distance), distance, endPos.getY() - startPos.getY());
+        double z = MathHelper.lerp(v, startPos.getZ(), endPos.getZ());
+
+        y += -ModEntityTypes.CHAIN_COLLISION.getHeight() + 1/16f;
+
+        ChainCollisionEntity c = new ChainCollisionEntity(this.world, x, y, z, start.getId(), end.getId());
+        if (world.spawnEntity(c)) {
+            return c;
+        } else {
+            LOGGER.warn("Tried to summon collision entity for a chain, failed to do so");
+            return null;
+        }
     }
 
     /**
@@ -694,13 +739,17 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         return EntitySpawnPacketCreator.create(this, NetworkingPackages.S2C_SPAWN_CHAIN_KNOT_PACKET, extraData);
     }
 
+    public Vec3d getLeashOffset() {
+        return new Vec3d(0, 5/16f, 0);
+    }
+
     /**
-     * Not sure what this does but {@link net.minecraft.entity.decoration.LeashKnotEntity#method_30951(float)} has it.
+     * Not sure what this does but {@link net.minecraft.entity.decoration.LeashKnotEntity#getLeashPos(float)} has it.
      */
     @Environment(EnvType.CLIENT)
     @Override
-    public Vec3d method_30951(float f) {
-        return this.getLerpedPos(f).add(0.0D, 0.2D, 0.0D);
+    public Vec3d getLeashPos(float f) {
+        return this.getLerpedPos(f).add(0.0D, 5/16f, 0.0D);
     }
 
     /**

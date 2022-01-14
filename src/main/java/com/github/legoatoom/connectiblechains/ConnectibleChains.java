@@ -18,17 +18,22 @@
 package com.github.legoatoom.connectiblechains;
 
 
+import com.github.legoatoom.connectiblechains.client.ClientInitializer;
 import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
 import me.shedaniel.autoconfig.AutoConfig;
+import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.block.Block;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -48,8 +53,13 @@ public class ConnectibleChains implements ModInitializer {
     public static final String MODID = "connectiblechains";
     /**
      * ModConfigs are helpful if people keep demanding for your chains to get longer...
+     * File config is what's saved on disk, runtimeConfig should be used in most cases
      */
-    public static ModConfig config;
+    public static ModConfig fileConfig;
+    /**
+     * Runtime config is a mix of the client and server config and should not be saved to disk
+     */
+    public static ModConfig runtimeConfig;
 
     /**
      * Because of how mods work, this function is called always when a player uses right click.
@@ -106,12 +116,27 @@ public class ConnectibleChains implements ModInitializer {
      */
     @Override
     public void onInitialize() {
-
         ModEntityTypes.init();
         AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
-        config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
+        ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
+        fileConfig = configHolder.getConfig();
+        runtimeConfig = new ModConfig().copyFrom(fileConfig);
+        configHolder.registerSaveListener((holder, modConfig) -> {
+            ClientInitializer clientInitializer = ClientInitializer.getInstance();
+            if(clientInitializer != null) {
+                clientInitializer.getChainKnotEntityRenderer().getChainRenderer().purge();
+            }
+            IntegratedServer server = MinecraftClient.getInstance().getServer();
+            if(server != null) {
+                fileConfig.syncToClients(server);
+                runtimeConfig.copyFrom(fileConfig);
+            }
+            return ActionResult.PASS;
+        });
 
         UseBlockCallback.EVENT.register(ConnectibleChains::chainUseEvent);
+
+        ServerPlayConnectionEvents.INIT.register((handler, server) -> fileConfig.syncToClient(handler.getPlayer()));
     }
 
 }
