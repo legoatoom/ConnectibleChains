@@ -27,10 +27,8 @@ These chains have collision but can be broken when attacking it with a shear. \
 Sneak on fences if you do want to place them normally.
 
 #### Images
-<h6>Drawbridge</h6>
-<img src="https://raw.githubusercontent.com/legoatoom/ConnectibleChains/master/src/main/resources/assets/images/drawbridge.png" height="250px">
 <h6>Path</h6>
-<img src="https://raw.githubusercontent.com/legoatoom/ConnectibleChains/master/src/main/resources/assets/images/path.png" height="250px">
+<img src="https://raw.githubusercontent.com/legoatoom/ConnectibleChains/9c61b5c2fbe298f6dc01db78fd62d47bf363a673/src/main/resources/assets/images/2022-01-14_22.03.12.png" height="250px">
 
 
 #### Issues
