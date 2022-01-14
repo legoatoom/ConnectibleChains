@@ -6,14 +6,15 @@
   "name": "Connectible Chains",
   "description": "Connect your fences with a decorative chain!",
   "authors": [
-    "legoatoom"
+    "legoatoom",
+    "Qendolin"
   ],
   "contact": {
     "homepage": "https://github.com/legoatoom/ConnectibleChains",
     "sources": "https://github.com/legoatoom/ConnectibleChains"
   },
 
-  "license": "GPL-3.0",
+  "license": "LGPL-3.0",
   "icon": "assets/icon.png",
 
   "environment": "*",

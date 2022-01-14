@@ -53,7 +53,7 @@ public class ModEntityTypes {
                         (EntityType.EntityFactory<ChainCollisionEntity>) ChainCollisionEntity::new)
                         .trackRangeBlocks(10).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
                         // 4/16 is the width of a fence
-                        .dimensions(EntityDimensions.fixed(4/16f, 0.3F))
+                        .dimensions(EntityDimensions.fixed(4/16f, 4/16f))
                         .disableSaving()
                         .disableSummon()
                         .fireImmune()
