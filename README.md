@@ -8,7 +8,7 @@
 </p>
 <br>
 <p align="center">
-      <a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img alt="GitHub" src="https://img.shields.io/github/license/legoatoom/ConnectibleChains"></a>
+      <a href="https://www.gnu.org/licenses/lgpl-3.0.en.html"><img alt="GitHub" src="https://img.shields.io/github/license/legoatoom/ConnectibleChains"></a>
         <a href="https://github.com/legoatoom/ConnectibleChains/releases"><img src="https://img.shields.io/github/v/release/legoatoom/ConnectibleChains"></a>
         <a href="https://github.com/legoatoom/ConnectibleChains/issues"><img src="https://img.shields.io/github/issues-raw/legoatoom/ConnectibleChains"></a>
         <br>
@@ -27,10 +27,8 @@ These chains have collision but can be broken when attacking it with a shear. \
 Sneak on fences if you do want to place them normally.
 
 #### Images
-<h6>Drawbridge</h6>
-<img src="https://raw.githubusercontent.com/legoatoom/ConnectibleChains/master/src/main/resources/assets/images/drawbridge.png" height="250px">
 <h6>Path</h6>
-<img src="https://raw.githubusercontent.com/legoatoom/ConnectibleChains/master/src/main/resources/assets/images/path.png" height="250px">
+<img src="https://raw.githubusercontent.com/legoatoom/ConnectibleChains/9c61b5c2fbe298f6dc01db78fd62d47bf363a673/src/main/resources/assets/images/2022-01-14_22.03.12.png" height="250px">
 
 
 #### Issues
@@ -38,7 +36,7 @@ Sneak on fences if you do want to place them normally.
 If you have encountered any bugs or have some feedback, go to the GitHub [issues](https://github.com/legoatoom/ConnectibleChains/issues) page.
 
 #### Forge?
-There is a Forge Port that is currently doesn't have collisions. Made by lilypuree \
+There is a Forge Port made for 1.16.5 and is considered outdated. Made by lilypuree \
 https://www.curseforge.com/minecraft/mc-mods/connectible-chains-forge
 
 
@@ -47,10 +45,9 @@ https://www.curseforge.com/minecraft/mc-mods/connectible-chains-forge
 If there are invisible collisions for some reason, hold a shear while
 having entity hitboxes on (F3+B) to see the collisions and then attack them to remove them.
 
-Currently, I do not want to add this functionality to chains from other mods.
+I am currently considering adding chain's from other mods, if you have any in particular feel free to create an issue about it on github.
 
-For resourcepacks, the chain around the fence can be altered.\
-The chain connection can sadly not be changed similarly to lead connections.
+
 
 
 

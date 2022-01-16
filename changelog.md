@@ -6,6 +6,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.0.0] - 12022-01-14
+### Fixed
+- Fixed Collision doesn't work for mobs #7
+- Fixed Max Chain Distance only taking effect after restart
+- Improved collider placement
+- Fixed left over knots when a chain breaks because it's too long
+- Improved lang file a little
+- Sync chain config to client
+- Replaced chain line renderer fixing many issues
+- Fixed UV stretching (In some cases the pixels still aren't acute trapezoids but obtuse)
+- Fixed hard coded texture
+- Fixed very high poly count
+- Added adjustable quality setting
+- Fixed pixel gaps between polygons
+- Added model caching
+- Added debug rendering
+- Improved lighting
+- Fixed incorrect chain position on first frames after a new connection
+
+### Credit
+- Thanks to Qendolin for this update. 
+
 ## [1.2.3] - 12021-10-03
 ### Fixed
 - Issue of connecting chains twice
