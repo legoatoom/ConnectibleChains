@@ -33,7 +33,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.server.integrated.IntegratedServer;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -121,18 +121,6 @@ public class ConnectibleChains implements ModInitializer {
         ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
         fileConfig = configHolder.getConfig();
         runtimeConfig = new ModConfig().copyFrom(fileConfig);
-        configHolder.registerSaveListener((holder, modConfig) -> {
-            ClientInitializer clientInitializer = ClientInitializer.getInstance();
-            if(clientInitializer != null) {
-                clientInitializer.getChainKnotEntityRenderer().getChainRenderer().purge();
-            }
-            IntegratedServer server = MinecraftClient.getInstance().getServer();
-            if(server != null) {
-                fileConfig.syncToClients(server);
-                runtimeConfig.copyFrom(fileConfig);
-            }
-            return ActionResult.PASS;
-        });
 
         UseBlockCallback.EVENT.register(ConnectibleChains::chainUseEvent);
 

@@ -21,12 +21,15 @@ import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
+import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.enitity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
 import com.github.legoatoom.connectiblechains.util.PacketBufUtil;
+import me.shedaniel.autoconfig.AutoConfig;
+import me.shedaniel.autoconfig.ConfigHolder;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -39,6 +42,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
@@ -198,6 +203,7 @@ public class ClientInitializer implements ClientModInitializer {
                         return;
                     }
                     try {
+                        LogManager.getLogger(ConnectibleChains.MODID).info("Received config from server");
                         ConnectibleChains.runtimeConfig.readPacket(packetByteBuf);
                     } catch (Exception e) {
                         LogManager.getLogger().error("Could not deserialize config: ", e);
@@ -213,6 +219,21 @@ public class ClientInitializer implements ClientModInitializer {
                 }
             }
             return ItemStack.EMPTY;
+        });
+
+        ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
+        configHolder.registerSaveListener((holder, modConfig) -> {
+            ClientInitializer clientInitializer = ClientInitializer.getInstance();
+            if(clientInitializer != null) {
+                clientInitializer.getChainKnotEntityRenderer().getChainRenderer().purge();
+            }
+            MinecraftServer server = MinecraftClient.getInstance().getServer();
+            if(server != null) {
+                LogManager.getLogger(ConnectibleChains.MODID).info("Syncing config to clients");
+                ConnectibleChains.fileConfig.syncToClients(server);
+                ConnectibleChains.runtimeConfig.copyFrom(ConnectibleChains.fileConfig);
+            }
+            return ActionResult.PASS;
         });
     }
 
