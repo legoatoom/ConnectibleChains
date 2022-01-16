@@ -203,7 +203,7 @@ public class ClientInitializer implements ClientModInitializer {
                         return;
                     }
                     try {
-                        LogManager.getLogger(ConnectibleChains.MODID).info("Received config from server");
+                        LogManager.getLogger(ConnectibleChains.MODID).info("Received {} config from server", ConnectibleChains.MODID);
                         ConnectibleChains.runtimeConfig.readPacket(packetByteBuf);
                     } catch (Exception e) {
                         LogManager.getLogger().error("Could not deserialize config: ", e);
