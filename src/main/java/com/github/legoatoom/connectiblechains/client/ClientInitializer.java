@@ -40,6 +40,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.MinecraftServer;
@@ -93,7 +94,7 @@ public class ClientInitializer implements ClientModInitializer {
                             if (entity instanceof ChainKnotEntity) {
                                 ((ChainKnotEntity) entity).addHoldingEntityId(fromTo[1], fromPlayer);
                             } else {
-                                LogManager.getLogger().warn("Received Attach Chain Package to unknown Entity.");
+                                ConnectibleChains.LOGGER.warn("Received Attach Chain Package to unknown Entity.");
                             }
                         }
                     });
@@ -133,8 +134,6 @@ public class ClientInitializer implements ClientModInitializer {
                     UUID uuid = buf.readUuid();
                     int entityId = buf.readVarInt();
                     Vec3d pos = PacketBufUtil.readVec3d(buf);
-                    float pitch = PacketBufUtil.readAngle(buf);
-                    float yaw = PacketBufUtil.readAngle(buf);
 
                     int startId = buf.readVarInt();
                     int endId = buf.readVarInt();
@@ -148,13 +147,10 @@ public class ClientInitializer implements ClientModInitializer {
                             throw new IllegalStateException("Failed to create instance of entity \"" + entityTypeID + "\"");
                         }
                         e.setPosition(pos.x, pos.y, pos.z);
-                        e.setPitch(pitch);
-                        e.setYaw(yaw);
                         e.setId(entityId);
                         e.setUuid(uuid);
                         e.setVelocity(Vec3d.ZERO);
                         if (e instanceof ChainCollisionEntity){
-
                             ((ChainCollisionEntity) e).setStartOwnerId(startId);
                             ((ChainCollisionEntity) e).setEndOwnerId(endId);
                         }
@@ -169,8 +165,7 @@ public class ClientInitializer implements ClientModInitializer {
                     UUID uuid = buf.readUuid();
                     int entityId = buf.readVarInt();
                     Vec3d pos = PacketBufUtil.readVec3d(buf);
-                    float pitch = PacketBufUtil.readAngle(buf);
-                    float yaw = PacketBufUtil.readAngle(buf);
+                    Item item = Registry.ITEM.get(buf.readInt());
 
                     client.execute(() -> {
                         if (MinecraftClient.getInstance().world == null){
@@ -181,11 +176,12 @@ public class ClientInitializer implements ClientModInitializer {
                             throw new IllegalStateException("Failed to create instance of entity \"" + entityTypeID + "\"");
                         }
                         e.setPosition(pos.x, pos.y, pos.z);
-                        e.setPitch(pitch);
-                        e.setYaw(yaw);
                         e.setId(entityId);
                         e.setUuid(uuid);
                         e.setVelocity(Vec3d.ZERO);
+                        if(e instanceof ChainKnotEntity knot) {
+                            knot.setItem(item);
+                        }
                         MinecraftClient.getInstance().world.addEntity(entityId, e);
                     });
                 });
@@ -203,10 +199,10 @@ public class ClientInitializer implements ClientModInitializer {
                         return;
                     }
                     try {
-                        LogManager.getLogger(ConnectibleChains.MODID).info("Received {} config from server", ConnectibleChains.MODID);
+                        ConnectibleChains.LOGGER.info("Received {} config from server", ConnectibleChains.MODID);
                         ConnectibleChains.runtimeConfig.readPacket(packetByteBuf);
                     } catch (Exception e) {
-                        LogManager.getLogger().error("Could not deserialize config: ", e);
+                        ConnectibleChains.LOGGER.error("Could not deserialize config: ", e);
                     }
                     getChainKnotEntityRenderer().getChainRenderer().purge();
                 });
@@ -214,8 +210,12 @@ public class ClientInitializer implements ClientModInitializer {
         ClientPickBlockGatherCallback.EVENT.register((player, result) -> {
             if (result instanceof EntityHitResult){
                 Entity entity = ((EntityHitResult) result).getEntity();
-                if (entity instanceof ChainKnotEntity || entity instanceof ChainCollisionEntity){
-                    return new ItemStack(Items.CHAIN);
+                if (entity instanceof ChainKnotEntity knot) {
+                    return new ItemStack(knot.getItem());
+                } else if (entity instanceof ChainCollisionEntity collision) {
+                    ChainKnotEntity knot = (ChainKnotEntity) player.world.getEntityById(collision.getStartOwnerId());
+                    assert knot != null;
+                    return new ItemStack(knot.getItem());
                 }
             }
             return ItemStack.EMPTY;
@@ -229,7 +229,7 @@ public class ClientInitializer implements ClientModInitializer {
             }
             MinecraftServer server = MinecraftClient.getInstance().getServer();
             if(server != null) {
-                LogManager.getLogger(ConnectibleChains.MODID).info("Syncing config to clients");
+                ConnectibleChains.LOGGER.info("Syncing config to clients");
                 ConnectibleChains.fileConfig.syncToClients(server);
                 ConnectibleChains.runtimeConfig.copyFrom(ConnectibleChains.fileConfig);
             }

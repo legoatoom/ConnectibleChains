@@ -17,11 +17,13 @@
 
 package com.github.legoatoom.connectiblechains.enitity;
 
+import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
+import net.minecraft.item.Items;
 import net.minecraft.util.registry.Registry;
 import org.apache.logging.log4j.LogManager;
 
@@ -40,7 +42,7 @@ public class ModEntityTypes {
         CHAIN_KNOT = Registry.register(
                 Registry.ENTITY_TYPE, Helper.identifier("chain_knot") ,
                 FabricEntityTypeBuilder.create(SpawnGroup.MISC,
-                        (EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new)
+                         (EntityType.EntityFactory<ChainKnotEntity>) (world, type) -> new ChainKnotEntity(world, type, Items.CHAIN))
                         .trackRangeBlocks(10).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
                         .dimensions(EntityDimensions.fixed(6/16f, 0.5F))
                         .spawnableFarFromPlayer()
@@ -64,6 +66,6 @@ public class ModEntityTypes {
 
     @SuppressWarnings("EmptyMethod")
     public static void init() {
-        LogManager.getLogger("ConnectibleChains").info("Initializing ModEntityTypes...");
+        ConnectibleChains.LOGGER.info("Initializing ModEntityTypes...");
     }
 }

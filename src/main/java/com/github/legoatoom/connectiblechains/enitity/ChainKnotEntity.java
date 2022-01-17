@@ -18,6 +18,7 @@
 package com.github.legoatoom.connectiblechains.enitity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.compat.ChainItems;
 import com.github.legoatoom.connectiblechains.util.EntitySpawnPacketCreator;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
@@ -33,6 +34,7 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.PersistentProjectileEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
@@ -46,7 +48,9 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.*;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
@@ -102,15 +106,22 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      */
     private int obstructionCheckCounter;
 
-    public ChainKnotEntity(EntityType<? extends ChainKnotEntity> entityType, World world) {
+    /**
+     * The chain item, for mod compat
+     */
+    private Item item;
+
+    public ChainKnotEntity(EntityType<? extends ChainKnotEntity> entityType, World world, Item item) {
         super(entityType, world);
         this.COLLISION_STORAGE = new HashMap<>();
+        this.item = item;
     }
 
-    public ChainKnotEntity(World world, BlockPos pos) {
+    public ChainKnotEntity(World world, BlockPos pos, Item item) {
         super(ModEntityTypes.CHAIN_KNOT, world, pos);
         this.setPosition((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D);
         this.COLLISION_STORAGE = new HashMap<>();
+        this.item = item;
     }
 
     /**
@@ -122,29 +133,32 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      * @param world The current world.
      * @param pos the position where we want to make a chainKnot.
      * @param chain nullable chainKnot if one already has one, if null, we will make one only if we have to make a connection.
+     * @param item nullable used when chain is null
      * @return boolean, if it has made a connection.
      */
-    public static Boolean tryAttachHeldChainsToBlock(PlayerEntity playerEntity, World world, BlockPos pos, @Nullable ChainKnotEntity chain) {
+    public static boolean tryAttachHeldChainsToBlock(PlayerEntity playerEntity, World world, BlockPos pos, @Nullable ChainKnotEntity chain, Item item) {
         boolean hasMadeConnection = false;
-        double i = pos.getX();
-        double j = pos.getY();
-        double k = pos.getZ();
-        List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class,
-                new Box(i - getMaxRange(), j - getMaxRange(), k - getMaxRange(),
-                        i + getMaxRange(), j + getMaxRange(), k + getMaxRange()));
+        double x = pos.getX();
+        double y = pos.getY();
+        double z = pos.getZ();
+        List<ChainKnotEntity> otherKnots = world.getNonSpectatingEntities(ChainKnotEntity.class,
+                new Box(x - getMaxRange(), y - getMaxRange(), z - getMaxRange(),
+                        x + getMaxRange(), y + getMaxRange(), z + getMaxRange()));
 
-        for (ChainKnotEntity otherKnots : list) {
-            if (otherKnots.getHoldingEntities().contains(playerEntity)) {
-                if (!otherKnots.equals(chain)) {
+        for (ChainKnotEntity otherKnot : otherKnots) {
+            if (otherKnot.getHoldingEntities().contains(playerEntity)) {
+                if (!otherKnot.equals(chain)) {
                     // We found a knot that is connected to the player and therefore needs to connect to the chain.
                     if (chain == null) {
-                        chain = new ChainKnotEntity(world, pos);
+                        chain = new ChainKnotEntity(world, pos, item);
                         world.spawnEntity(chain);
                         chain.onPlace();
                     }
 
-                    otherKnots.attachChain(chain, true, playerEntity.getId());
-                    hasMadeConnection = true;
+                    if(otherKnot.item == item) {
+                        otherKnot.attachChain(chain, true, playerEntity.getId());
+                        hasMadeConnection = true;
+                    }
                 }
             }
         }
@@ -275,24 +289,24 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      */
     @Override
     public void writeCustomDataToNbt(NbtCompound tag) {
+        tag.putString("Item", Registry.ITEM.getId(item).toString());
         boolean b = false;
         NbtList listTag = new NbtList();
         for (Entity entity : this.holdingEntities.values()) {
-            if (entity != null) {
-                NbtCompound compoundTag = new NbtCompound();
-                if (entity instanceof PlayerEntity) {
-                    UUID uuid = entity.getUuid();
-                    compoundTag.putUuid("UUID", uuid);
-                    b = true;
-                } else if (entity instanceof AbstractDecorationEntity) {
-                    BlockPos blockPos = ((AbstractDecorationEntity) entity).getDecorationBlockPos();
-                    compoundTag.putInt("X", blockPos.getX());
-                    compoundTag.putInt("Y", blockPos.getY());
-                    compoundTag.putInt("Z", blockPos.getZ());
-                    b = true;
-                }
-                listTag.add(compoundTag);
+            if (entity == null) continue;
+            NbtCompound compoundTag = new NbtCompound();
+            if (entity instanceof PlayerEntity) {
+                UUID uuid = entity.getUuid();
+                compoundTag.putUuid("UUID", uuid);
+                b = true;
+            } else if (entity instanceof AbstractDecorationEntity) {
+                BlockPos blockPos = ((AbstractDecorationEntity) entity).getDecorationBlockPos();
+                compoundTag.putInt("X", blockPos.getX());
+                compoundTag.putInt("Y", blockPos.getY());
+                compoundTag.putInt("Z", blockPos.getZ());
+                b = true;
             }
+            listTag.add(compoundTag);
         }
         if (b) {
             tag.put("Chains", listTag);
@@ -310,6 +324,9 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     public void readCustomDataFromNbt(NbtCompound tag) {
         if (tag.contains("Chains")) {
             this.chainTags = tag.getList("Chains", 10);
+        }
+        if (tag.contains("Item")) {
+            this.item = Registry.ITEM.getOrEmpty(Identifier.tryParse(tag.getString("Item"))).orElse(Items.CHAIN);
         }
     }
 
@@ -331,6 +348,14 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
     public void setPosition(double x, double y, double z) {
         super.setPosition((double) MathHelper.floor(x) + 0.5D, (double) MathHelper.floor(y) + 0.5D, (double) MathHelper.floor(z) + 0.5D);
+    }
+
+    public Item getItem() {
+        return item;
+    }
+
+    public void setItem(Item item) {
+        this.item = item;
     }
 
     /**
@@ -408,31 +433,33 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      * @see #updateChains()
      */
     private void deserializeChainTag(NbtCompound tag) {
-        if (tag != null && this.world instanceof ServerWorld) {
-            if (tag.contains("UUID")) {
-                UUID uuid = tag.getUuid("UUID");
-                Entity entity = ((ServerWorld) this.world).getEntity(uuid);
-                if (entity != null) {
-                    this.attachChain(entity, true, 0);
-                    this.chainTags.remove(tag);
-                    return;
-                }
-            } else if (tag.contains("X")) {
-                BlockPos blockPos = new BlockPos(tag.getInt("X"), tag.getInt("Y"), tag.getInt("Z"));
-                ChainKnotEntity entity = ChainKnotEntity.getOrCreate(this.world, blockPos, true);
-                if (entity != null) {
-                    this.attachChain(Objects.requireNonNull(ChainKnotEntity.getOrCreate(this.world, blockPos, false)), true, 0);
-                    this.chainTags.remove(tag);
-                }
+        if (tag == null || !(this.world instanceof ServerWorld)) {
+            return;
+        }
+
+        if (tag.contains("UUID")) {
+            UUID uuid = tag.getUuid("UUID");
+            Entity entity = ((ServerWorld) this.world).getEntity(uuid);
+            if (entity != null) {
+                this.attachChain(entity, true, 0);
+                this.chainTags.remove(tag);
                 return;
             }
-
-            // At the start the server and client need to tell each other the info.
-            // So we need to check if the object is old enough for these things to exist before we delete them.
-            if (this.age > 100) {
-                this.dropItem(Items.CHAIN);
+        } else if (tag.contains("X")) {
+            BlockPos blockPos = new BlockPos(tag.getInt("X"), tag.getInt("Y"), tag.getInt("Z"));
+            ChainKnotEntity entity = ChainKnotEntity.getOrCreate(this.world, blockPos, true, item);
+            if (entity != null) {
+                this.attachChain(Objects.requireNonNull(ChainKnotEntity.getOrCreate(this.world, blockPos, false, item)), true, 0);
                 this.chainTags.remove(tag);
             }
+            return;
+        }
+
+        // At the start the server and client need to tell each other the info.
+        // So we need to check if the object is old enough for these things to exist before we delete them.
+        if (this.age > 100) {
+            this.dropItem(item);
+            this.chainTags.remove(tag);
         }
     }
 
@@ -480,7 +507,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         this.holdingEntities.remove(entity.getId());
         if (!this.world.isClient() && dropItem && this.world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
             Vec3d middle = Helper.middleOf(getPos(), entity.getPos());
-            ItemEntity entity1 = new ItemEntity(world, middle.x, middle.y, middle.z, new ItemStack(Items.CHAIN));
+            ItemEntity entity1 = new ItemEntity(world, middle.x, middle.y, middle.z, new ItemStack(item));
             entity1.setToDefaultPickupDelay();
             this.world.spawnEntity(entity1);
         }
@@ -597,7 +624,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      * @return {@link ChainKnotEntity} or null
      */
     @Nullable
-    public static ChainKnotEntity getOrCreate(World world, BlockPos pos, Boolean hasToExist) {
+    public static ChainKnotEntity getOrCreate(World world, BlockPos pos, Boolean hasToExist, Item item) {
         int posX = pos.getX();
         int posY = pos.getY();
         int posZ = pos.getZ();
@@ -613,7 +640,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                     // If it has to exist and it doesn't, we return null.
                     return null;
                 }
-                ChainKnotEntity newChain = new ChainKnotEntity(world, pos);
+                ChainKnotEntity newChain = new ChainKnotEntity(world, pos, item);
                 world.spawnEntity(newChain);
                 newChain.onPlace();
                 return newChain;
@@ -697,16 +724,16 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         if (this.world.isClient) {
             return ActionResult.SUCCESS;
         } else {
-            boolean madeConnection = tryAttachHeldChainsToBlock(player, world, getDecorationBlockPos(), this);
+            boolean madeConnection = tryAttachHeldChainsToBlock(player, world, getDecorationBlockPos(), this, item);
 
             if (!madeConnection) {
                 if (this.getHoldingEntities().contains(player)) {
                     onBreak(null);
                     detachChain(player, true, false);
                     if (!player.isCreative()) {
-                        player.giveItemStack(new ItemStack(Items.CHAIN));
+                        player.giveItemStack(new ItemStack(item));
                     }
-                } else if (player.getStackInHand(hand).getItem().equals(Items.CHAIN)) {
+                } else if (item.equals(player.getStackInHand(hand).getItem())) {
                     onPlace();
                     attachChain(player, true, 0);
                     if (!player.isCreative()) {
@@ -735,7 +762,10 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      */
     @Override
     public Packet<?> createSpawnPacket() {
-        Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> packetByteBuf; // I have no extra data to send.
+        Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> {
+            packetByteBuf.writeInt(Registry.ITEM.getRawId(item));
+            return packetByteBuf;
+        };
         return EntitySpawnPacketCreator.create(this, NetworkingPackages.S2C_SPAWN_CHAIN_KNOT_PACKET, extraData);
     }
 

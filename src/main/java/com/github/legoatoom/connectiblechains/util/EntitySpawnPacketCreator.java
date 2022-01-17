@@ -40,8 +40,7 @@ public class EntitySpawnPacketCreator {
         byteBuf.writeVarInt(e.getId());
 
         PacketBufUtil.writeVec3d(byteBuf, e.getPos());
-        PacketBufUtil.writeAngle(byteBuf, e.getPitch());
-        PacketBufUtil.writeAngle(byteBuf, e.getYaw());
+        // pitch and yaw don't matter so don't send them
         byteBuf = extraData.apply(byteBuf);
         return ServerPlayNetworking.createS2CPacket(packetID, byteBuf);
     }

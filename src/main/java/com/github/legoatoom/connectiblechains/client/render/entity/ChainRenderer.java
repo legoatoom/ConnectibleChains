@@ -18,6 +18,7 @@
 package com.github.legoatoom.connectiblechains.client.render.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.compat.ChainItems;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.render.VertexConsumer;
@@ -30,12 +31,11 @@ import static com.github.legoatoom.connectiblechains.util.Helper.drip2prime;
 public class ChainRenderer {
     private final Object2ObjectOpenHashMap<BakeKey, ChainModel> models = new Object2ObjectOpenHashMap<>(256);
     private static final float CHAIN_SCALE = 1f;
-    private static final float CHAIN_SIZE = CHAIN_SCALE * 3/16f;
     private static final int MAX_SEGMENTS = 2048;
 
     public static class BakeKey {
         private final int hash;
-        public BakeKey(Vec3d srcPos, Vec3d dstPos) {
+        public BakeKey(Vec3d srcPos, Vec3d dstPos, ChainItems.Type type) {
             float dY = (float) (srcPos.y - dstPos.y);
             float dXZ = Helper.distanceBetween(
                     new Vec3f((float) srcPos.x, 0, (float) srcPos.z),
@@ -43,12 +43,9 @@ public class ChainRenderer {
 
             int hash = Float.floatToIntBits(dY);
             hash = 31 * hash + Float.floatToIntBits(dXZ);
+            hash = 31 * hash + type.uvSIdeA().hashCode();
+            hash = 31 * hash + type.uvSideB().hashCode();
             this.hash = hash;
-        }
-
-        @Override
-        public int hashCode() {
-            return hash;
         }
 
         @Override
@@ -61,42 +58,44 @@ public class ChainRenderer {
         }
     }
 
-    public void renderBaked(VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vec3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
+    public void renderBaked(VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vec3f chainVec, ChainItems.Type type, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model;
         if(models.containsKey(key)) {
             model = models.get(key);
         } else {
-            model = buildModel(chainVec);
+            model = buildModel(chainVec, type);
             models.put(key, model);
         }
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
     }
 
-    public void render(VertexConsumer buffer, MatrixStack matrices, Vec3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
-        ChainModel model = buildModel(chainVec);
+    public void render(VertexConsumer buffer, MatrixStack matrices, Vec3f chainVec, ChainItems.Type type, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
+        ChainModel model = buildModel(chainVec, type);
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
     }
 
-    private ChainModel buildModel(Vec3f chainVec) {
+    private ChainModel buildModel(Vec3f chainVec, ChainItems.Type type) {
         float desiredSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
         int initialCapacity = (int) (2f * Helper.lengthOf(chainVec) / desiredSegmentLength);
         ChainModel.Builder builder = ChainModel.builder(initialCapacity);
 
         if(chainVec.getX() == 0 && chainVec.getZ() == 0) {
-            buildFaceVertical(builder, chainVec, 45, 0);
-            buildFaceVertical(builder, chainVec, -45, 3);
+            buildFaceVertical(builder, chainVec, 45, type.uvSIdeA());
+            buildFaceVertical(builder, chainVec, -45, type.uvSideB());
         } else {
-            buildFace(builder, chainVec, 45, 0);
-            buildFace(builder, chainVec, -45, 3);
+            buildFace(builder, chainVec, 45, type.uvSIdeA());
+            buildFace(builder, chainVec, -45, type.uvSideB());
         }
 
         return builder.build();
     }
 
-    private void buildFaceVertical(ChainModel.Builder builder, Vec3f v, float angle, int uvu) {
+    private void buildFaceVertical(ChainModel.Builder builder, Vec3f v, float angle, ChainItems.UV uv) {
         float actualSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
+        float chainWidth = (uv.x1() - uv.x0()) / 16 * CHAIN_SCALE;
+
         Vec3f normal = new Vec3f((float)Math.cos(Math.toRadians(angle)), 0, (float)Math.sin(Math.toRadians(angle)));
-        normal.scale(CHAIN_SIZE);
+        normal.scale(chainWidth);
 
         Vec3f vert00 = new Vec3f(-normal.getX()/2, 0, -normal.getZ()/2), vert01 = vert00.copy();
         vert01.add(normal);
@@ -116,10 +115,10 @@ public class ChainRenderer {
 
             uvv1 += actualSegmentLength / CHAIN_SCALE;
 
-            builder.vertex(vert00).uv(uvu/16f, uvv0).next();
-            builder.vertex(vert01).uv((uvu+3)/16f, uvv0).next();
-            builder.vertex(vert11).uv((uvu+3)/16f, uvv1).next();
-            builder.vertex(vert10).uv(uvu/16f, uvv1).next();
+            builder.vertex(vert00).uv(uv.x0()/16f, uvv0).next();
+            builder.vertex(vert01).uv(uv.x1()/16f, uvv0).next();
+            builder.vertex(vert11).uv(uv.x1()/16f, uvv1).next();
+            builder.vertex(vert10).uv(uv.x0()/16f, uvv1).next();
 
             if(lastIter_) break;
 
@@ -130,7 +129,7 @@ public class ChainRenderer {
         }
     }
 
-    private void buildFace(ChainModel.Builder builder, Vec3f v, float angle, int uvu) {
+    private void buildFace(ChainModel.Builder builder, Vec3f v, float angle, ChainItems.UV uv) {
         float actualSegmentLength, desiredSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
         float distance = Helper.lengthOf(v), distanceXZ = (float) Math.sqrt(v.getX()*v.getX() + v.getZ()*v.getZ());
         // Original code used total distance between start and end instead of horizontal distance
@@ -140,6 +139,7 @@ public class ChainRenderer {
         Vec3f vert00 = new Vec3f(), vert01 = new Vec3f(), vert11 = new Vec3f(), vert10 = new Vec3f();
         Vec3f normal = new Vec3f(), rotAxis = new Vec3f();
 
+        float chainWidth = (uv.x1() - uv.x0()) / 16 * CHAIN_SCALE;
         float uvv0, uvv1 = 0, gradient, x, y;
         Vec3f point0 = new Vec3f(), point1 = new Vec3f();
         Quaternion rotator;
@@ -161,7 +161,7 @@ public class ChainRenderer {
         rotator = rotAxis.getDegreesQuaternion(angle);
 
         normal.rotate(rotator);
-        normal.scale(CHAIN_SIZE);
+        normal.scale(chainWidth);
         vert10.set(point0.getX() - normal.getX()/2, point0.getY() - normal.getY()/2, point0.getZ() - normal.getZ()/2);
         vert11.set(vert10);
         vert11.add(normal);
@@ -178,7 +178,7 @@ public class ChainRenderer {
             normal.set(-gradient, Math.abs(distanceXZ / distance), 0);
             normal.normalize();
             normal.rotate(rotator);
-            normal.scale(CHAIN_SIZE);
+            normal.scale(chainWidth);
 
             vert00.set(vert10);
             vert01.set(vert11);
@@ -190,10 +190,10 @@ public class ChainRenderer {
             uvv0 = uvv1;
             uvv1 = uvv0 + actualSegmentLength / CHAIN_SCALE;
 
-            builder.vertex(vert00).uv(uvu/16f, uvv0).next();
-            builder.vertex(vert01).uv((uvu+3)/16f, uvv0).next();
-            builder.vertex(vert11).uv((uvu+3)/16f, uvv1).next();
-            builder.vertex(vert10).uv(uvu/16f, uvv1).next();
+            builder.vertex(vert00).uv(uv.x0()/16f, uvv0).next();
+            builder.vertex(vert01).uv(uv.x1()/16f, uvv0).next();
+            builder.vertex(vert11).uv(uv.x1()/16f, uvv1).next();
+            builder.vertex(vert10).uv(uv.x0()/16f, uvv1).next();
 
             if(lastIter_) break;
 

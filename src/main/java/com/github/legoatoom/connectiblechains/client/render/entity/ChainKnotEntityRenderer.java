@@ -20,6 +20,7 @@ package com.github.legoatoom.connectiblechains.client.render.entity;
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.ClientInitializer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
+import com.github.legoatoom.connectiblechains.compat.ChainItems;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import net.fabricmc.api.EnvType;
@@ -56,7 +57,6 @@ import java.util.ArrayList;
 @Environment(EnvType.CLIENT)
 public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     private static final Identifier KNOT_TEXTURE = Helper.identifier("textures/entity/chain_knot.png");
-    private static final Identifier CHAIN_TEXTURE = new Identifier("textures/block/chain.png");
     private final ChainKnotEntityModel<ChainKnotEntity> model;
     private final ChainRenderer chainRenderer = new ChainRenderer();
 
@@ -165,13 +165,14 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         Vec3d leashOffset = fromEntity.getLeashOffset();
         matrices.translate(leashOffset.x, leashOffset.y, leashOffset.z);
 
+        ChainItems.Type type = ChainItems.getType(fromEntity.getItem());
         // Some further performance improvements can be made here:
         // Create a rendering layer that:
         // - does not have normals
         // - does not have an overlay
         // - does not have vertex color
         // - uses a tri strp instead of quads
-        VertexConsumer buffer = vertexConsumerProvider.getBuffer(RenderLayer.getEntityCutoutNoCull(CHAIN_TEXTURE));
+        VertexConsumer buffer = vertexConsumerProvider.getBuffer(RenderLayer.getEntityCutoutNoCull(type.texture()));
         if(ConnectibleChains.runtimeConfig.doDebugDraw()) {
             buffer = vertexConsumerProvider.getBuffer(RenderLayer.getLines());
         }
@@ -195,10 +196,10 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         matrices.multiply(Quaternion.fromEulerXyz(0, angleY, 0));
 
         if (toEntity instanceof AbstractDecorationEntity) {
-            ChainRenderer.BakeKey key = new ChainRenderer.BakeKey(fromEntity.getPos(), toEntity.getPos());
-            chainRenderer.renderBaked(buffer, matrices, key, chainVec, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd);
+            ChainRenderer.BakeKey key = new ChainRenderer.BakeKey(fromEntity.getPos(), toEntity.getPos(), type);
+            chainRenderer.renderBaked(buffer, matrices, key, chainVec, type, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd);
         } else {
-            chainRenderer.render(buffer, matrices, chainVec, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd);
+            chainRenderer.render(buffer, matrices, chainVec, type, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd);
         }
 
         matrices.pop();

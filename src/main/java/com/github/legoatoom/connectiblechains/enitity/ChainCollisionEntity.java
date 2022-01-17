@@ -192,7 +192,15 @@ public class ChainCollisionEntity extends Entity {
         this.startOwnerId = startOwnerId;
     }
 
+    public int getStartOwnerId() {
+        return startOwnerId;
+    }
+
     public void setEndOwnerId(int endOwnerId) {
         this.endOwnerId = endOwnerId;
+    }
+
+    public int getEndOwnerId() {
+        return endOwnerId;
     }
 }
