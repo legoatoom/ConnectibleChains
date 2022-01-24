@@ -33,10 +33,8 @@ import net.minecraft.entity.Entity;
 @Environment(EnvType.CLIENT)
 public class ChainKnotEntityModel<T extends Entity> extends SinglePartEntityModel<T> {
     private final ModelPart chainKnot;
-    private final ModelPart root;
 
     public ChainKnotEntityModel(ModelPart root) {
-        this.root = root;
         this.chainKnot = root.getChild("knot");
     }
 

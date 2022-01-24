@@ -23,9 +23,7 @@ import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
-import net.minecraft.item.Items;
 import net.minecraft.util.registry.Registry;
-import org.apache.logging.log4j.LogManager;
 
 /**
  * This class keeps track of all entities that this mod has.

@@ -24,7 +24,9 @@ import com.github.legoatoom.connectiblechains.util.Helper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.Quaternion;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3f;
 
 import static com.github.legoatoom.connectiblechains.util.Helper.drip2;
 import static com.github.legoatoom.connectiblechains.util.Helper.drip2prime;

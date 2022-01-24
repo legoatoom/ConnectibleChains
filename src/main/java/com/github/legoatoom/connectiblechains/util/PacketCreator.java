@@ -52,7 +52,7 @@ public class PacketCreator {
     }
 
     /**
-     * Creates a multi chain attach packet for a knot
+     * Creates a multi attach packet for a knot
      * @param knot the primary knot
      * @return Packet or null
      */

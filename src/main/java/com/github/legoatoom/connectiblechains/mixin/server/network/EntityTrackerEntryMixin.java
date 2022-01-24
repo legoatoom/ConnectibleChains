@@ -17,17 +17,10 @@
 
 package com.github.legoatoom.connectiblechains.mixin.server.network;
 
-import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
-import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
-import io.netty.buffer.Unpooled;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.Packet;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.EntityTrackerEntry;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -36,7 +29,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 @Mixin(EntityTrackerEntry.class)

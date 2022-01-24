@@ -74,23 +74,6 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             else if(link.secondary.shouldRender(x, y, z)) return true;
         }
         return super.shouldRender(entity, frustum, x, y, z);
-//        boolean should = entity.getHoldingEntities().stream().anyMatch(entity1 -> {
-//            if (entity1 instanceof ChainKnotEntity) {
-//                if (!entity1.shouldRender(x, y, z)) {
-//                    return false;
-//                } else if (entity1.ignoreCameraFrustum) {
-//                    return true;
-//                } else {
-//                    Box box = entity1.getVisibilityBoundingBox().expand(entity.distanceTo(entity1) / 2D);
-//                    if (box.isValid() || box.getAverageSideLength() == 0.0D) {
-//                        box = new Box(entity1.getX() - 2.0D, entity1.getY() - 2.0D, entity1.getZ() - 2.0D, entity1.getX() + 2.0D, entity1.getY() + 2.0D, entity1.getZ() + 2.0D);
-//                    }
-//
-//                    return frustum.isVisible(box);
-//                }
-//            } else return entity1 instanceof PlayerEntity;
-//        });
-//        return super.shouldRender(entity, frustum, x, y, z) || should;
     }
 
     @Override
@@ -103,7 +86,6 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(chainKnotEntity.getChainType().knotTexture()));
         this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
         matrices.pop();
-//        ArrayList<Entity> entities = chainKnotEntity.getHoldingEntities();
         List<ChainLink> links = chainKnotEntity.getLinks();
         for (ChainLink link : links) {
             if(link.primary != chainKnotEntity || link.isDead()) continue;
@@ -154,7 +136,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
      * the {@link net.minecraft.client.render.entity.LeashKnotEntityRenderer}.
      * Many variables therefore have simple names. I tried my best to comment and explain what everything does.
      *
-     * @param link
+     * @param link                   A link that provides the positions and type
      * @param tickDelta              Delta tick
      * @param matrices               The render matrix stack.
      * @param vertexConsumerProvider The VertexConsumerProvider, whatever it does.

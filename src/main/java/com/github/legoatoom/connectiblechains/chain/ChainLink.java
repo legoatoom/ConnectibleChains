@@ -245,7 +245,6 @@ public class ChainLink {
         y += -ModEntityTypes.CHAIN_COLLISION.getHeight() + 1/16f;
 
         ChainCollisionEntity c = new ChainCollisionEntity(primary.world, x, y, z, this);
-//        ChainCollisionEntity c = new ChainCollisionEntity(primary.world, x, y, z, start.getId(), end.getId());
         if (primary.world.spawnEntity(c)) {
             return c;
         } else {

@@ -69,8 +69,8 @@ import java.util.UUID;
 public class ClientInitializer implements ClientModInitializer {
 
     public static final EntityModelLayer CHAIN_KNOT = new EntityModelLayer(Helper.identifier("chain_knot"), "main");
-    public static ChainTypes types = new ChainTypes();
-    private static ChainKnotEntityRenderer chainKnotEntityRenderer = null;
+    public static final ChainTypes TYPES = new ChainTypes();
+    private static ChainKnotEntityRenderer chainKnotEntityRenderer;
     private static ClientInitializer instance;
 
     /**
@@ -80,19 +80,13 @@ public class ClientInitializer implements ClientModInitializer {
      */
     private static final ObjectList<IncompleteChainLink> INCOMPLETE_LINKS = new ObjectArrayList<>(256);
 
-//    /**
-//     * Collision entities which don't have a complete link yet.
-//     * Their links will try to be set each world tick.
-//     */
-//    private static final Long2ObjectMap<ObjectList<ChainCollisionEntity>> INCOMPLETE_COLLIDERS = new Long2ObjectOpenHashMap<>(256);
-
     @Override
     public void onInitializeClient() {
         instance = this;
         initRenderers();
         registerReceiverClientPackages();
         ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(
-                SidedResourceReloadListener.proxy(ResourceType.CLIENT_RESOURCES, types));
+                SidedResourceReloadListener.proxy(ResourceType.CLIENT_RESOURCES, TYPES));
 
         ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
         configHolder.registerSaveListener((holder, modConfig) -> {
@@ -122,49 +116,6 @@ public class ClientInitializer implements ClientModInitializer {
     }
 
     private void registerReceiverClientPackages() {
-//        ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_CHAIN_ATTACH_PACKET_ID,
-//                (client, handler, packetByteBuf, responseSender) -> {
-//                    int[] fromTo = packetByteBuf.readIntArray();
-//                    int fromPlayer = packetByteBuf.readInt();
-//                    client.execute(() -> {
-//                        if (client.world != null) {
-//                            Entity entity = client.world.getEntityById(fromTo[0]);
-//                            if (entity instanceof ChainKnotEntity knot) {
-//                                knot.addHoldingEntityId(fromTo[1], fromPlayer);
-//                            } else {
-//                                ConnectibleChains.LOGGER.warn("Received Attach Chain Package to unknown Entity.");
-//                            }
-//                        }
-//                    });
-//                });
-//
-//        ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_CHAIN_DETACH_PACKET_ID,
-//                (client, handler, packetByteBuf, responseSender) -> {
-//                    int[] fromTo = packetByteBuf.readIntArray();
-//                    client.execute(() -> {
-//                        if (client.world != null) {
-//                            Entity entity = client.world.getEntityById(fromTo[0]);
-//                            if (entity instanceof ChainKnotEntity) {
-//                                ((ChainKnotEntity) entity).removeHoldingEntityId(fromTo[1]);
-//                            }
-//                        }
-//                    });
-//                });
-//
-//        ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_MULTI_CHAIN_ATTACH_PACKET_ID,
-//                (client, handler, packetByteBuf, responseSender) -> {
-//                    int from = packetByteBuf.readInt();
-//                    int[] tos = packetByteBuf.readIntArray();
-//                    client.execute(() -> {
-//                        if (client.world != null) {
-//                            Entity entity = client.world.getEntityById(from);
-//                            if (entity instanceof ChainKnotEntity knot) {
-//                                ((ChainKnotEntity) entity).addHoldingEntityIds(tos);
-//                            }
-//                        }
-//                    });
-//                });
-
         ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_CHAIN_ATTACH_PACKET_ID,
                 (client, handler, packetByteBuf, responseSender) -> {
                     int fromId = packetByteBuf.readVarInt();
@@ -175,17 +126,13 @@ public class ClientInitializer implements ClientModInitializer {
                         Entity from = client.world.getEntityById(fromId);
                         if (from instanceof ChainKnotEntity knot) {
                             Entity to = client.world.getEntityById(toId);
-                            ChainType chainType = ClientInitializer.types.get(typeId);
+                            ChainType chainType = ClientInitializer.TYPES.getOrDefault(typeId);
 
                             if(to == null) {
                                 INCOMPLETE_LINKS.add(new IncompleteChainLink(knot, toId, chainType));
                             } else {
                                 ChainLink.create(knot, to, chainType);
                             }
-
-//                            ChainLink link = new ChainLink(knot, to, chainType);
-//                            knot.addLink(link);
-//                            if (to instanceof ChainKnotEntity otherKnot) otherKnot.addLink(link);
                         } else {
                             throw new IllegalStateException("Tried to attach from " + from + " (#" + fromId + ") which is not a chain knot");
                         }
@@ -230,16 +177,13 @@ public class ClientInitializer implements ClientModInitializer {
                         if (from instanceof ChainKnotEntity knot) {
                             for (int i = 0; i < toIds.length; i++) {
                                 Entity to = client.world.getEntityById(toIds[i]);
-                                ChainType chainType = ClientInitializer.types.get(types[i]);
+                                ChainType chainType = ClientInitializer.TYPES.getOrDefault(types[i]);
 
                                 if(to == null) {
                                     INCOMPLETE_LINKS.add(new IncompleteChainLink(knot, toIds[i], chainType));
                                 } else {
                                     ChainLink.create(knot, to, chainType);
                                 }
-//                                ChainLink link = new ChainLink(knot, to, chainType);
-//                                knot.addLink(link);
-//                                if (to instanceof ChainKnotEntity otherKnot) otherKnot.addLink(link);
                             }
                         } else {
                             throw new IllegalStateException("Tried to multi-attach from " + from + " (#" + fromId + ") which is not a chain knot");
@@ -255,8 +199,6 @@ public class ClientInitializer implements ClientModInitializer {
                     int entityId = buf.readVarInt();
                     Vec3d pos = PacketBufUtil.readVec3d(buf);
 
-//                    int fromId = buf.readVarInt();
-//                    int toId = buf.readVarInt();
                     int typeId = buf.readVarInt();
 
                     client.execute(() -> {
@@ -272,24 +214,7 @@ public class ClientInitializer implements ClientModInitializer {
                         e.setUuid(uuid);
                         e.setVelocity(Vec3d.ZERO);
                         if (e instanceof ChainCollisionEntity collider) {
-                            collider.setChainType(ClientInitializer.types.get(typeId));
-////                            collider.setStartOwnerId(startId);
-////                            collider.setEndOwnerId(endId);
-//                            Entity from = client.world.getEntityById(fromId);
-//                            Entity to = client.world.getEntityById(toId);
-//
-//                            if(from == null || to == null) {
-//                                long packedId = fromId | (long) toId << 32;
-//                                ObjectList<ChainCollisionEntity> collidersList = INCOMPLETE_COLLIDERS.get(packedId);
-//                                if(collidersList == null) {
-//                                    collidersList = new ObjectArrayList<>(16);
-//                                    INCOMPLETE_COLLIDERS.put(packedId, collidersList);
-//                                }
-//                                collidersList.add(collider);
-//                            } else {
-//                                // Find the link
-//                                setColliderLink(collider, from, to);
-//                            }
+                            collider.setChainType(ClientInitializer.TYPES.getOrDefault(typeId));
                         }
                         client.world.addEntity(entityId, e);
                     });
@@ -318,7 +243,7 @@ public class ClientInitializer implements ClientModInitializer {
                         e.setUuid(uuid);
                         e.setVelocity(Vec3d.ZERO);
                         if (e instanceof ChainKnotEntity knot) {
-                            knot.setChainType(ClientInitializer.types.get(typeId));
+                            knot.setChainType(ClientInitializer.TYPES.getOrDefault(typeId));
                             knot.setGraceTicks((byte) 0);
                         }
                         client.world.addEntity(entityId, e);
@@ -331,9 +256,13 @@ public class ClientInitializer implements ClientModInitializer {
 
             client.execute(() -> {
                 if(client.world == null) return;
-                ChainKnotEntity knot = (ChainKnotEntity) client.world.getEntityById(knotId);
-                ChainType chainType = ClientInitializer.types.get(typeId);
-                knot.updateChainType(chainType);
+                Entity entity = client.world.getEntityById(knotId);
+                ChainType chainType = ClientInitializer.TYPES.getOrDefault(typeId);
+                if(entity instanceof ChainKnotEntity knot) {
+                    knot.updateChainType(chainType);
+                } else {
+                    throw new IllegalStateException("Tried to change type of " + entity + " (#" + knotId + ") which is not a chain knot");
+                }
             });
         });
 
@@ -370,33 +299,7 @@ public class ClientInitializer implements ClientModInitializer {
             return ItemStack.EMPTY;
         });
 
-        ClientTickEvents.START_WORLD_TICK.register(world -> {
-            INCOMPLETE_LINKS.removeIf(IncompleteChainLink::tryCompleteOrRemove);
-//            INCOMPLETE_COLLIDERS.forEach((packedId, colliderList) -> {
-//                int startId = (int) (long) packedId;
-//                int endId = (int) (packedId >> 32);
-//
-//                Entity from = world.getEntityById(startId);
-//                Entity to = world.getEntityById(endId);
-//
-//                if(from != null && to != null) {
-//                    for (ChainCollisionEntity collider : colliderList) {
-//                        setColliderLink(collider, from, to);
-//                    }
-//                    INCOMPLETE_COLLIDERS.remove((long) packedId);
-//                }
-//            });
-        });
-    }
-
-    private void setColliderLink(ChainCollisionEntity collider, Entity from, Entity to) {
-        ChainKnotEntity knot = (ChainKnotEntity) from;
-        for (ChainLink link : knot.getLinks()) {
-            if(link.primary == knot && link.secondary == to) {
-                collider.setLink(link);
-                break;
-            }
-        }
+        ClientTickEvents.START_WORLD_TICK.register(world -> INCOMPLETE_LINKS.removeIf(IncompleteChainLink::tryCompleteOrRemove));
     }
 
     public ChainKnotEntityRenderer getChainKnotEntityRenderer() {

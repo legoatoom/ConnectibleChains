@@ -65,7 +65,7 @@ public class ConnectibleChains implements ModInitializer {
      */
     public static ModConfig runtimeConfig;
 
-    public static ChainTypes types;
+    public static final ChainTypes TYPES = new ChainTypes();
 
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
@@ -81,6 +81,7 @@ public class ConnectibleChains implements ModInitializer {
      * @param hitResult General information about the block that was clicked.
      * @return An ActionResult.
      */
+    @SuppressWarnings("GrazieInspection")
     private static ActionResult chainUseEvent(PlayerEntity player, World world, Hand hand, BlockHitResult hitResult) {
         if(player == null || player.isSneaking()) return ActionResult.PASS;
         ItemStack stack = player.getStackInHand(hand);
@@ -88,11 +89,10 @@ public class ConnectibleChains implements ModInitializer {
         BlockPos blockPos = hitResult.getBlockPos();
         Block block = world.getBlockState(blockPos).getBlock();
 
-//        if (world.isClient) return ActionResult.success(ChainKnotEntity.canConnectTo(block));
         if(!ChainKnotEntity.canConnectTo(block)) return ActionResult.PASS;
         else if (world.isClient) {
             Item handItem = player.getStackInHand(hand).getItem();
-            if(ConnectibleChains.types.has(handItem)) {
+            if(ConnectibleChains.TYPES.has(handItem)) {
                 return ActionResult.SUCCESS;
             }
 
@@ -109,51 +109,14 @@ public class ConnectibleChains implements ModInitializer {
         }
 
         // 2. Create new knot if none exists and try again
-        if(!ConnectibleChains.types.has(item)) return ActionResult.PASS;
+        if(!ConnectibleChains.TYPES.has(item)) return ActionResult.PASS;
 
-        ChainType chainType = ConnectibleChains.types.get(item);
+        ChainType chainType = ConnectibleChains.TYPES.get(item);
         knot = new ChainKnotEntity(world, blockPos, chainType);
         knot.setGraceTicks((byte) 0);
         world.spawnEntity(knot);
         knot.onPlace();
         return knot.interact(player, hand);
-
-
-
-//        ChainKnotEntity knot = ChainKnotEntity.getOrCreate(world, blockPos, false, stack.getItem());
-//        return knot.interact(player, hand);
-
-//        if (ConnectibleChains.types.has(item) && ChainKnotEntity.canConnectTo(block) && !player.isSneaking()) {
-//            if (!world.isClient) {
-//                ChainKnotEntity knot = ChainKnotEntity.getOrCreate(world, blockPos, false, stack.getItem());
-//                if (!ChainKnotEntity.tryAttachHeldChainsToBlock(player, world, blockPos, knot, stack.getItem())) {
-//                    // If this didn't work connect the player to the new chain instead.
-//                    assert knot != null; // This can never happen as long as getOrCreate has false as parameter.
-//                    if (knot.getHoldingEntities().contains(player)) {
-//                        knot.detachChain(player, true, false);
-//                        knot.onBreak(null);
-//                        if (!player.isCreative())
-//                            stack.increment(1);
-//                    } else if (knot.attachChain(player, true, 0)) {
-//                        knot.onPlace();
-//                        if (!player.isCreative())
-//                            stack.decrement(1);
-//                    }
-//                }
-//            }
-//            return ActionResult.success(world.isClient);
-//        }
-//        if (ChainKnotEntity.canConnectTo(block)) {
-//            if (world.isClient) {
-//                return ConnectibleChains.types.has(stack.getItem()) ? ActionResult.SUCCESS : ActionResult.PASS;
-//            } else {
-//                if(ChainKnotEntity.tryAttachHeldChainsToBlock(player, world, blockPos, ChainKnotEntity.getOrCreate(world, blockPos, true, item), item))
-//                    return ActionResult.SUCCESS;
-//                else
-//                    return ActionResult.PASS;
-//            }
-//        }
-//        return ActionResult.PASS;
     }
 
     /**
@@ -163,9 +126,8 @@ public class ConnectibleChains implements ModInitializer {
     public void onInitialize() {
         ModEntityTypes.init();
 
-        types = new ChainTypes();
         ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(
-                SidedResourceReloadListener.proxy(ResourceType.SERVER_DATA, types));
+                SidedResourceReloadListener.proxy(ResourceType.SERVER_DATA, TYPES));
 
         AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
         ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);

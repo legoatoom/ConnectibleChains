@@ -17,10 +17,11 @@
 
 package com.github.legoatoom.connectiblechains.enitity;
 
+import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.chain.ChainType;
-import com.github.legoatoom.connectiblechains.util.PacketCreator;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
+import com.github.legoatoom.connectiblechains.util.PacketCreator;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.tool.attribute.v1.FabricToolTags;
@@ -39,6 +40,8 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -50,16 +53,8 @@ import java.util.function.Function;
  */
 public class ChainCollisionEntity extends Entity {
 
-//    /**
-//     * The chainKnot entity id that has a connection to another chainKnot with id {@link #endOwnerId}.
-//     */
-//    private int startOwnerId;
-//    /**
-//     * The chainKnot entity id that has a connection from another chainKnot with id {@link #startOwnerId}.
-//     */
-//    private int endOwnerId;
-
     @Environment(EnvType.SERVER)
+    @Nullable
     private ChainLink link;
 
     /**
@@ -68,21 +63,11 @@ public class ChainCollisionEntity extends Entity {
     @Environment(EnvType.CLIENT)
     private ChainType chainType;
 
-    @SuppressWarnings("WeakerAccess")
     public ChainCollisionEntity(EntityType<? extends ChainCollisionEntity> entityType, World world) {
         super(entityType, world);
-
     }
 
-//    @SuppressWarnings("WeakerAccess")
-//    public ChainCollisionEntity(World world, double x, double y, double z, int startOwnerId, int endOwnerId) {
-//        this(ModEntityTypes.CHAIN_COLLISION, world);
-//        this.startOwnerId = startOwnerId;
-//        this.endOwnerId = endOwnerId;
-//        this.setPosition(x, y, z);
-//    }
-
-    public ChainCollisionEntity(World world, double x, double y, double z, ChainLink link) {
+    public ChainCollisionEntity(World world, double x, double y, double z, @NotNull ChainLink link) {
         this(ModEntityTypes.CHAIN_COLLISION, world);
         this.link = link;
         this.setPosition(x, y, z);
@@ -94,9 +79,13 @@ public class ChainCollisionEntity extends Entity {
     }
 
     /**
-     * When this entity is attacked by a player with a item that has Tag: {@link FabricToolTags#SHEARS},
-     * it calls the {@link ChainKnotEntity#damageLink(boolean, ChainKnotEntity)} method
-     * to destroy the link between the {@link #startOwnerId} and {@link #endOwnerId}
+     * When this entity is damaged by
+     * <ul>
+     * <li>A player with a item that has Tag: {@link FabricToolTags#SHEARS}</li>
+     * <li>An explosion</li>
+     * </ul>
+     * it destroys the link that it is part of.
+     * Otherwise, it plays a hit sound.
      *
      * @return true when damage was effective
      */
@@ -106,12 +95,11 @@ public class ChainCollisionEntity extends Entity {
             return false;
         }
         if(this.world.isClient) {
-//            return !(source.getSource() instanceof PersistentProjectileEntity);
             return false;
         }
 
         if(source.isExplosive()) {
-            link.destroy(true);
+            if(link != null) link.destroy(true);
             return true;
         }
         if(source.getSource() instanceof PlayerEntity player) {
@@ -123,49 +111,15 @@ public class ChainCollisionEntity extends Entity {
         if(!source.isProjectile()) {
             // Projectiles such as arrows (actually probably just arrows) can get "stuck"
             // on entities they cannot damage, such as players while blocking with shields or these chains.
-            // That would cause some serious sound spam and we wanna avoid that.
+            // That would cause some serious sound spam, and we want to avoid that.
             playSound(SoundEvents.BLOCK_CHAIN_HIT, 0.5F, 1.0F);
         }
         return false;
-
-//        Entity startOwner = this.world.getEntityById(startOwnerId);
-//        Entity endOwner = this.world.getEntityById(endOwnerId);
-//        Entity sourceEntity = source.getAttacker();
-//        if (source.getSource() instanceof PersistentProjectileEntity) {
-//            return false;
-//        } else if (sourceEntity instanceof PlayerEntity player) {
- //               && startOwner instanceof ChainKnotEntity && endOwner instanceof ChainKnotEntity*/) {
-//            if (!player.getMainHandStack().isEmpty() && FabricToolTags.SHEARS.contains(player.getMainHandStack().getItem())) {
-//            if(tryBreakWith(player.getMainHandStack().getItem(), !player.isCreative())) {
-//                return true;
-//            } else {
-//                playSound(SoundEvents.BLOCK_CHAIN_HIT, 0.5F, 1.0F);
-//                return false;
-//            }
-//                    ((ChainKnotEntity) startOwner).damageLink(isCreative, (ChainKnotEntity) endOwner);
-//                ChainLink link = null;
-//                for (ChainLink chainLink : ((ChainKnotEntity) startOwner).getLinks()) {
-//                    if(chainLink.primary == startOwner && chainLink.secondary == endOwner) {
-//                        link = chainLink;
-//                        break;
-//                    }
-//                    if(chainLink.secondary == startOwner && chainLink.primary == endOwner) {
-//                        link = chainLink;
-//                        break;
-//                    }
-//                }
-//                if(link != null) {
-//                    link.destroy(!player.isCreative());
-//                }
-//            }
-//        }
-//        playSound(SoundEvents.BLOCK_CHAIN_HIT, 0.5F, 1.0F);
-//        return true;
     }
 
     private boolean tryBreakWith(Item item, boolean mayDrop) {
         if (FabricToolTags.SHEARS.contains(item)) {
-            if(!world.isClient) link.destroy(mayDrop);
+            if(!world.isClient && link != null) link.destroy(mayDrop);
             return true;
         }
         return false;
@@ -173,7 +127,7 @@ public class ChainCollisionEntity extends Entity {
 
     /**
      * If this entity can even be collided with.
-     * Different from {@link #isCollidable()} ()} as this tells if something can collide with this.
+     * Different from {@link #isCollidable()} as this tells if something can collide with this.
      *
      * @return true
      */
@@ -192,7 +146,7 @@ public class ChainCollisionEntity extends Entity {
     }
 
     /**
-     * We only allow the collision box to be rendered if a player is holding a item that has tag {@link FabricToolTags#SHEARS}.
+     * We only allow the collision box to be rendered if a player is holding an item that has tag {@link FabricToolTags#SHEARS}.
      * This might be helpful when using F3+B to see the boxes of the chain.
      *
      * @return boolean - should the collision box be rendered.
@@ -267,37 +221,15 @@ public class ChainCollisionEntity extends Entity {
     public Packet<?> createSpawnPacket() {
         //Write our id and the id of the one we connect to.
         Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> {
-//            packetByteBuf.writeVarInt(startOwnerId);
-//            packetByteBuf.writeVarInt(endOwnerId);
-//            packetByteBuf.writeVarInt(link.primary.getId());
-//            packetByteBuf.writeVarInt(link.secondary.getId());
-            packetByteBuf.writeVarInt(Registry.ITEM.getRawId(link.chainType.getItem()));
+            ChainType chainType = link == null ? ConnectibleChains.TYPES.getDefaultType() : link.chainType;
+            packetByteBuf.writeVarInt(Registry.ITEM.getRawId(chainType.getItem()));
             return packetByteBuf;
         };
         return PacketCreator.createSpawn(this, NetworkingPackets.S2C_SPAWN_CHAIN_COLLISION_PACKET, extraData);
     }
 
-//    public void setStartOwnerId(int startOwnerId) {
-//        this.startOwnerId = startOwnerId;
-//    }
-//
-//    public int getStartOwnerId() {
-//        return startOwnerId;
-//    }
-//
-//    public void setEndOwnerId(int endOwnerId) {
-//        this.endOwnerId = endOwnerId;
-//    }
-//
-//    public int getEndOwnerId() {
-//        return endOwnerId;
-//    }
-
-    public void setLink(ChainLink link) {
-        this.link = link;
-    }
-
-    public ChainLink getLink() {
+    @SuppressWarnings("unused")
+    public @Nullable ChainLink getLink() {
         return link;
     }
 
@@ -314,10 +246,10 @@ public class ChainCollisionEntity extends Entity {
         if(world.isClient) return;
         // Condition can be met when the knots were removed with commands
         // but the collider still exists
-        if(link.needsBeDestroyed()) link.destroy(true);
+        if(link != null && link.needsBeDestroyed()) link.destroy(true);
 
         // Collider removes itself when the link is dead
-        if(!this.isRemoved() && link.isDead()) {
+        if(link == null || link.isDead()) {
             remove(Entity.RemovalReason.DISCARDED);
         }
     }

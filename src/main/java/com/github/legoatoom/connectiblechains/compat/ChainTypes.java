@@ -8,7 +8,6 @@ import com.github.legoatoom.connectiblechains.util.Helper;
 import com.mojang.datafixers.util.Either;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.resource.SimpleResourceReloadListener;
 import net.fabricmc.fabric.api.tag.TagFactory;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
@@ -31,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+@SuppressWarnings("unused")
 public class ChainTypes implements SidedResourceReloadListener<List<ChainType>> {
     public static final Tag<Item> CONNECTIBLE_CHAINS = TagFactory.ITEM.create(new Identifier(ConnectibleChains.MODID, "chainable"));
     private static final Identifier DEFAULT_TYPE = new Identifier("minecraft:chain");
@@ -66,6 +66,7 @@ public class ChainTypes implements SidedResourceReloadListener<List<ChainType>> 
         return registeredTypes.get(Registry.ITEM.getId(item));
     }
 
+    @SuppressWarnings("unused")
     public ChainType get(Identifier id) {
         return registeredTypes.get(id);
     }
@@ -87,7 +88,7 @@ public class ChainTypes implements SidedResourceReloadListener<List<ChainType>> 
     }
 
     /**
-     * Checks if a mod is loaded and it's version is above or equal to version
+     * Checks if a mod is loaded, and it's version is above or equal to version
      * @param modid The mod id from fabric.mod.json
      * @param version A SemVer version
      * @return true if the mod with the version is loaded
@@ -133,27 +134,19 @@ public class ChainTypes implements SidedResourceReloadListener<List<ChainType>> 
         List<Identifier> builtin = new ArrayList<>();
 
         builtin.add(new Identifier("minecraft:chain"));
-//        addType("minecraft:chain", "minecraft:textures/block/chain.png", ConnectibleChains.MODID + ":textures/entity/chain_knot.png");
 
-        // If the uvs or ids change use 'if' + 'else if' and check the newer version first
-
+        // If the ids change use 'if' + 'else if' and check the newer version first
         if (isVersionLoaded("betterend", "0.9.0")) {
             builtin.add(new Identifier("betterend:thallasium_chain"));
             builtin.add(new Identifier("betterend:terminite_chain"));
-//            addType("betterend:thallasium_chain", "betterend:textures/block/thallasium_chain.png", "minecraft:missing");
-//            addType("betterend:terminite_chain", "betterend:textures/block/terminite_chain.png", "minecraft:missing");
         }
         if (isVersionLoaded("betternether", "3.5.0")) {
             builtin.add(new Identifier("betternether:cincinnasite_chain"));
-//            addType("betternether:cincinnasite_chain", "betternether:textures/block/cincinnasite_chain.png", "minecraft:missing");
         }
         if (isVersionLoaded("valley", "2.0")) {
             builtin.add(new Identifier("valley:golden_chain"));
             builtin.add(new Identifier("valley:netherite_chain"));
             builtin.add(new Identifier("valley:copper_chain"));
-//            addType("valley:golden_chain", "valley:textures/blocks/golden_chain_block.png", "minecraft:missing");
-//            addType("valley:netherite_chain", "valley:textures/blocks/netherite_chain_block.png", "minecraft:missing");
-//            addType("valley:copper_chain", "valley:textures/blocks/copper_chain_block.png", "minecraft:missing");
         }
 
         return builtin;
@@ -211,7 +204,7 @@ public class ChainTypes implements SidedResourceReloadListener<List<ChainType>> 
         Identifier knotTextureId = textureMap.get("chain_knot");
 
         if(textureId == null) {
-            ConnectibleChains.LOGGER.error("Missing 'chain' texture for {}", item);;
+            ConnectibleChains.LOGGER.error("Missing 'chain' texture for {}", item);
             textureId = MISSING_ID;
         }
         if(knotTextureId == null) {
