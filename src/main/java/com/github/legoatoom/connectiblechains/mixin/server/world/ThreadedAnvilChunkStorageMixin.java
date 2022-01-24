@@ -17,14 +17,19 @@
 
 package com.github.legoatoom.connectiblechains.mixin.server.world;
 
+import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
-import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
+import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
+import com.github.legoatoom.connectiblechains.util.PacketCreator;
 import com.google.common.collect.Lists;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
+import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -59,30 +64,22 @@ public abstract class ThreadedAnvilChunkStorageMixin {
             at = @At(value = "TAIL")
     )
     private void sendAttachChainPackets(ServerPlayerEntity player, MutableObject<ChunkDataS2CPacket> cachedDataPacket, WorldChunk chunk, CallbackInfo ci) {
-        ObjectIterator<ThreadedAnvilChunkStorage.EntityTracker> var6 = this.entityTrackers.values().iterator();
-        List<ChainKnotEntity> list = Lists.newArrayList();
+        ObjectIterator<ThreadedAnvilChunkStorage.EntityTracker> trackers = this.entityTrackers.values().iterator();
+        List<ChainKnotEntity> knots = Lists.newArrayList();
 
-        while (var6.hasNext()) {
-            ThreadedAnvilChunkStorage.EntityTracker entityTracker = var6.next();
+        while (trackers.hasNext()) {
+            ThreadedAnvilChunkStorage.EntityTracker entityTracker = trackers.next();
             Entity entity = entityTracker.entity;
             if (entity != player && entity.getChunkPos().equals(chunk.getPos())) {
-                if (entity instanceof ChainKnotEntity && !((ChainKnotEntity) entity).getHoldingEntities().isEmpty()) {
-                    list.add((ChainKnotEntity) entity);
+                if (entity instanceof ChainKnotEntity knot && !knot.getLinks().isEmpty()) {
+                    knots.add(knot);
                 }
             }
         }
 
-        if (!list.isEmpty()) {
-            for (ChainKnotEntity chainKnotEntity : list) {
-                PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
-                //Write our id and the id of the one we connect to.
-                int[] ids = chainKnotEntity.getHoldingEntities().stream().mapToInt(Entity::getId).toArray();
-                if (ids.length > 0) {
-                    passedData.writeInt(chainKnotEntity.getId());
-                    passedData.writeIntArray(ids);
-                    ServerPlayNetworking.send(player, NetworkingPackages.S2C_MULTI_CHAIN_ATTACH_PACKET_ID, passedData);
-                }
-            }
+        for (ChainKnotEntity knot : knots) {
+            Packet<?> packet = PacketCreator.createMultiAttach(knot);
+            if(packet != null) player.networkHandler.sendPacket(packet);
         }
     }
 }

@@ -42,7 +42,7 @@ public class ModEntityTypes {
         CHAIN_KNOT = Registry.register(
                 Registry.ENTITY_TYPE, Helper.identifier("chain_knot") ,
                 FabricEntityTypeBuilder.create(SpawnGroup.MISC,
-                         (EntityType.EntityFactory<ChainKnotEntity>) (world, type) -> new ChainKnotEntity(world, type, Items.CHAIN))
+                        (EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new)
                         .trackRangeBlocks(10).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
                         .dimensions(EntityDimensions.fixed(6/16f, 0.5F))
                         .spawnableFarFromPlayer()

@@ -7,6 +7,9 @@
     "server.network.EntityTrackerEntryMixin",
     "server.world.ThreadedAnvilChunkStorageMixin"
   ],
+  "client": [
+    "client.JsonUnbakedModelAccessor"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

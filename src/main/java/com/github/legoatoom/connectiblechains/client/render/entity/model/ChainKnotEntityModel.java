@@ -43,7 +43,9 @@ public class ChainKnotEntityModel<T extends Entity> extends SinglePartEntityMode
     public static TexturedModelData getTexturedModelData() {
         ModelData modelData = new ModelData();
         ModelPartData modelPartData = modelData.getRoot();
-        modelPartData.addChild("knot", ModelPartBuilder.create().uv(0, 0).cuboid(-3.0F, -8.0F, -3.0F, 6.0F, 8.0F, 6.0F), ModelTransform.NONE);
+        modelPartData.addChild("knot", ModelPartBuilder.create()
+                .uv(0, 0)
+                .cuboid(-3.0F, -8.0F, -3.0F, 6.0F, 3.0F, 6.0F), ModelTransform.NONE);
         return TexturedModelData.of(modelData, 32, 32);
     }
 

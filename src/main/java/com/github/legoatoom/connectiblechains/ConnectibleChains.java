@@ -18,7 +18,9 @@
 package com.github.legoatoom.connectiblechains;
 
 
-import com.github.legoatoom.connectiblechains.compat.ChainItems;
+import com.github.legoatoom.connectiblechains.chain.ChainType;
+import com.github.legoatoom.connectiblechains.compat.ChainTypes;
+import com.github.legoatoom.connectiblechains.compat.SidedResourceReloadListener;
 import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
@@ -28,10 +30,12 @@ import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.resource.ResourceType;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -61,6 +65,8 @@ public class ConnectibleChains implements ModInitializer {
      */
     public static ModConfig runtimeConfig;
 
+    public static ChainTypes types;
+
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
     /**
@@ -76,42 +82,78 @@ public class ConnectibleChains implements ModInitializer {
      * @return An ActionResult.
      */
     private static ActionResult chainUseEvent(PlayerEntity player, World world, Hand hand, BlockHitResult hitResult) {
-        if (player == null) return ActionResult.PASS;
+        if(player == null || player.isSneaking()) return ActionResult.PASS;
         ItemStack stack = player.getStackInHand(hand);
         Item item = stack.getItem();
         BlockPos blockPos = hitResult.getBlockPos();
         Block block = world.getBlockState(blockPos).getBlock();
-        if (ChainItems.has(item) && ChainKnotEntity.canConnectTo(block) && !player.isSneaking()) {
-            if (!world.isClient) {
-                ChainKnotEntity knot = ChainKnotEntity.getOrCreate(world, blockPos, false, stack.getItem());
-                if (!ChainKnotEntity.tryAttachHeldChainsToBlock(player, world, blockPos, knot, stack.getItem())) {
-                    // If this didn't work connect the player to the new chain instead.
-                    assert knot != null; // This can never happen as long as getOrCreate has false as parameter.
-                    if (knot.getHoldingEntities().contains(player)) {
-                        knot.detachChain(player, true, false);
-                        knot.onBreak(null);
-                        if (!player.isCreative())
-                            stack.increment(1);
-                    } else if (knot.attachChain(player, true, 0)) {
-                        knot.onPlace();
-                        if (!player.isCreative())
-                            stack.decrement(1);
-                    }
-                }
+
+//        if (world.isClient) return ActionResult.success(ChainKnotEntity.canConnectTo(block));
+        if(!ChainKnotEntity.canConnectTo(block)) return ActionResult.PASS;
+        else if (world.isClient) {
+            Item handItem = player.getStackInHand(hand).getItem();
+            if(ConnectibleChains.types.has(handItem)) {
+                return ActionResult.SUCCESS;
             }
-            return ActionResult.success(world.isClient);
+
+            return ActionResult.PASS;
         }
-        if (ChainKnotEntity.canConnectTo(block)) {
-            if (world.isClient) {
-                return ChainItems.has(stack.getItem()) ? ActionResult.SUCCESS : ActionResult.PASS;
-            } else {
-                if(ChainKnotEntity.tryAttachHeldChainsToBlock(player, world, blockPos, ChainKnotEntity.getOrCreate(world, blockPos, true, item), item))
-                    return ActionResult.SUCCESS;
-                else
-                    return ActionResult.PASS;
+
+        // 1. Try with existing knot, regardless of hand item
+        ChainKnotEntity knot = ChainKnotEntity.get(world, blockPos);
+        if(knot != null) {
+            if(knot.interact(player, hand) == ActionResult.CONSUME) {
+                return ActionResult.CONSUME;
             }
+            return ActionResult.PASS;
         }
-        return ActionResult.PASS;
+
+        // 2. Create new knot if none exists and try again
+        if(!ConnectibleChains.types.has(item)) return ActionResult.PASS;
+
+        ChainType chainType = ConnectibleChains.types.get(item);
+        knot = new ChainKnotEntity(world, blockPos, chainType);
+        knot.setGraceTicks((byte) 0);
+        world.spawnEntity(knot);
+        knot.onPlace();
+        return knot.interact(player, hand);
+
+
+
+//        ChainKnotEntity knot = ChainKnotEntity.getOrCreate(world, blockPos, false, stack.getItem());
+//        return knot.interact(player, hand);
+
+//        if (ConnectibleChains.types.has(item) && ChainKnotEntity.canConnectTo(block) && !player.isSneaking()) {
+//            if (!world.isClient) {
+//                ChainKnotEntity knot = ChainKnotEntity.getOrCreate(world, blockPos, false, stack.getItem());
+//                if (!ChainKnotEntity.tryAttachHeldChainsToBlock(player, world, blockPos, knot, stack.getItem())) {
+//                    // If this didn't work connect the player to the new chain instead.
+//                    assert knot != null; // This can never happen as long as getOrCreate has false as parameter.
+//                    if (knot.getHoldingEntities().contains(player)) {
+//                        knot.detachChain(player, true, false);
+//                        knot.onBreak(null);
+//                        if (!player.isCreative())
+//                            stack.increment(1);
+//                    } else if (knot.attachChain(player, true, 0)) {
+//                        knot.onPlace();
+//                        if (!player.isCreative())
+//                            stack.decrement(1);
+//                    }
+//                }
+//            }
+//            return ActionResult.success(world.isClient);
+//        }
+//        if (ChainKnotEntity.canConnectTo(block)) {
+//            if (world.isClient) {
+//                return ConnectibleChains.types.has(stack.getItem()) ? ActionResult.SUCCESS : ActionResult.PASS;
+//            } else {
+//                if(ChainKnotEntity.tryAttachHeldChainsToBlock(player, world, blockPos, ChainKnotEntity.getOrCreate(world, blockPos, true, item), item))
+//                    return ActionResult.SUCCESS;
+//                else
+//                    return ActionResult.PASS;
+//            }
+//        }
+//        return ActionResult.PASS;
     }
 
     /**
@@ -120,7 +162,10 @@ public class ConnectibleChains implements ModInitializer {
     @Override
     public void onInitialize() {
         ModEntityTypes.init();
-        ChainItems.register();
+
+        types = new ChainTypes();
+        ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(
+                SidedResourceReloadListener.proxy(ResourceType.SERVER_DATA, types));
 
         AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
         ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);

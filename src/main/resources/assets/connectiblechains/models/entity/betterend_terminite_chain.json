@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "betterend:textures/block/terminite_chain",
+    "chain_knot": "connectiblechains:textures/entity/terminite_chain_knot"
+  }
+}

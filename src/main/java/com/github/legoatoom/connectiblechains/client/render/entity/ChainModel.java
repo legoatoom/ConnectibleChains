@@ -55,7 +55,7 @@ public class ChainModel {
                     .texture(uvs[i*2], uvs[i*2+1])
                     .overlay(OverlayTexture.DEFAULT_UV)
                     .light(light)
-                    .normal(normalMatrix, 0, 1, 0)
+                    .normal(normalMatrix, 0, 0, 1)
                     .next();
         }
     }

@@ -17,21 +17,27 @@
 
 package com.github.legoatoom.connectiblechains.util;
 
+import com.github.legoatoom.connectiblechains.chain.ChainLink;
+import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import io.netty.buffer.Unpooled;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.Function;
 
 /**
  * <a href="https://fabricmc.net/wiki/tutorial:projectiles">This class is from a tutorial</a> Edited some things to make it more useful for me.
  */
-public class EntitySpawnPacketCreator {
-    public static Packet<?> create(Entity e, Identifier packetID, Function<PacketByteBuf, PacketByteBuf> extraData) {
+public class PacketCreator {
+    public static Packet<?> createSpawn(Entity e, Identifier packetID, Function<PacketByteBuf, PacketByteBuf> extraData) {
         if (e.world.isClient)
             throw new IllegalStateException("SpawnPacketUtil.create called on the logical client!");
         PacketByteBuf byteBuf = new PacketByteBuf(Unpooled.buffer());
@@ -43,5 +49,31 @@ public class EntitySpawnPacketCreator {
         // pitch and yaw don't matter so don't send them
         byteBuf = extraData.apply(byteBuf);
         return ServerPlayNetworking.createS2CPacket(packetID, byteBuf);
+    }
+
+    /**
+     * Creates a multi chain attach packet for a knot
+     * @param knot the primary knot
+     * @return Packet or null
+     */
+    @Nullable
+    public static Packet<?> createMultiAttach(ChainKnotEntity knot) {
+        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        List<ChainLink> links = knot.getLinks();
+        IntList ids = new IntArrayList(links.size());
+        IntList types = new IntArrayList(links.size());
+        for (ChainLink link : links) {
+            if (link.primary == knot) {
+                ids.add(link.secondary.getId());
+                types.add(Registry.ITEM.getRawId(link.chainType.getItem()));
+            }
+        }
+        if (ids.size() > 0) {
+            buf.writeInt(knot.getId());
+            buf.writeIntList(ids);
+            buf.writeIntList(types);
+            return ServerPlayNetworking.createS2CPacket(NetworkingPackets.S2C_MULTI_CHAIN_ATTACH_PACKET_ID, buf);
+        }
+        return null;
     }
 }
