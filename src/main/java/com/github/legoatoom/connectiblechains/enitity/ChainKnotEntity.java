@@ -70,7 +70,7 @@ import java.util.function.Function;
  * @author legoatoom
  */
 public class ChainKnotEntity extends AbstractDecorationEntity {
-    
+
     /**
      * The distance when it is visible.
      */
@@ -83,22 +83,18 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      * a connection to this as this is already removed. The second use is for /summon for basically the same reasons.
      */
     private static final byte GRACE_PERIOD = 100;
-
-    /**
-     * The Tag that stores all the links
-     */
-    private NbtList chainTags;
-
-    /**
-     * A timer integer for destroying this entity if it isn't connected anything.
-     */
-    private int obstructionCheckCounter;
-
     /**
      * All links that involve this knot (secondary and primary)
      */
     private final ObjectList<ChainLink> links = new ObjectArrayList<>();
-
+    /**
+     * The Tag that stores all the links
+     */
+    private NbtList chainTags;
+    /**
+     * A timer integer for destroying this entity if it isn't connected anything.
+     */
+    private int obstructionCheckCounter;
     /**
      * The chain chainType, for rendering
      */
@@ -116,22 +112,14 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         this.chainType = chainType;
     }
 
-    public void setChainType(ChainType chainType) {
-        this.chainType = chainType;
-    }
-
-    public ChainType getChainType() {
-        return chainType;
-    }
-
     /**
      * This method tries to check if around the target there are other {@link ChainKnotEntity ChainKnotEntities} that
      * have a connection to this player, if so we remove it and create a new one to destination
      *
      * @param playerEntity the player wo tries to make a connection.
-     * @param world The current world.
-     * @param pos the position where we want to make a chainKnot.
-     * @param destination the destination knot where the links will be moved to
+     * @param world        The current world.
+     * @param pos          the position where we want to make a chainKnot.
+     * @param destination  the destination knot where the links will be moved to
      * @return boolean, if it has made a connection.
      */
     public static boolean tryAttachHeldChainsToBlock(PlayerEntity playerEntity, World world, BlockPos pos, ChainKnotEntity destination) {
@@ -145,20 +133,20 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
         for (ChainKnotEntity source : otherKnots) {
             // Prevent connections with self
-            if(destination.equals(source)) continue;
+            if (destination.equals(source)) continue;
 
             // Prevent CME because ChainLink.create adds a link
             int linksCount = source.getLinks().size();
             for (int i = 0; i < linksCount; i++) {
                 ChainLink link = source.getLinks().get(i);
-                if(link.secondary != playerEntity) continue;
+                if (link.secondary != playerEntity) continue;
                 // We found a knot that is connected to the player.
 
                 // Now move that link to this knot
                 ChainLink newLink = ChainLink.create(source, destination, link.chainType);
 
                 // Check if the link does not already exist
-                if(newLink != null) {
+                if (newLink != null) {
                     link.destroy(false);
                     link.removeSilently = true;
                     hasMadeConnection = true;
@@ -173,6 +161,45 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      */
     public static double getMaxRange() {
         return ConnectibleChains.runtimeConfig.getMaxChainRange();
+    }
+
+    /**
+     * Is this block acceptable to connect too?
+     *
+     * @param block the block in question.
+     * @return boolean if is allowed or not.
+     */
+    public static boolean canConnectTo(Block block) {
+        return BlockTags.WALLS.contains(block) || BlockTags.FENCES.contains(block);
+    }
+
+    public static ChainKnotEntity get(World world, BlockPos pos) {
+        int posX = pos.getX();
+        int posY = pos.getY();
+        int posZ = pos.getZ();
+        final List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class,
+                new Box((double) posX - 1.0D, (double) posY - 1.0D, (double) posZ - 1.0D,
+                        (double) posX + 1.0D, (double) posY + 1.0D, (double) posZ + 1.0D));
+        Iterator<ChainKnotEntity> iterator = list.iterator();
+
+        ChainKnotEntity result = null;
+        while (iterator.hasNext()) {
+            ChainKnotEntity current = iterator.next();
+            if (current.getDecorationBlockPos().equals(pos)) {
+                result = current;
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    public ChainType getChainType() {
+        return chainType;
+    }
+
+    public void setChainType(ChainType chainType) {
+        this.chainType = chainType;
     }
 
     /**
@@ -224,13 +251,13 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     private void removeDeadLinks() {
         boolean playBreakSound = false;
         for (ChainLink link : links) {
-            if(link.needsBeDestroyed()) link.destroy(true);
-            if(link.isDead() && !link.removeSilently) playBreakSound = true;
+            if (link.needsBeDestroyed()) link.destroy(true);
+            if (link.isDead() && !link.removeSilently) playBreakSound = true;
         }
-        if(playBreakSound) onBreak(null);
+        if (playBreakSound) onBreak(null);
 
         links.removeIf(ChainLink::isDead);
-        if(links.isEmpty() && (chainTags == null || chainTags.isEmpty()) && graceTicks <= 0) {
+        if (links.isEmpty() && (chainTags == null || chainTags.isEmpty()) && graceTicks <= 0) {
             this.remove(RemovalReason.DISCARDED);
             // No break sound
         }
@@ -238,20 +265,12 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
     /**
      * Simple checker to see if the block is connected to a fence or a wall.
+     *
      * @return boolean - if it can stay attached.
      */
     public boolean canStayAttached() {
         Block block = this.world.getBlockState(this.attachmentPos).getBlock();
         return canConnectTo(block);
-    }
-
-    /**
-     * Is this block acceptable to connect too?
-     * @param block the block in question.
-     * @return boolean if is allowed or not.
-     */
-    public static boolean canConnectTo(Block block){
-        return BlockTags.WALLS.contains(block) || BlockTags.FENCES.contains(block);
     }
 
     @Override
@@ -266,6 +285,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
     /**
      * When this entity is being attacked, we remove all connections and then remove this entity.
+     *
      * @return if it is successfully attacked.
      */
     @Override
@@ -274,23 +294,23 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         if (this.isInvulnerableTo(source)) {
             return false;
         }
-        if(this.world.isClient) {
+        if (this.world.isClient) {
             return false;
         }
 
-        if(source.isExplosive()) {
+        if (source.isExplosive()) {
             for (ChainLink link : links) {
                 link.destroy(true);
             }
             return true;
         }
-        if(source.getSource() instanceof PlayerEntity player) {
-            if(tryBreakWith(player.getMainHandStack().getItem(), !player.isCreative())) {
+        if (source.getSource() instanceof PlayerEntity player) {
+            if (tryBreakWith(player.getMainHandStack().getItem(), !player.isCreative())) {
                 return true;
             }
         }
 
-        if(!source.isProjectile()) {
+        if (!source.isProjectile()) {
             // Projectiles such as arrows (actually probably just arrows) can get "stuck"
             // on entities they cannot damage, such as players while blocking with shields or these chains.
             // That would cause some serious sound spam, and we want to avoid that.
@@ -301,7 +321,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
     private boolean tryBreakWith(Item item, boolean mayDrop) {
         if (FabricToolTags.SHEARS.contains(item)) {
-            if(!world.isClient) {
+            if (!world.isClient) {
                 for (ChainLink link : links) {
                     link.destroy(mayDrop);
                 }
@@ -386,7 +406,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     public void updateChainType(ChainType chainType) {
         this.chainType = chainType;
 
-        if(!world.isClient) {
+        if (!world.isClient) {
             Collection<ServerPlayerEntity> trackingPlayers = PlayerLookup.around((ServerWorld) world, getBlockPos(), ChainKnotEntity.VISIBLE_RANGE);
             PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
             buf.writeVarInt(getId());
@@ -408,12 +428,12 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         }
 
         double squaredMaxRange = getMaxRange() * getMaxRange();
-        for(ChainLink link : links) {
-            if(link.isDead()) continue;
+        for (ChainLink link : links) {
+            if (link.isDead()) continue;
 
-            if(!this.isAlive()) {
+            if (!this.isAlive()) {
                 link.destroy(true);
-            } else if(link.primary == this && link.getSquaredDistance() > squaredMaxRange) {
+            } else if (link.primary == this && link.getSquaredDistance() > squaredMaxRange) {
                 // no need to check the distance on both ends
                 link.destroy(true);
             }
@@ -472,29 +492,9 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         this.links.add(link);
     }
 
-    public static ChainKnotEntity get(World world, BlockPos pos) {
-        int posX = pos.getX();
-        int posY = pos.getY();
-        int posZ = pos.getZ();
-        final List<ChainKnotEntity> list = world.getNonSpectatingEntities(ChainKnotEntity.class,
-                new Box((double) posX - 1.0D, (double) posY - 1.0D, (double) posZ - 1.0D,
-                        (double) posX + 1.0D, (double) posY + 1.0D, (double) posZ + 1.0D));
-        Iterator<ChainKnotEntity> iterator = list.iterator();
-
-        ChainKnotEntity result = null;
-        while (iterator.hasNext()) {
-            ChainKnotEntity current = iterator.next();
-            if(current.getDecorationBlockPos().equals(pos)) {
-                result = current;
-                break;
-            }
-        }
-
-        return result;
-    }
-
     /**
      * Should we render this?
+     *
      * @param distance the distance from the chainKnot.
      * @return boolean, yes or no.
      */
@@ -510,18 +510,18 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
      * be made to this.
      *
      * @param player the player that interacted.
-     * @param hand the hand of the player.
+     * @param hand   the hand of the player.
      * @return ActionResult
      */
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
         if (this.world.isClient) {
             Item handItem = player.getStackInHand(hand).getItem();
-            if(ConnectibleChains.TYPES.has(handItem)) {
+            if (ConnectibleChains.TYPES.has(handItem)) {
                 return ActionResult.SUCCESS;
             }
 
-            if(tryBreakWith(handItem, !player.isCreative())) {
+            if (tryBreakWith(handItem, !player.isCreative())) {
                 return ActionResult.SUCCESS;
             }
 
@@ -530,7 +530,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
 
         // 1. Try to move existing link from player to this.
         boolean madeConnection = tryAttachHeldChainsToBlock(player, world, getDecorationBlockPos(), this);
-        if(madeConnection) {
+        if (madeConnection) {
             onPlace();
             return ActionResult.CONSUME;
         }
@@ -543,13 +543,13 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
                 link.destroy(true);
             }
         }
-        if(broke) {
+        if (broke) {
             return ActionResult.CONSUME;
         }
 
         // 3. Try to create a new connection
         Item handItem = player.getStackInHand(hand).getItem();
-        if(ConnectibleChains.TYPES.has(handItem)) {
+        if (ConnectibleChains.TYPES.has(handItem)) {
             // Interacted with a valid chain item, create a new link
             onPlace();
             ChainType chainType = ConnectibleChains.TYPES.get(handItem);
@@ -564,7 +564,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
         }
 
         // 4. Interacted with anything else, check for shears
-        if(tryBreakWith(handItem, !player.isCreative())) {
+        if (tryBreakWith(handItem, !player.isCreative())) {
             return ActionResult.CONSUME;
         }
 
@@ -591,7 +591,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     }
 
     public Vec3d getLeashOffset() {
-        return new Vec3d(0, 5/16f, 0);
+        return new Vec3d(0, 5 / 16f, 0);
     }
 
     /**
@@ -600,6 +600,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity {
     @Environment(EnvType.CLIENT)
     @Override
     public Vec3d getLeashPos(float f) {
-        return this.getLerpedPos(f).add(0.0D, 5/16f, 0.0D);
+        return this.getLerpedPos(f).add(0.0D, 5 / 16f, 0.0D);
     }
 }

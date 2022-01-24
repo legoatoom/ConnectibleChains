@@ -31,6 +31,10 @@ import java.util.List;
 
 public record ChainModel(float[] vertices, float[] uvs) {
 
+    public static Builder builder(int initialCapacity) {
+        return new Builder(initialCapacity);
+    }
+
     public void render(VertexConsumer buffer, MatrixStack matrices, int bLight0, int bLight1, int sLight0, int sLight1) {
         Matrix4f modelMatrix = matrices.peek().getPositionMatrix();
         Matrix3f normalMatrix = matrices.peek().getNormalMatrix();
@@ -51,10 +55,6 @@ public record ChainModel(float[] vertices, float[] uvs) {
                     .normal(normalMatrix, 0, 0, 1)
                     .next();
         }
-    }
-
-    public static Builder builder(int initialCapacity) {
-        return new Builder(initialCapacity);
     }
 
     public static class Builder {

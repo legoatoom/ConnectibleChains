@@ -40,7 +40,7 @@ import java.util.List;
 
 /**
  * Mixin is used to keep track of the connections when the ChainKnot is loaded again.
- *
+ * <p>
  * If we do not do this, the client does not know about connections that are loaded in new chunks.
  *
  * @author legoatoom
@@ -72,7 +72,7 @@ public abstract class ThreadedAnvilChunkStorageMixin {
 
         for (ChainKnotEntity knot : knots) {
             Packet<?> packet = PacketCreator.createMultiAttach(knot);
-            if(packet != null) player.networkHandler.sendPacket(packet);
+            if (packet != null) player.networkHandler.sendPacket(packet);
         }
     }
 }

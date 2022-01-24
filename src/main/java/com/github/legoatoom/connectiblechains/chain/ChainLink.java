@@ -41,19 +41,44 @@ public class ChainLink {
     public final Entity secondary;
     public final ChainType chainType;
     private final IntList collisionStorage = new IntArrayList(16);
-    private boolean alive = true;
     public boolean removeSilently = false;
+    private boolean alive = true;
 
     public ChainLink(ChainKnotEntity primary, Entity secondary, ChainType chainType) {
-        if(primary == null)
+        if (primary == null)
             throw new IllegalStateException("Tried to create a link from null");
-        if(primary.equals(secondary))
+        if (primary.equals(secondary))
             throw new IllegalStateException("Tried to create a link between a knot and itself");
-        if(secondary == null)
+        if (secondary == null)
             throw new IllegalStateException("Tried to create a link between a knot and null");
         this.primary = primary;
         this.secondary = secondary;
         this.chainType = chainType;
+    }
+
+    /**
+     * Create a chain link between primary and secondary and adds it to thier lists
+     *
+     * @param primary   A chain knot
+     * @param secondary A different chain knot or player
+     * @param chainType The link chainType
+     * @return A new chain link or null if it already exists
+     */
+    @Nullable
+    public static ChainLink create(ChainKnotEntity primary, Entity secondary, ChainType chainType) {
+        ChainLink link = new ChainLink(primary, secondary, chainType);
+        // Prevent multiple links between same targets
+        if (primary.getLinks().contains(link)) return null;
+
+        primary.addLink(link);
+        if (secondary instanceof ChainKnotEntity secondaryKnot) {
+            secondaryKnot.addLink(link);
+            link.createCollision();
+        }
+        if (!primary.world.isClient) {
+            link.sendAttachChainPacket(primary.world);
+        }
+        return link;
     }
 
     public boolean isDead() {
@@ -63,6 +88,7 @@ public class ChainLink {
     /**
      * If due to some error, or unforeseeable causes such as commands
      * the link still exists but needs to be destroyed.
+     *
      * @return true when {@link #destroy(boolean)} needs to be called
      */
     public boolean needsBeDestroyed() {
@@ -73,46 +99,22 @@ public class ChainLink {
         return this.primary.squaredDistanceTo(secondary);
     }
 
-    /**
-     * Create a chain link between primary and secondary and adds it to thier lists
-     * @param primary A chain knot
-     * @param secondary A different chain knot or player
-     * @param chainType The link chainType
-     * @return A new chain link or null if it already exists
-     */
-    @Nullable
-    public static ChainLink create(ChainKnotEntity primary, Entity secondary, ChainType chainType) {
-        ChainLink link = new ChainLink(primary, secondary, chainType);
-        // Prevent multiple links between same targets
-        if(primary.getLinks().contains(link)) return null;
-
-        primary.addLink(link);
-        if(secondary instanceof ChainKnotEntity secondaryKnot) {
-            secondaryKnot.addLink(link);
-            link.createCollision();
-        }
-        if(!primary.world.isClient) {
-            link.sendAttachChainPacket(primary.world);
-        }
-        return link;
-    }
-
     public void destroy(boolean mayDrop) {
-        if(!alive) return;
+        if (!alive) return;
 
         boolean drop = mayDrop;
         World world = primary.world;
         this.alive = false;
 
-        if(world.isClient) return;
+        if (world.isClient) return;
 
-        if(secondary instanceof PlayerEntity player && player.isCreative()) drop = false;
+        if (secondary instanceof PlayerEntity player && player.isCreative()) drop = false;
         // I think DO_TILE_DROPS makes more sense than DO_ENTITY_DROPS in this case
-        if(!world.getGameRules().getBoolean(GameRules.DO_TILE_DROPS)) drop = false;
+        if (!world.getGameRules().getBoolean(GameRules.DO_TILE_DROPS)) drop = false;
 
-        if(drop) {
+        if (drop) {
             ItemStack stack = new ItemStack(chainType.getItem());
-            if(secondary instanceof PlayerEntity player) {
+            if (secondary instanceof PlayerEntity player) {
                 player.giveItemStack(stack);
             } else {
                 Vec3d middle = Helper.middleOf(primary.getPos(), secondary.getPos());
@@ -123,7 +125,7 @@ public class ChainLink {
         }
 
         destroyCollision();
-        if(!primary.isRemoved() && !secondary.isRemoved())
+        if (!primary.isRemoved() && !secondary.isRemoved())
             sendDetachChainPacket(world);
     }
 
@@ -180,24 +182,24 @@ public class ChainLink {
      */
     private void createCollision() {
         if (!collisionStorage.isEmpty()) return;
-        if(primary.world.isClient) return;
+        if (primary.world.isClient) return;
 
         double distance = primary.distanceTo(secondary);
-        double step = COLLIDER_SPACING*Math.sqrt(Math.pow(ModEntityTypes.CHAIN_COLLISION.getWidth(), 2)*2) / distance;
+        double step = COLLIDER_SPACING * Math.sqrt(Math.pow(ModEntityTypes.CHAIN_COLLISION.getWidth(), 2) * 2) / distance;
         double v = step;
         double centerHoldout = ModEntityTypes.CHAIN_COLLISION.getWidth() / distance;
 
         while (v < 0.5 - centerHoldout) {
             Entity collider1 = spawnCollision(false, primary, secondary, v);
-            if(collider1 != null) collisionStorage.add(collider1.getId());
+            if (collider1 != null) collisionStorage.add(collider1.getId());
             Entity collider2 = spawnCollision(true, primary, secondary, v);
-            if(collider2 != null) collisionStorage.add(collider2.getId());
+            if (collider2 != null) collisionStorage.add(collider2.getId());
 
             v += step;
         }
 
-        Entity centerCollider = spawnCollision(false,primary, secondary, 0.5);
-        if(centerCollider != null) collisionStorage.add(centerCollider.getId());
+        Entity centerCollider = spawnCollision(false, primary, secondary, 0.5);
+        if (centerCollider != null) collisionStorage.add(centerCollider.getId());
     }
 
     /**
@@ -214,10 +216,11 @@ public class ChainLink {
 
     /**
      * Spawns a collider at v percent between entity1 and entity2
+     *
      * @param reverse Reverse start and end
-     * @param start the entity at v=0
-     * @param end the entity at v=1
-     * @param v percent of the distance
+     * @param start   the entity at v=0
+     * @param end     the entity at v=1
+     * @param v       percent of the distance
      * @return {@link ChainCollisionEntity} or null
      */
     @Nullable
@@ -227,7 +230,7 @@ public class ChainLink {
         Vec3d endPos = end.getPos().add(end.getLeashOffset());
 
         Vec3d tmp = endPos;
-        if(reverse) {
+        if (reverse) {
             endPos = startPos;
             startPos = tmp;
         }
@@ -242,7 +245,7 @@ public class ChainLink {
         double y = startPos.getY() + Helper.drip2((v * distance), distance, endPos.getY() - startPos.getY());
         double z = MathHelper.lerp(v, startPos.getZ(), endPos.getZ());
 
-        y += -ModEntityTypes.CHAIN_COLLISION.getHeight() + 1/16f;
+        y += -ModEntityTypes.CHAIN_COLLISION.getHeight() + 1 / 16f;
 
         ChainCollisionEntity c = new ChainCollisionEntity(primary.world, x, y, z, this);
         if (primary.world.spawnEntity(c)) {
@@ -260,7 +263,7 @@ public class ChainLink {
         ChainLink link = (ChainLink) o;
         return alive == link.alive && (
                 (primary.equals(link.primary) && secondary.equals(link.secondary)) ||
-                (primary.equals(link.secondary) && secondary.equals(link.primary)));
+                        (primary.equals(link.secondary) && secondary.equals(link.primary)));
     }
 
     @Override

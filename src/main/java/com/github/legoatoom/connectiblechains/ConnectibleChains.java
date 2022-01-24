@@ -55,6 +55,8 @@ public class ConnectibleChains implements ModInitializer {
      * it will be a lot easier!
      */
     public static final String MODID = "connectiblechains";
+    public static final ChainTypes TYPES = new ChainTypes();
+    public static final Logger LOGGER = LogManager.getLogger(MODID);
     /**
      * ModConfigs are helpful if people keep demanding for your chains to get longer...
      * File config is what's saved on disk, runtimeConfig should be used in most cases
@@ -64,10 +66,6 @@ public class ConnectibleChains implements ModInitializer {
      * Runtime config is a mix of the client and server config and should not be saved to disk
      */
     public static ModConfig runtimeConfig;
-
-    public static final ChainTypes TYPES = new ChainTypes();
-
-    public static final Logger LOGGER = LogManager.getLogger(MODID);
 
     /**
      * Because of how mods work, this function is called always when a player uses right click.
@@ -83,16 +81,16 @@ public class ConnectibleChains implements ModInitializer {
      */
     @SuppressWarnings("GrazieInspection")
     private static ActionResult chainUseEvent(PlayerEntity player, World world, Hand hand, BlockHitResult hitResult) {
-        if(player == null || player.isSneaking()) return ActionResult.PASS;
+        if (player == null || player.isSneaking()) return ActionResult.PASS;
         ItemStack stack = player.getStackInHand(hand);
         Item item = stack.getItem();
         BlockPos blockPos = hitResult.getBlockPos();
         Block block = world.getBlockState(blockPos).getBlock();
 
-        if(!ChainKnotEntity.canConnectTo(block)) return ActionResult.PASS;
+        if (!ChainKnotEntity.canConnectTo(block)) return ActionResult.PASS;
         else if (world.isClient) {
             Item handItem = player.getStackInHand(hand).getItem();
-            if(ConnectibleChains.TYPES.has(handItem)) {
+            if (ConnectibleChains.TYPES.has(handItem)) {
                 return ActionResult.SUCCESS;
             }
 
@@ -101,15 +99,15 @@ public class ConnectibleChains implements ModInitializer {
 
         // 1. Try with existing knot, regardless of hand item
         ChainKnotEntity knot = ChainKnotEntity.get(world, blockPos);
-        if(knot != null) {
-            if(knot.interact(player, hand) == ActionResult.CONSUME) {
+        if (knot != null) {
+            if (knot.interact(player, hand) == ActionResult.CONSUME) {
                 return ActionResult.CONSUME;
             }
             return ActionResult.PASS;
         }
 
         // 2. Create new knot if none exists and try again
-        if(!ConnectibleChains.TYPES.has(item)) return ActionResult.PASS;
+        if (!ConnectibleChains.TYPES.has(item)) return ActionResult.PASS;
 
         ChainType chainType = ConnectibleChains.TYPES.get(item);
         knot = new ChainKnotEntity(world, blockPos, chainType);

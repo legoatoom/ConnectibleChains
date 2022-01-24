@@ -41,7 +41,7 @@ abstract class EntityTrackerEntryMixin {
     private void sendPackages(Consumer<Packet<?>> sender, CallbackInfo ci) {
         if (this.entity instanceof ChainKnotEntity knot) {
             Packet<?> packet = PacketCreator.createMultiAttach(knot);
-            if(packet != null) sender.accept(packet);
+            if (packet != null) sender.accept(packet);
         }
     }
 }

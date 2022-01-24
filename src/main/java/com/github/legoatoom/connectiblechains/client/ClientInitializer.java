@@ -70,15 +70,18 @@ public class ClientInitializer implements ClientModInitializer {
 
     public static final EntityModelLayer CHAIN_KNOT = new EntityModelLayer(Helper.identifier("chain_knot"), "main");
     public static final ChainTypes TYPES = new ChainTypes();
-    private static ChainKnotEntityRenderer chainKnotEntityRenderer;
-    private static ClientInitializer instance;
-
     /**
      * Links where this is the primary and the secondary doesn't yet exist / hasn't yet loaded.
      * They are kept in a separate list to prevent accidental accesses of the secondary which would
      * result in a NPE. The links will try to be completed each world tick.
      */
     private static final ObjectList<IncompleteChainLink> INCOMPLETE_LINKS = new ObjectArrayList<>(256);
+    private static ChainKnotEntityRenderer chainKnotEntityRenderer;
+    private static ClientInitializer instance;
+
+    public static ClientInitializer getInstance() {
+        return instance;
+    }
 
     @Override
     public void onInitializeClient() {
@@ -128,7 +131,7 @@ public class ClientInitializer implements ClientModInitializer {
                             Entity to = client.world.getEntityById(toId);
                             ChainType chainType = ClientInitializer.TYPES.getOrDefault(typeId);
 
-                            if(to == null) {
+                            if (to == null) {
                                 INCOMPLETE_LINKS.add(new IncompleteChainLink(knot, toId, chainType));
                             } else {
                                 ChainLink.create(knot, to, chainType);
@@ -148,9 +151,9 @@ public class ClientInitializer implements ClientModInitializer {
                         Entity from = client.world.getEntityById(fromId);
                         Entity to = client.world.getEntityById(toId);
                         if (from instanceof ChainKnotEntity knot) {
-                            if(to == null) {
+                            if (to == null) {
                                 for (IncompleteChainLink link : INCOMPLETE_LINKS) {
-                                    if(link.primary == from && link.secondaryId == toId)
+                                    if (link.primary == from && link.secondaryId == toId)
                                         link.destroy();
                                 }
                             } else {
@@ -179,7 +182,7 @@ public class ClientInitializer implements ClientModInitializer {
                                 Entity to = client.world.getEntityById(toIds[i]);
                                 ChainType chainType = ClientInitializer.TYPES.getOrDefault(types[i]);
 
-                                if(to == null) {
+                                if (to == null) {
                                     INCOMPLETE_LINKS.add(new IncompleteChainLink(knot, toIds[i], chainType));
                                 } else {
                                     ChainLink.create(knot, to, chainType);
@@ -255,10 +258,10 @@ public class ClientInitializer implements ClientModInitializer {
             int typeId = buf.readVarInt();
 
             client.execute(() -> {
-                if(client.world == null) return;
+                if (client.world == null) return;
                 Entity entity = client.world.getEntityById(knotId);
                 ChainType chainType = ClientInitializer.TYPES.getOrDefault(typeId);
-                if(entity instanceof ChainKnotEntity knot) {
+                if (entity instanceof ChainKnotEntity knot) {
                     knot.updateChainType(chainType);
                 } else {
                     throw new IllegalStateException("Tried to change type of " + entity + " (#" + knotId + ") which is not a chain knot");
@@ -304,9 +307,5 @@ public class ClientInitializer implements ClientModInitializer {
 
     public ChainKnotEntityRenderer getChainKnotEntityRenderer() {
         return chainKnotEntityRenderer;
-    }
-
-    public static ClientInitializer getInstance() {
-        return instance;
     }
 }

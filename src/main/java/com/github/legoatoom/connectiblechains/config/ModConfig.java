@@ -67,13 +67,13 @@ public class ModConfig implements ConfigData {
         return IS_DEBUG_ENV && MinecraftClient.getInstance().options.debugEnabled;
     }
 
+    public int getQuality() {
+        return quality;
+    }
+
     @SuppressWarnings("unused")
     public void setQuality(int quality) {
         this.quality = quality;
-    }
-
-    public int getQuality() {
-        return quality;
     }
 
     public void syncToClients(MinecraftServer server) {

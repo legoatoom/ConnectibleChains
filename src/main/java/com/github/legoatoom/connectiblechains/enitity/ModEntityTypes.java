@@ -36,24 +36,24 @@ public class ModEntityTypes {
     public static final EntityType<ChainKnotEntity> CHAIN_KNOT;
     public static final EntityType<ChainCollisionEntity> CHAIN_COLLISION;
 
-    static{
+    static {
         CHAIN_KNOT = Registry.register(
-                Registry.ENTITY_TYPE, Helper.identifier("chain_knot") ,
+                Registry.ENTITY_TYPE, Helper.identifier("chain_knot"),
                 FabricEntityTypeBuilder.create(SpawnGroup.MISC,
-                        (EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new)
+                                (EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new)
                         .trackRangeBlocks(10).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
-                        .dimensions(EntityDimensions.fixed(6/16f, 0.5F))
+                        .dimensions(EntityDimensions.fixed(6 / 16f, 0.5F))
                         .spawnableFarFromPlayer()
                         .fireImmune()
                         .build()
         );
         CHAIN_COLLISION = Registry.register(
-                Registry.ENTITY_TYPE, Helper.identifier("chain_collision") ,
+                Registry.ENTITY_TYPE, Helper.identifier("chain_collision"),
                 FabricEntityTypeBuilder.create(SpawnGroup.MISC,
-                        (EntityType.EntityFactory<ChainCollisionEntity>) ChainCollisionEntity::new)
+                                (EntityType.EntityFactory<ChainCollisionEntity>) ChainCollisionEntity::new)
                         .trackRangeBlocks(10).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
                         // 4/16 is the width of a fence
-                        .dimensions(EntityDimensions.fixed(4/16f, 4/16f))
+                        .dimensions(EntityDimensions.fixed(4 / 16f, 4 / 16f))
                         .disableSaving()
                         .disableSummon()
                         .fireImmune()

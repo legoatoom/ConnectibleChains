@@ -13,7 +13,12 @@ import java.util.concurrent.Executor;
 
 @SuppressWarnings("unused")
 public interface SidedResourceReloadListener<T> {
+    static <T> SimpleResourceReloadListener<T> proxy(ResourceType type, SidedResourceReloadListener<T> impl) {
+        return new SidedResourceReloadListenerProxy<>(type, impl);
+    }
+
     CompletableFuture<T> load(ResourceType type, ResourceManager manager, Profiler profiler, Executor executor);
+
     CompletableFuture<Void> apply(ResourceType type, T data, ResourceManager manager, Profiler profiler, Executor executor);
 
     Identifier getFabricId();
@@ -24,10 +29,6 @@ public interface SidedResourceReloadListener<T> {
 
     default String getName() {
         return this.getClass().getSimpleName();
-    }
-
-    static <T> SimpleResourceReloadListener<T> proxy(ResourceType type, SidedResourceReloadListener<T> impl) {
-        return new SidedResourceReloadListenerProxy<>(type, impl);
     }
 }
 

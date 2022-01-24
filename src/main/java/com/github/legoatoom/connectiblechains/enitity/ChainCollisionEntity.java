@@ -94,21 +94,21 @@ public class ChainCollisionEntity extends Entity {
         if (this.isInvulnerableTo(source)) {
             return false;
         }
-        if(this.world.isClient) {
+        if (this.world.isClient) {
             return false;
         }
 
-        if(source.isExplosive()) {
-            if(link != null) link.destroy(true);
+        if (source.isExplosive()) {
+            if (link != null) link.destroy(true);
             return true;
         }
-        if(source.getSource() instanceof PlayerEntity player) {
-            if(tryBreakWith(player.getMainHandStack().getItem(), !player.isCreative())) {
+        if (source.getSource() instanceof PlayerEntity player) {
+            if (tryBreakWith(player.getMainHandStack().getItem(), !player.isCreative())) {
                 return true;
             }
         }
 
-        if(!source.isProjectile()) {
+        if (!source.isProjectile()) {
             // Projectiles such as arrows (actually probably just arrows) can get "stuck"
             // on entities they cannot damage, such as players while blocking with shields or these chains.
             // That would cause some serious sound spam, and we want to avoid that.
@@ -119,7 +119,7 @@ public class ChainCollisionEntity extends Entity {
 
     private boolean tryBreakWith(Item item, boolean mayDrop) {
         if (FabricToolTags.SHEARS.contains(item)) {
-            if(!world.isClient && link != null) link.destroy(mayDrop);
+            if (!world.isClient && link != null) link.destroy(mayDrop);
             return true;
         }
         return false;
@@ -138,6 +138,7 @@ public class ChainCollisionEntity extends Entity {
 
     /**
      * We don't want to be able to push the collision box of the chain.
+     *
      * @return false
      */
     @Override
@@ -201,13 +202,13 @@ public class ChainCollisionEntity extends Entity {
      * be made to this.
      *
      * @param player the player that interacted.
-     * @param hand the hand of the player.
+     * @param hand   the hand of the player.
      * @return ActionResult
      */
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
         boolean didBreak = tryBreakWith(player.getStackInHand(hand).getItem(), !player.isCreative());
-        if(didBreak) return ActionResult.CONSUME;
+        if (didBreak) return ActionResult.CONSUME;
         return ActionResult.PASS;
     }
 
@@ -215,7 +216,6 @@ public class ChainCollisionEntity extends Entity {
      * When this entity is created we need to send a packet to the client.
      * This method sends a packet that contains the entityID of both the start and
      * end chainKnot of this entity.
-     *
      */
     @Override
     public Packet<?> createSpawnPacket() {
@@ -233,23 +233,23 @@ public class ChainCollisionEntity extends Entity {
         return link;
     }
 
-    public void setChainType(ChainType chainType) {
-        this.chainType = chainType;
-    }
-
     public ChainType getChainType() {
         return chainType;
     }
 
+    public void setChainType(ChainType chainType) {
+        this.chainType = chainType;
+    }
+
     @Override
     public void tick() {
-        if(world.isClient) return;
+        if (world.isClient) return;
         // Condition can be met when the knots were removed with commands
         // but the collider still exists
-        if(link != null && link.needsBeDestroyed()) link.destroy(true);
+        if (link != null && link.needsBeDestroyed()) link.destroy(true);
 
         // Collider removes itself when the link is dead
-        if(link == null || link.isDead()) {
+        if (link == null || link.isDead()) {
             remove(Entity.RemovalReason.DISCARDED);
         }
     }
