@@ -31,7 +31,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
@@ -47,25 +46,24 @@ import java.util.function.Function;
 
 /**
  * ChainCollisionEntity is an Entity that is invisible but has a collision.
- * It is used to create a collision for connections between chains.
+ * It is used to create a collision for links.
  *
- * @author legoatoom
+ * @author legoatoom, Qendolin
  */
-public class ChainCollisionEntity extends Entity {
+public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
 
+    /**
+     * The link that this collider is a part of.
+     */
     @Environment(EnvType.SERVER)
     @Nullable
     private ChainLink link;
 
     /**
-     * On the client only the chainType information is present, for pick block mostly
+     * On the client only the chainType information is present, for the pick item action mostly
      */
     @Environment(EnvType.CLIENT)
     private ChainType chainType;
-
-    public ChainCollisionEntity(EntityType<? extends ChainCollisionEntity> entityType, World world) {
-        super(entityType, world);
-    }
 
     public ChainCollisionEntity(World world, double x, double y, double z, @NotNull ChainLink link) {
         this(ModEntityTypes.CHAIN_COLLISION, world);
@@ -73,63 +71,35 @@ public class ChainCollisionEntity extends Entity {
         this.setPosition(x, y, z);
     }
 
+    public ChainCollisionEntity(EntityType<? extends ChainCollisionEntity> entityType, World world) {
+        super(entityType, world);
+    }
+
+    @SuppressWarnings("unused")
+    @Environment(EnvType.SERVER)
+    public @Nullable ChainLink getLink() {
+        return link;
+    }
+
+    @Environment(EnvType.CLIENT)
+    public ChainType getChainType() {
+        return chainType;
+    }
+
+    @Environment(EnvType.CLIENT)
+    public void setChainType(ChainType chainType) {
+        this.chainType = chainType;
+    }
+
     @Override
     protected void initDataTracker() {
-        // Required by Entity
-    }
-
-    /**
-     * When this entity is damaged by
-     * <ul>
-     * <li>A player with a item that has Tag: {@link FabricToolTags#SHEARS}</li>
-     * <li>An explosion</li>
-     * </ul>
-     * it destroys the link that it is part of.
-     * Otherwise, it plays a hit sound.
-     *
-     * @return true when damage was effective
-     */
-    @Override
-    public boolean damage(DamageSource source, float amount) {
-        if (this.isInvulnerableTo(source)) {
-            return false;
-        }
-        if (this.world.isClient) {
-            return false;
-        }
-
-        if (source.isExplosive()) {
-            if (link != null) link.destroy(true);
-            return true;
-        }
-        if (source.getSource() instanceof PlayerEntity player) {
-            if (tryBreakWith(player.getMainHandStack().getItem(), !player.isCreative())) {
-                return true;
-            }
-        }
-
-        if (!source.isProjectile()) {
-            // Projectiles such as arrows (actually probably just arrows) can get "stuck"
-            // on entities they cannot damage, such as players while blocking with shields or these chains.
-            // That would cause some serious sound spam, and we want to avoid that.
-            playSound(SoundEvents.BLOCK_CHAIN_HIT, 0.5F, 1.0F);
-        }
-        return false;
-    }
-
-    private boolean tryBreakWith(Item item, boolean mayDrop) {
-        if (FabricToolTags.SHEARS.contains(item)) {
-            if (!world.isClient && link != null) link.destroy(mayDrop);
-            return true;
-        }
-        return false;
     }
 
     /**
      * If this entity can even be collided with.
      * Different from {@link #isCollidable()} as this tells if something can collide with this.
      *
-     * @return true
+     * @return true when not removed.
      */
     @Override
     public boolean collides() {
@@ -150,7 +120,8 @@ public class ChainCollisionEntity extends Entity {
      * We only allow the collision box to be rendered if a player is holding an item that has tag {@link FabricToolTags#SHEARS}.
      * This might be helpful when using F3+B to see the boxes of the chain.
      *
-     * @return boolean - should the collision box be rendered.
+     * @param distance the camera distance from the collider.
+     * @return true when it should be rendered
      */
     @Environment(EnvType.CLIENT)
     @Override
@@ -165,16 +136,16 @@ public class ChainCollisionEntity extends Entity {
 
     @Override
     protected void readCustomDataFromNbt(NbtCompound tag) {
-        // Required by Entity, but does nothing.
     }
 
     @Override
     protected void writeCustomDataToNbt(NbtCompound tag) {
-        // Required by Entity, but does nothing.
     }
 
     /**
      * Makes sure that nothing can walk through it.
+     *
+     * @return true
      */
     @Override
     public boolean isCollidable() {
@@ -182,44 +153,60 @@ public class ChainCollisionEntity extends Entity {
     }
 
     /**
-     * What happens when this is attacked?
-     * This method is called by {@link PlayerEntity#attack(Entity)} to allow an entity to choose what happens when
-     * it is attacked. We don't want to play sounds when we attack it without shears, so that is why we override this.
+     * @see ChainKnotEntity#handleAttack(Entity)
      */
     @Override
     public boolean handleAttack(Entity attacker) {
         if (attacker instanceof PlayerEntity playerEntity) {
-            return this.damage(DamageSource.player(playerEntity), 0.0F);
+            this.damage(DamageSource.player(playerEntity), 0.0F);
         } else {
             playSound(SoundEvents.BLOCK_CHAIN_HIT, 0.5F, 1.0F);
-            return false;
         }
+        return true;
     }
 
     /**
-     * Interaction of a player and this entity.
-     * It will try to make new connections to the player or allow other chains that are connected to the player to
-     * be made to this.
+     * @see ChainKnotEntity#damage(DamageSource, float)
+     */
+    @Override
+    public boolean damage(DamageSource source, float amount) {
+        ActionResult result = ChainLinkEntity.onDamageFrom(this, source);
+
+        if (result.isAccepted()) {
+            destroyLinks(result == ActionResult.SUCCESS);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void destroyLinks(boolean mayDrop) {
+        if (link != null) link.destroy(mayDrop);
+    }
+
+    /**
+     * Interaction (attack or use) of a player and this entity.
+     * Tries to destroy the link with the item in the players hand.
      *
-     * @param player the player that interacted.
-     * @param hand   the hand of the player.
-     * @return ActionResult
+     * @param player The player that interacted.
+     * @param hand   The hand that interacted.
+     * @return {@link ActionResult#SUCCESS} when the interaction was successful.
      */
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
-        boolean didBreak = tryBreakWith(player.getStackInHand(hand).getItem(), !player.isCreative());
-        if (didBreak) return ActionResult.CONSUME;
+        if (ChainLinkEntity.canDestroyWith(player.getStackInHand(hand).getItem())) {
+            destroyLinks(!player.isCreative());
+            return ActionResult.SUCCESS;
+        }
         return ActionResult.PASS;
     }
 
     /**
-     * When this entity is created we need to send a packet to the client.
-     * This method sends a packet that contains the entityID of both the start and
-     * end chainKnot of this entity.
+     * The client only needs to know type info for the pick item action.
+     * Links are handled server-side.
      */
     @Override
     public Packet<?> createSpawnPacket() {
-        //Write our id and the id of the one we connect to.
         Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> {
             ChainType chainType = link == null ? ConnectibleChains.TYPES.getDefaultType() : link.chainType;
             packetByteBuf.writeVarInt(Registry.ITEM.getRawId(chainType.getItem()));
@@ -228,19 +215,9 @@ public class ChainCollisionEntity extends Entity {
         return PacketCreator.createSpawn(this, NetworkingPackets.S2C_SPAWN_CHAIN_COLLISION_PACKET, extraData);
     }
 
-    @SuppressWarnings("unused")
-    public @Nullable ChainLink getLink() {
-        return link;
-    }
-
-    public ChainType getChainType() {
-        return chainType;
-    }
-
-    public void setChainType(ChainType chainType) {
-        this.chainType = chainType;
-    }
-
+    /**
+     * Destroys broken links and removes itself when there is no alive link.
+     */
     @Override
     public void tick() {
         if (world.isClient) return;

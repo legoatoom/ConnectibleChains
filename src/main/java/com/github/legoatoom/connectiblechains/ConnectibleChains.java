@@ -68,6 +68,26 @@ public class ConnectibleChains implements ModInitializer {
     public static ModConfig runtimeConfig;
 
     /**
+     * Here is where the fun begins.
+     */
+    @Override
+    public void onInitialize() {
+        ModEntityTypes.init();
+
+        ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(
+                SidedResourceReloadListener.proxy(ResourceType.SERVER_DATA, TYPES));
+
+        AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
+        ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
+        fileConfig = configHolder.getConfig();
+        runtimeConfig = new ModConfig().copyFrom(fileConfig);
+
+        UseBlockCallback.EVENT.register(ConnectibleChains::chainUseEvent);
+
+        ServerPlayConnectionEvents.INIT.register((handler, server) -> fileConfig.syncToClient(handler.getPlayer()));
+    }
+
+    /**
      * Because of how mods work, this function is called always when a player uses right click.
      * But if the right click doesn't involve this mod (No chain/block to connect to) then we ignore immediately.
      * <p>
@@ -87,7 +107,7 @@ public class ConnectibleChains implements ModInitializer {
         BlockPos blockPos = hitResult.getBlockPos();
         Block block = world.getBlockState(blockPos).getBlock();
 
-        if (!ChainKnotEntity.canConnectTo(block)) return ActionResult.PASS;
+        if (!ChainKnotEntity.canAttachTo(block)) return ActionResult.PASS;
         else if (world.isClient) {
             Item handItem = player.getStackInHand(hand).getItem();
             if (ConnectibleChains.TYPES.has(handItem)) {
@@ -115,26 +135,6 @@ public class ConnectibleChains implements ModInitializer {
         world.spawnEntity(knot);
         knot.onPlace();
         return knot.interact(player, hand);
-    }
-
-    /**
-     * Here is where the fun begins.
-     */
-    @Override
-    public void onInitialize() {
-        ModEntityTypes.init();
-
-        ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(
-                SidedResourceReloadListener.proxy(ResourceType.SERVER_DATA, TYPES));
-
-        AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
-        ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
-        fileConfig = configHolder.getConfig();
-        runtimeConfig = new ModConfig().copyFrom(fileConfig);
-
-        UseBlockCallback.EVENT.register(ConnectibleChains::chainUseEvent);
-
-        ServerPlayConnectionEvents.INIT.register((handler, server) -> fileConfig.syncToClient(handler.getPlayer()));
     }
 
 }

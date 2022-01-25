@@ -12,6 +12,11 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+/**
+ * A proxy for {@link SimpleResourceReloadListener} that knows the resource type.
+ *
+ * @param <T> Type of data that is loaded by this listener
+ */
 record SidedResourceReloadListenerProxy<T>(
         @NotNull ResourceType type,
         @NotNull SidedResourceReloadListener<T> impl

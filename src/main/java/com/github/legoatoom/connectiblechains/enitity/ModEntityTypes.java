@@ -62,8 +62,7 @@ public class ModEntityTypes {
 
     }
 
-    @SuppressWarnings("EmptyMethod")
     public static void init() {
-        ConnectibleChains.LOGGER.info("Initializing ModEntityTypes...");
+        ConnectibleChains.LOGGER.info("Initialized entity types.");
     }
 }

@@ -19,7 +19,7 @@ package com.github.legoatoom.connectiblechains.client.render.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainType;
-import com.github.legoatoom.connectiblechains.chain.UV;
+import com.github.legoatoom.connectiblechains.chain.UVRect;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.render.VertexConsumer;
@@ -47,11 +47,6 @@ public class ChainRenderer {
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
     }
 
-    public void render(VertexConsumer buffer, MatrixStack matrices, Vec3f chainVec, ChainType chainType, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
-        ChainModel model = buildModel(chainVec, chainType);
-        model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
-    }
-
     private ChainModel buildModel(Vec3f chainVec, ChainType chainType) {
         float desiredSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
         int initialCapacity = (int) (2f * Helper.lengthOf(chainVec) / desiredSegmentLength);
@@ -68,7 +63,10 @@ public class ChainRenderer {
         return builder.build();
     }
 
-    private void buildFaceVertical(ChainModel.Builder builder, Vec3f v, float angle, UV uv) {
+    /**
+     * {@link #buildFace} does not work when {@code v} is pointing straight up or down.
+     */
+    private void buildFaceVertical(ChainModel.Builder builder, Vec3f v, float angle, UVRect uv) {
         float actualSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
         float chainWidth = (uv.x1() - uv.x0()) / 16 * CHAIN_SCALE;
 
@@ -81,10 +79,10 @@ public class ChainRenderer {
         vert11.add(normal);
 
         float uvv0 = 0, uvv1 = 0;
-        boolean lastIter_ = false;
+        boolean lastIter = false;
         for (int segment = 0; segment < MAX_SEGMENTS; segment++) {
             if (vert00.getY() + actualSegmentLength >= v.getY()) {
-                lastIter_ = true;
+                lastIter = true;
                 actualSegmentLength = v.getY() - vert00.getY();
             }
 
@@ -98,7 +96,7 @@ public class ChainRenderer {
             builder.vertex(vert11).uv(uv.x1() / 16f, uvv1).next();
             builder.vertex(vert10).uv(uv.x0() / 16f, uvv1).next();
 
-            if (lastIter_) break;
+            if (lastIter) break;
 
             uvv0 = uvv1;
 
@@ -107,7 +105,16 @@ public class ChainRenderer {
         }
     }
 
-    private void buildFace(ChainModel.Builder builder, Vec3f v, float angle, UV uv) {
+    /**
+     * Creates geometry from the origin to {@code v} with the specified {@code angle}.
+     * It uses an iterative approach meaning that it adds geometry until it's at the end or
+     * has reached {@link #MAX_SEGMENTS}.
+     * @param builder The target builder
+     * @param v The end position in relation to the origin
+     * @param angle The angle of the face
+     * @param uv The uv bounds of the face
+     */
+    private void buildFace(ChainModel.Builder builder, Vec3f v, float angle, UVRect uv) {
         float actualSegmentLength, desiredSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
         float distance = Helper.lengthOf(v), distanceXZ = (float) Math.sqrt(v.getX() * v.getX() + v.getZ() * v.getZ());
         // Original code used total distance between start and end instead of horizontal distance
@@ -146,7 +153,7 @@ public class ChainRenderer {
 
         actualSegmentLength = Helper.distanceBetween(point0, point1);
 
-        boolean lastIter_ = false;
+        boolean lastIter = false;
         for (int segment = 0; segment < MAX_SEGMENTS; segment++) {
             rotAxis.set(point1.getX() - point0.getX(), point1.getY() - point0.getY(), point1.getZ() - point0.getZ());
             rotAxis.normalize();
@@ -173,13 +180,13 @@ public class ChainRenderer {
             builder.vertex(vert11).uv(uv.x1() / 16f, uvv1).next();
             builder.vertex(vert10).uv(uv.x0() / 16f, uvv1).next();
 
-            if (lastIter_) break;
+            if (lastIter) break;
 
             point0.set(point1);
 
             x += estimateDeltaX(desiredSegmentLength, gradient);
             if (x >= distanceXZ) {
-                lastIter_ = true;
+                lastIter = true;
                 x = distanceXZ;
             }
 
@@ -214,10 +221,21 @@ public class ChainRenderer {
         return (float) (s / Math.sqrt(1 + k * k));
     }
 
+    public void render(VertexConsumer buffer, MatrixStack matrices, Vec3f chainVec, ChainType chainType, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
+        ChainModel model = buildModel(chainVec, chainType);
+        model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
+    }
+
+    /**
+     * Purge the model cache.
+     */
     public void purge() {
         models.clear();
     }
 
+    /**
+     * Used to identify a cached model.
+     */
     public static class BakeKey {
         private final int hash;
 

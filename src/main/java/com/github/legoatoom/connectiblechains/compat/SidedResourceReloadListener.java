@@ -11,15 +11,18 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+/**
+ * A reload-listener that is aware of the resource type.
+ *
+ * @param <T> Type of data that is loaded by this listener
+ * @author gudenau, Qendolin
+ * @see SimpleResourceReloadListener
+ */
 @SuppressWarnings("unused")
 public interface SidedResourceReloadListener<T> {
     static <T> SimpleResourceReloadListener<T> proxy(ResourceType type, SidedResourceReloadListener<T> impl) {
         return new SidedResourceReloadListenerProxy<>(type, impl);
     }
-
-    CompletableFuture<T> load(ResourceType type, ResourceManager manager, Profiler profiler, Executor executor);
-
-    CompletableFuture<Void> apply(ResourceType type, T data, ResourceManager manager, Profiler profiler, Executor executor);
 
     Identifier getFabricId();
 
@@ -30,5 +33,9 @@ public interface SidedResourceReloadListener<T> {
     default String getName() {
         return this.getClass().getSimpleName();
     }
+
+    CompletableFuture<T> load(ResourceType type, ResourceManager manager, Profiler profiler, Executor executor);
+
+    CompletableFuture<Void> apply(ResourceType type, T data, ResourceManager manager, Profiler profiler, Executor executor);
 }
 

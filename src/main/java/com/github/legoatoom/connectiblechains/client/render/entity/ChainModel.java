@@ -29,12 +29,25 @@ import net.minecraft.util.math.Vec3f;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Used to avoid calculating the chain every frame.
+ */
 public record ChainModel(float[] vertices, float[] uvs) {
 
     public static Builder builder(int initialCapacity) {
         return new Builder(initialCapacity);
     }
 
+    /**
+     * Writes the model data to {@code buffer} and applies lighting.
+     *
+     * @param buffer   The target buffer.
+     * @param matrices The transformation stack
+     * @param bLight0  Block-light at the start.
+     * @param bLight1  Block-light at the end.
+     * @param sLight0  Sky-light at the start.
+     * @param sLight1  Sky-light at the end.
+     */
     public void render(VertexConsumer buffer, MatrixStack matrices, int bLight0, int bLight1, int sLight0, int sLight1) {
         Matrix4f modelMatrix = matrices.peek().getPositionMatrix();
         Matrix3f normalMatrix = matrices.peek().getNormalMatrix();

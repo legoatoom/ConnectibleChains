@@ -57,6 +57,10 @@ public class Helper {
         return p2 + a * Math.cosh((((2D * x) + (2D * p1)) - d) / (2D * a));
     }
 
+    private static double asinh(double x) {
+        return Math.log(x + Math.sqrt(x * x + 1.0));
+    }
+
     /**
      * Derivative of drip2
      * For geogebra:
@@ -71,10 +75,6 @@ public class Helper {
         double a = ConnectibleChains.runtimeConfig.getChainHangAmount();
         double p1 = a * asinh((h / (2D * a)) * (1D / Math.sinh(d / (2D * a))));
         return Math.sinh((2 * x + 2 * p1 - d) / (2 * a));
-    }
-
-    private static double asinh(double x) {
-        return Math.log(x + Math.sqrt(x * x + 1.0));
     }
 
     public static Vec3d middleOf(Vec3d a, Vec3d b) {

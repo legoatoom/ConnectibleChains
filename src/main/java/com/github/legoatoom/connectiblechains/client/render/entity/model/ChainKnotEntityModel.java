@@ -26,6 +26,8 @@ import net.minecraft.entity.Entity;
 /**
  * Model for the {@link com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity}.
  * Similar to the {@link net.minecraft.client.render.entity.model.LeashKnotEntityModel} code.
+ * <p>
+ * The model is 6x3x6 pixels big.
  *
  * @author legoatoom
  * @see net.minecraft.client.render.entity.LeashKnotEntityRenderer
@@ -47,13 +49,12 @@ public class ChainKnotEntityModel<T extends Entity> extends SinglePartEntityMode
         return TexturedModelData.of(modelData, 32, 32);
     }
 
-    public void setAngles(T entity, float limbAngle, float limbDistance, float customAngle, float headYaw, float headPitch) {
-        this.chainKnot.yaw = headYaw * 0.017453292F;
-        this.chainKnot.pitch = headPitch * 0.017453292F;
-    }
-
     @Override
     public ModelPart getPart() {
         return chainKnot;
+    }
+
+    @Override
+    public void setAngles(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
     }
 }

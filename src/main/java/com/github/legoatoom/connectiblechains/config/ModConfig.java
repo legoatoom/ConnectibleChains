@@ -63,10 +63,6 @@ public class ModConfig implements ConfigData {
         this.maxChainRange = maxChainRange;
     }
 
-    public boolean doDebugDraw() {
-        return IS_DEBUG_ENV && MinecraftClient.getInstance().options.debugEnabled;
-    }
-
     public int getQuality() {
         return quality;
     }
@@ -74,6 +70,10 @@ public class ModConfig implements ConfigData {
     @SuppressWarnings("unused")
     public void setQuality(int quality) {
         this.quality = quality;
+    }
+
+    public boolean doDebugDraw() {
+        return IS_DEBUG_ENV && MinecraftClient.getInstance().options.debugEnabled;
     }
 
     public void syncToClients(MinecraftServer server) {

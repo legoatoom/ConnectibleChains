@@ -37,9 +37,17 @@ import java.util.function.Function;
  * <a href="https://fabricmc.net/wiki/tutorial:projectiles">This class is from a tutorial</a> Edited some things to make it more useful for me.
  */
 public class PacketCreator {
+    /**
+     * Creates a spawn packet for {@code e} with additional data from {@code extraData}.
+     *
+     * @param e         The entity to spawn
+     * @param packetID  The spawn packet id
+     * @param extraData Extra data supplier
+     * @return A S2C packet
+     */
     public static Packet<?> createSpawn(Entity e, Identifier packetID, Function<PacketByteBuf, PacketByteBuf> extraData) {
         if (e.world.isClient)
-            throw new IllegalStateException("SpawnPacketUtil.create called on the logical client!");
+            throw new IllegalStateException("Called on the logical client!");
         PacketByteBuf byteBuf = new PacketByteBuf(Unpooled.buffer());
         byteBuf.writeVarInt(Registry.ENTITY_TYPE.getRawId(e.getType()));
         byteBuf.writeUuid(e.getUuid());
@@ -55,7 +63,7 @@ public class PacketCreator {
      * Creates a multi attach packet for a knot
      *
      * @param knot the primary knot
-     * @return Packet or null
+     * @return Packet or null if no data is to be sent
      */
     @Nullable
     public static Packet<?> createMultiAttach(ChainKnotEntity knot) {
