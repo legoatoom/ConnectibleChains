@@ -1,0 +1,12 @@
+{
+	"textures": {
+		"betterend:terminite_chain": {
+			"chain": "betterend:textures/block/terminite_chain",
+			"knot": "connectiblechains:textures/entity/terminite_chain_knot"
+		},
+		"betterend:thallasium_chain": {
+			"chain": "betterend:textures/block/thallasium_chain",
+			"knot": "connectiblechains:textures/entity/thallasium_chain_knot"
+		}
+	}
+}

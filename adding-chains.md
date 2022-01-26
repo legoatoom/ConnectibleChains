@@ -18,28 +18,33 @@ The contents of the file should look something like this:
 
 ## 2. Specify the textures
 
-The textures of your chain are specified in a pseudo model file.
-The file has to follow this path convention: 
+The textures of your chain are specified in a json file.
+The path has to follow this convention: 
 ```
-assets/connectiblechains/models/entity/<underscore_sperated_id>.json
+assets/<namespace_of_item>/textures/entity/connectible_chains_compat.json
 ```
-Where `<underscore_sperated_id>` is the full id of your item where all `:` and `/` have been replaced with `_`.  
+Where `<namespace_of_item>` is the namespace of the item id in the `chainable` tag.  
 I.e.: 
-- `examplemod:my_chain_item_id` -> `examplemod_my_chain_item_id`
-- `examplemod:chains/my_chain` -> `examplemod_chains_my_chain`
+- `examplemod:my_chain_item_id` -> `examplemod`
+- `examplemod_extras:chains/pink_chain` -> `examplemod_extras`
 
-The file has to contain a `textures` object with `chain` and `chain_knot` properties. 
-The values specify the texture ids, just like normal model files.
+The file has to contain a `textures` object where the keys are the full item ids (same as in the `chainable` tag) 
+and the value is and object with `chain` and `knot` that specify the texture ids.
 
-For `minecraft:chain` the filename is `minecraft_chain.json` and the contents are
+For `minecraft:chain` the file is `assets/minecraft/textures/entity/connectible_chains_compat.json` and the contents are
 ```json
 {
   "textures": {
-    "chain": "minecraft:textures/block/chain",
-    "chain_knot": "connectiblechains:textures/entity/chain_knot"
+    "minecraft:chain": {
+      "chain": "minecraft:textures/block/chain",
+      "knot": "connectiblechains:textures/entity/chain_knot"
+    }
   }
 }
+
 ```
+
+> Note: For every namespace the texture maps get merged in order of their resource priority.
 
 ## 3. Create a knot texture
 
@@ -55,8 +60,8 @@ You should now be able to use the custom chain.
 
 ### If it does not work follow these steps
 
-1. Check the log for errors and fix them
-2. If you can't place the chain then you messed up in step 1  
+- **Check the log** for errors and fix them
+- If you can't place the chain then you messed up in step 1  
    The tag file **has to** be in `data/connectiblechains/tags/items/`
-3. If the texture is magenta and black you messed up in step 2  
+- If the texture is magenta and black you messed up in step 2  
    The model file **has to** be in `assets/connectiblechains/models/entity/`

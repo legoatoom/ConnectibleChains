@@ -3,16 +3,13 @@ package com.github.legoatoom.connectiblechains.compat;
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainType;
 import com.github.legoatoom.connectiblechains.chain.UVRect;
-import com.github.legoatoom.connectiblechains.mixin.client.JsonUnbakedModelAccessor;
-import com.github.legoatoom.connectiblechains.util.Helper;
-import com.mojang.datafixers.util.Either;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.tag.TagFactory;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-import net.minecraft.client.render.model.json.JsonUnbakedModel;
-import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.item.Item;
 import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceManager;
@@ -21,8 +18,8 @@ import net.minecraft.tag.Tag;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.util.registry.Registry;
-import org.apache.commons.io.IOUtils;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -37,10 +34,10 @@ import java.util.concurrent.Executor;
  * @author Qendolin
  */
 public class ChainTypes implements SidedResourceReloadListener<List<ChainType>> {
-    public static final Tag<Item> CONNECTIBLE_CHAINS = TagFactory.ITEM.create(new Identifier(ConnectibleChains.MODID, "chainable"));
+    public static final Tag<Item> CHAINABLE_CHAINS = TagFactory.ITEM.create(new Identifier(ConnectibleChains.MODID, "chainable"));
+    private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final Identifier DEFAULT_TYPE = new Identifier("minecraft:chain");
     private static final Identifier MISSING_ID = new Identifier(ConnectibleChains.MODID, "textures/entity/missing.png");
-
     private final List<Identifier> builtinTypes = loadBuiltinTypes();
 
     // Identifiers are more performant than Items (I'm pretty sure)
@@ -58,73 +55,117 @@ public class ChainTypes implements SidedResourceReloadListener<List<ChainType>> 
     }
 
     /**
-     * Register chain types from builtin and tag, for client and server.
+     * Load chain types from builtin and tag, for client and server.
      *
      * @param type    The chain type
      * @param manager The resource manager
      */
     private List<ChainType> loadChainTypes(ResourceType type, ResourceManager manager) {
         List<ChainType> chainTypes = new ArrayList<>();
-        for (Identifier item : builtinTypes) {
-            chainTypes.add(loadChainType(type, manager, item));
+        Map<String, List<Identifier>> typesByNamespace = new HashMap<>();
+        for (Identifier id : builtinTypes) {
+            typesByNamespace.putIfAbsent(id.getNamespace(), new ArrayList<>());
+            typesByNamespace.get(id.getNamespace()).add(id);
         }
-        for (Item item : CONNECTIBLE_CHAINS.values()) {
-            chainTypes.add(loadChainType(type, manager, Registry.ITEM.getId(item)));
+        for (Item item : CHAINABLE_CHAINS.values()) {
+            Identifier id = Registry.ITEM.getId(item);
+            typesByNamespace.putIfAbsent(id.getNamespace(), new ArrayList<>());
+            typesByNamespace.get(id.getNamespace()).add(id);
         }
+
+        for (Map.Entry<String, List<Identifier>> entry : typesByNamespace.entrySet()) {
+            TextureMap textureMap = null;
+            if(type == ResourceType.CLIENT_RESOURCES) {
+                textureMap = loadTextureMap(manager, entry.getKey());
+            }
+
+            for (Identifier id : entry.getValue()) {
+                chainTypes.add(createChainType(type, manager, id, textureMap));
+            }
+        }
+
         return chainTypes;
     }
 
-    private ChainType loadChainType(ResourceType type, ResourceManager manager, Identifier item) {
+    /**
+     * Loads all texture maps for a given namespace and merges them with priority ordering.
+     *
+     * @param manager   The resource manager
+     * @param namespace The namespace of the texture map
+     * @return The combined texture map
+     */
+    private TextureMap loadTextureMap(ResourceManager manager, String namespace) {
+        Identifier id = new Identifier(namespace, "textures/entity/connectible_chains_compat.json");
+        List<Resource> resources;
+        try {
+            resources = manager.getAllResources(id);
+        } catch (FileNotFoundException ignored) {
+            ConnectibleChains.LOGGER.error("Missing texture map for {}", namespace);
+            return null;
+        } catch (IOException e) {
+            ConnectibleChains.LOGGER.error("Failed to load texture maps for {}: ", id, e);
+            return null;
+        }
+
+        TextureMap mergedMap = new TextureMap();
+        for (Resource resource : resources) {
+            try (resource) {
+                InputStreamReader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
+                TextureMap map = GSON.fromJson(reader, TextureMap.class);
+                mergedMap.textures.putAll(map.textures);
+            } catch (Exception e) {
+                ConnectibleChains.LOGGER.error("Failed to load texture map for {}: ", resource.getId(), e);
+            }
+        }
+
+        mergedMap.textures.forEach((item, entry) -> {
+            if (entry.chain != null) entry.chain += ".png";
+            if (entry.knot != null) entry.knot += ".png";
+        });
+
+        return mergedMap;
+    }
+
+    /**
+     * Creates the chain type for server and client
+     *
+     * @param type       Server or client resources
+     * @param manager    The resource manager
+     * @param item       The chain type item
+     * @param textureMap The item's namespace texture map
+     * @return A server side chain type when loading {@link ResourceType#SERVER_DATA} or a client side chain type
+     * with the resolved textures.
+     */
+    private ChainType createChainType(ResourceType type, ResourceManager manager, Identifier item, TextureMap textureMap) {
         if (type == ResourceType.SERVER_DATA) {
             return create(item);
         }
 
-        String name = item.toUnderscoreSeparatedString();
-
-        Identifier modelId = Helper.identifier("models/entity/" + name + ".json");
-        Map<String, Identifier> textureMap = loadTextureMap(manager, modelId);
-
         if (textureMap == null) {
-            ConnectibleChains.LOGGER.error("Missing model {} for {}", modelId, item);
+            return create(item, MISSING_ID, MISSING_ID);
+        }
+        TextureMap.Entry textureEntry = textureMap.get(item);
+        if (textureEntry == null) {
+            ConnectibleChains.LOGGER.error("Missing texture entry for {}", item);
             return create(item, MISSING_ID, MISSING_ID);
         }
 
-        Identifier textureId = textureMap.get("chain");
-        Identifier knotTextureId = textureMap.get("chain_knot");
+        Identifier chainTexture = Identifier.tryParse(textureEntry.chain);
+        Identifier knotTexture = Identifier.tryParse(textureEntry.knot);
 
-        if (textureId == null || !manager.containsResource(textureId)) {
-            ConnectibleChains.LOGGER.error("Missing 'chain' texture for {}, is {}", item, textureId);
-            textureId = MISSING_ID;
+        if (chainTexture == null || !manager.containsResource(chainTexture)) {
+            ConnectibleChains.LOGGER.error("Missing 'chain' texture for {}, is {}", item, chainTexture);
+            chainTexture = MISSING_ID;
         }
-        if (knotTextureId == null || !manager.containsResource(knotTextureId)) {
-            ConnectibleChains.LOGGER.error("Missing 'chain_knot' texture for {}, is {}", item, textureId);
-            textureId = MISSING_ID;
+        if (knotTexture == null || !manager.containsResource(knotTexture)) {
+            ConnectibleChains.LOGGER.error("Missing 'knot' texture for {}, is {}", item, knotTexture);
+            knotTexture = MISSING_ID;
         }
-        return create(item, textureId, knotTextureId);
+        return create(item, chainTexture, knotTexture);
     }
 
     public ChainType create(Identifier item) {
         return new ChainType(item, null, null, null, null);
-    }
-
-    private Map<String, Identifier> loadTextureMap(ResourceManager manager, Identifier id) {
-        Resource resource;
-        try {
-            resource = manager.getResource(id);
-        } catch (IOException e) {
-            return null;
-        }
-        InputStreamReader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
-        JsonUnbakedModel model = JsonUnbakedModel.deserialize(reader);
-        IOUtils.closeQuietly(reader, resource);
-
-        Map<String, Either<SpriteIdentifier, String>> textureMap = ((JsonUnbakedModelAccessor) model).getTextureMap();
-        Map<String, Identifier> result = new HashMap<>();
-        textureMap.forEach((key, value) -> {
-            if (value.left().isPresent()) result.put(key, new Identifier(value.left().get().getTextureId() + ".png"));
-        });
-
-        return result;
     }
 
     @Environment(EnvType.CLIENT)
