@@ -109,10 +109,11 @@ public class ChainRenderer {
      * Creates geometry from the origin to {@code v} with the specified {@code angle}.
      * It uses an iterative approach meaning that it adds geometry until it's at the end or
      * has reached {@link #MAX_SEGMENTS}.
+     *
      * @param builder The target builder
-     * @param v The end position in relation to the origin
-     * @param angle The angle of the face
-     * @param uv The uv bounds of the face
+     * @param v       The end position in relation to the origin
+     * @param angle   The angle of the face
+     * @param uv      The uv bounds of the face
      */
     private void buildFace(ChainModel.Builder builder, Vec3f v, float angle, UVRect uv) {
         float actualSegmentLength, desiredSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();

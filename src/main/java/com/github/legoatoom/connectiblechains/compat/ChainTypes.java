@@ -75,7 +75,7 @@ public class ChainTypes implements SidedResourceReloadListener<List<ChainType>> 
 
         for (Map.Entry<String, List<Identifier>> entry : typesByNamespace.entrySet()) {
             TextureMap textureMap = null;
-            if(type == ResourceType.CLIENT_RESOURCES) {
+            if (type == ResourceType.CLIENT_RESOURCES) {
                 textureMap = loadTextureMap(manager, entry.getKey());
             }
 
