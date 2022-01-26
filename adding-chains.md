@@ -10,7 +10,7 @@ The contents of the file should look something like this:
 {
   "replace": false,
   "values": [
-    "",
+    "examplemod:my_chain_item_id",
     "examplemod:my_other_chain_item_id"
   ]
 }

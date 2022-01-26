@@ -20,6 +20,7 @@ package com.github.legoatoom.connectiblechains.enitity;
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.chain.ChainType;
+import com.github.legoatoom.connectiblechains.datafixer.ChainKnotFixer;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
 import io.netty.buffer.Unpooled;
@@ -29,6 +30,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityDimensions;
@@ -48,6 +50,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.*;
@@ -134,6 +137,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         this.graceTicks = graceTicks;
     }
 
+    @Override
     public void setFacing(Direction facing) {
     }
 
@@ -146,6 +150,11 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         double w = getType().getWidth() / 2.0;
         double h = getType().getHeight();
         setBoundingBox(new Box(getX() - w, getY(), getZ() - w, getX() + w, getY() + h, getZ() + w));
+    }
+
+    @Override
+    public void setYaw(float yaw) {
+        super.setYaw(yaw);
     }
 
     /**
@@ -260,13 +269,17 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
                 ChainLink.create(this, entity, chainType);
                 return true;
             }
-        } else if (tag.contains("X")) {
-            BlockPos blockPos = new BlockPos(tag.getInt("X"), tag.getInt("Y"), tag.getInt("Z"));
-            ChainKnotEntity entity = ChainKnotEntity.get(world, blockPos);
+        } else if (tag.contains("RelX") || tag.contains("RelY") || tag.contains("RelZ")) {
+            BlockPos blockPos = new BlockPos(tag.getInt("RelX"), tag.getInt("RelY"), tag.getInt("RelZ"));
+            // Adjust position to be relative to our facing direction
+            blockPos = getBlockPosAsFacingRelative(blockPos, Direction.fromRotation(this.getYaw()));
+            ChainKnotEntity entity = ChainKnotEntity.get(world, blockPos.add(attachmentPos));
             if (entity != null) {
                 ChainLink.create(this, entity, chainType);
                 return true;
             }
+        } else {
+            ConnectibleChains.LOGGER.warn("Chain knot NBT is missing UUID or relative position.");
         }
 
         // At the start the server and client need to tell each other the info.
@@ -307,6 +320,19 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     @Override
     public void onBreak(@Nullable Entity entity) {
         playSound(SoundEvents.BLOCK_CHAIN_BREAK, 1.0F, 1.0F);
+    }
+
+    /**
+     * To support structure blocks which can rotate structures we need to treat the relative secondary position in the
+     * NBT as relative to our facing direction.
+     *
+     * @param relPos The relative position when the knot would be facing the +Z direction (0 deg).
+     * @param facing The target direction
+     * @return The yaw's equivalent block rotation.
+     */
+    private BlockPos getBlockPosAsFacingRelative(BlockPos relPos, Direction facing) {
+        BlockRotation rotation = BlockRotation.values()[facing.getHorizontal()];
+        return relPos.rotate(rotation);
     }
 
     /**
@@ -381,6 +407,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     @Override
     public void writeCustomDataToNbt(NbtCompound root) {
+        ChainKnotFixer.INSTANCE.addVersionTag(root);
         root.putString("ChainType", chainType.item().toString());
         NbtList linksTag = new NbtList();
 
@@ -395,10 +422,15 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
                 UUID uuid = secondary.getUuid();
                 compoundTag.putUuid("UUID", uuid);
             } else if (secondary instanceof AbstractDecorationEntity) {
-                BlockPos blockPos = ((AbstractDecorationEntity) secondary).getDecorationBlockPos();
-                compoundTag.putInt("X", blockPos.getX());
-                compoundTag.putInt("Y", blockPos.getY());
-                compoundTag.putInt("Z", blockPos.getZ());
+                BlockPos srcPos = this.attachmentPos;
+                BlockPos dstPos = ((AbstractDecorationEntity) secondary).getDecorationBlockPos();
+                BlockPos relPos = dstPos.subtract(srcPos);
+                // Inverse rotation to store the position as 'facing' agnostic
+                Direction inverseFacing = Direction.fromRotation(Direction.SOUTH.asRotation() - getYaw());
+                relPos = getBlockPosAsFacingRelative(relPos, inverseFacing);
+                compoundTag.putInt("RelX", relPos.getX());
+                compoundTag.putInt("RelY", relPos.getY());
+                compoundTag.putInt("RelZ", relPos.getZ());
             }
             linksTag.add(compoundTag);
         }
@@ -419,7 +451,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     public void readCustomDataFromNbt(NbtCompound root) {
         if (root.contains("Chains")) {
-            incompleteLinks.addAll(root.getList("Chains", 10));
+            incompleteLinks.addAll(root.getList("Chains", NbtType.COMPOUND));
         }
         chainType = ConnectibleChains.TYPES.getOrDefault(Identifier.tryParse(root.getString("ChainType")));
     }
@@ -602,13 +634,13 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     }
 
     /**
+     * @return all complete links that are associated with this knot.
      * @apiNote Operating on the list has potential for bugs as it does not include incomplete links.
      * For example {@link ChainLink#create(ChainKnotEntity, Entity, ChainType)} checks if the link already exists
      * using this list. Same goes for {@link #tryAttachHeldChains(PlayerEntity)}
      * but at the end of the day it doesn't really matter.
      * When an incomplete link is not resolved within the first two ticks it is unlikely to ever complete.
      * And even if it completes it will be stopped either because the knot is dead or the duplicates check in {@code ChainLink}.
-     * @return all complete links that are associated with this knot.
      */
     public List<ChainLink> getLinks() {
         return links;

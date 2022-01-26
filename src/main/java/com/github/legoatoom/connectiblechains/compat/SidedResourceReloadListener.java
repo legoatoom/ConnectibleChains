@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 /**
- * A reload-listener that is aware of the resource type.
+ * A reload-listener that is aware of the resource type that is being loaded.
  *
  * @param <T> Type of data that is loaded by this listener
  * @author gudenau, Qendolin
