@@ -186,7 +186,7 @@ public class ChainLink {
         double y = startPos.getY() + Helper.drip2((v * distance), distance, endPos.getY() - startPos.getY());
         double z = MathHelper.lerp(v, startPos.getZ(), endPos.getZ());
 
-        y += -ModEntityTypes.CHAIN_COLLISION.getHeight() + 1 / 16f;
+        y += -ModEntityTypes.CHAIN_COLLISION.getHeight() + 2 / 16f;
 
         ChainCollisionEntity c = new ChainCollisionEntity(primary.world, x, y, z, this);
         if (primary.world.spawnEntity(c)) {

@@ -90,7 +90,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     /**
      * Links where the 'secondary' might not exist yet. Will be cleared after the grace period.
      */
-    @Environment(EnvType.SERVER)
     private final ObjectList<NbtElement> incompleteLinks = new ObjectArrayList<>();
     /**
      * Increments each tick, when it reached 100 it resets and checks {@link #canStayAttached()}.
@@ -169,7 +168,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     @Override
     public void tick() {
         if (world.isClient) {
-            // All logic in handled on the server. The client only knows enough to render the entity.
+            // All other logic in handled on the server. The client only knows enough to render the entity.
+            links.removeIf(ChainLink::isDead);
             return;
         }
         attemptTickInVoid();

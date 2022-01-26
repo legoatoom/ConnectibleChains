@@ -55,7 +55,6 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     /**
      * The link that this collider is a part of.
      */
-    @Environment(EnvType.SERVER)
     @Nullable
     private ChainLink link;
 
@@ -76,7 +75,6 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     }
 
     @SuppressWarnings("unused")
-    @Environment(EnvType.SERVER)
     public @Nullable ChainLink getLink() {
         return link;
     }
