@@ -104,7 +104,6 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             }
         }
 
-
         if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
             matrices.push();
             // F stands for "from", T for "to"

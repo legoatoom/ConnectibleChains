@@ -510,7 +510,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
 
     @Override
     public Vec3d getLeashOffset() {
-        return new Vec3d(0, 5 / 16f, 0);
+        return new Vec3d(0, 4.5 / 16, 0);
     }
 
     /**
@@ -519,12 +519,12 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     @Environment(EnvType.CLIENT)
     @Override
     public Vec3d getLeashPos(float f) {
-        return getLerpedPos(f).add(0.0D, 5 / 16f, 0.0D);
+        return getLerpedPos(f).add(0, 4.5 / 16, 0);
     }
 
     @Override
     protected float getEyeHeight(EntityPose pose, EntityDimensions dimensions) {
-        return 5 / 16f;
+        return 4.5f / 16f;
     }
 
     /**
