@@ -13,7 +13,7 @@ public record ChainType(
         Identifier item,
         @Environment(EnvType.CLIENT) Identifier texture,
         @Environment(EnvType.CLIENT) Identifier knotTexture,
-        @Environment(EnvType.CLIENT) UVRect uvSIdeA,
+        @Environment(EnvType.CLIENT) UVRect uvSideA,
         @Environment(EnvType.CLIENT) UVRect uvSideB
 ) {
     public Item getItem() {

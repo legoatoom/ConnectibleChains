@@ -82,15 +82,17 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
     @Override
     public void render(ChainKnotEntity chainKnotEntity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
-        matrices.push();
-
         // Render the knot
-        Vec3d leashOffset = chainKnotEntity.getLeashPos(tickDelta).subtract(chainKnotEntity.getLerpedPos(tickDelta));
-        matrices.translate(leashOffset.x, leashOffset.y + 6.5 / 16f, leashOffset.z);
-        matrices.scale(5 / 6f, 1, 5 / 6f);
-        VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(chainKnotEntity.getChainType().knotTexture()));
-        this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
-        matrices.pop();
+        if (chainKnotEntity.shouldRenderKnot()) {
+            matrices.push();
+            Vec3d leashOffset = chainKnotEntity.getLeashPos(tickDelta).subtract(chainKnotEntity.getLerpedPos(tickDelta));
+            matrices.translate(leashOffset.x, leashOffset.y + 6.5 / 16f, leashOffset.z);
+            // The model is 6 px wide, but it should be rendered at 5px
+            matrices.scale(5 / 6f, 1, 5 / 6f);
+            VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(chainKnotEntity.getChainType().knotTexture()));
+            this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
+            matrices.pop();
+        }
 
         // Render the links
         List<ChainLink> links = chainKnotEntity.getLinks();

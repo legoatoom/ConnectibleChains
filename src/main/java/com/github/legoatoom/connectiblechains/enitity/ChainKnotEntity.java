@@ -47,17 +47,16 @@ import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.tag.BlockTags;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.BlockRotation;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
+import net.minecraft.util.*;
 import net.minecraft.util.math.*;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -103,6 +102,11 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * Remaining grace ticks, will be set to 0 when the last incomplete link is removed.
      */
     private byte graceTicks = GRACE_PERIOD;
+    /**
+     * What block the knot is attached to.
+     */
+    @Environment(EnvType.CLIENT)
+    private Block attachTarget;
 
     public ChainKnotEntity(EntityType<? extends ChainKnotEntity> entityType, World world) {
         super(entityType, world);
@@ -138,6 +142,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
 
     @Override
     public void setFacing(Direction facing) {
+        // AbstractDecorationEntity.facing should not be used
     }
 
     /**
@@ -149,11 +154,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         double w = getType().getWidth() / 2.0;
         double h = getType().getHeight();
         setBoundingBox(new Box(getX() - w, getY(), getZ() - w, getX() + w, getY() + h, getZ() + w));
-    }
-
-    @Override
-    public void setYaw(float yaw) {
-        super.setYaw(yaw);
     }
 
     /**
@@ -170,6 +170,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         if (world.isClient) {
             // All other logic in handled on the server. The client only knows enough to render the entity.
             links.removeIf(ChainLink::isDead);
+            attachTarget = world.getBlockState(attachmentPos).getBlock();
             return;
         }
         attemptTickInVoid();
@@ -273,7 +274,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             BlockPos blockPos = new BlockPos(tag.getInt("RelX"), tag.getInt("RelY"), tag.getInt("RelZ"));
             // Adjust position to be relative to our facing direction
             blockPos = getBlockPosAsFacingRelative(blockPos, Direction.fromRotation(this.getYaw()));
-            ChainKnotEntity entity = ChainKnotEntity.get(world, blockPos.add(attachmentPos));
+            ChainKnotEntity entity = ChainKnotEntity.getKnotAt(world, blockPos.add(attachmentPos));
             if (entity != null) {
                 ChainLink.create(this, entity, chainType);
                 return true;
@@ -310,11 +311,17 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         return canAttachTo(block);
     }
 
+    /**
+     * Destroys all links and sets the grace ticks to 0
+     *
+     * @param mayDrop true when the links should drop
+     */
     @Override
     public void destroyLinks(boolean mayDrop) {
         for (ChainLink link : links) {
             link.destroy(mayDrop);
         }
+        graceTicks = 0;
     }
 
     @Override
@@ -343,7 +350,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * @return {@link ChainKnotEntity} or null when none exists at {@code pos}.
      */
     @Nullable
-    public static ChainKnotEntity get(World world, BlockPos pos) {
+    public static ChainKnotEntity getKnotAt(World world, BlockPos pos) {
         List<ChainKnotEntity> results = world.getNonSpectatingEntities(ChainKnotEntity.class,
                 Box.of(Vec3d.of(pos), 2, 2, 2));
 
@@ -364,6 +371,29 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     public static boolean canAttachTo(Block block) {
         return BlockTags.WALLS.contains(block) || BlockTags.FENCES.contains(block);
+    }
+
+    /**
+     * Mirrors the incomplete links, otherwise {@link #getBlockPosAsFacingRelative(BlockPos, Direction)} won't work.
+     */
+    @Override
+    public float applyMirror(BlockMirror mirror) {
+        // Mirror the X axis, I am not sure why
+        for (NbtElement element : incompleteLinks) {
+            if (element instanceof NbtCompound link) {
+                if (link.contains("RelX")) {
+                    link.putInt("RelX", -link.getInt("RelX"));
+                }
+            }
+        }
+
+        // Opposite of Entity.applyMirror, again I am not sure why but it works
+        float yaw = MathHelper.wrapDegrees(this.getYaw());
+        return switch (mirror) {
+            case LEFT_RIGHT -> 180 - yaw;
+            case FRONT_BACK -> -yaw;
+            default -> yaw;
+        };
     }
 
     /**
@@ -470,7 +500,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * Checks if the {@code distance} is within the {@link #VISIBLE_RANGE visible range}.
      *
      * @param distance the camera distance from the knot.
-     * @return true when it should be rendered
+     * @return true when it is in range.
      */
     @Environment(EnvType.CLIENT)
     @Override
@@ -565,6 +595,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         // 4. Interacted with anything else, check for shears
         if (ChainLinkEntity.canDestroyWith(handItem)) {
             destroyLinks(!player.isCreative());
+            graceTicks = 0;
             return ActionResult.CONSUME;
         }
 
@@ -572,37 +603,26 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     }
 
     /**
-     * Searches for other {@link ChainKnotEntity ChainKnotEntities} around {@code itself} that
-     * have a link to {@code player}, if so we remove it and create a new one to {@code itself}.
+     * Destroys all chains held by {@code player} that are in range and creates new links to itself.
      *
      * @param player the player wo tries to make a connection.
      * @return true if it has made a connection.
      */
     public boolean tryAttachHeldChains(PlayerEntity player) {
         boolean hasMadeConnection = false;
-        Box searchBox = Box.of(Vec3d.of(getDecorationBlockPos()), getMaxRange() * 2, getMaxRange() * 2, getMaxRange() * 2);
-        List<ChainKnotEntity> otherKnots = world.getNonSpectatingEntities(ChainKnotEntity.class, searchBox);
-
-        for (ChainKnotEntity source : otherKnots) {
+        List<ChainLink> attachableLinks = getHeldChainsInRange(player, getDecorationBlockPos());
+        for (ChainLink link : attachableLinks) {
             // Prevent connections with self
-            if (source == this) continue;
+            if (link.primary == this) continue;
 
-            // Prevent CME because ChainLink.create adds a link
-            int linksCount = source.getLinks().size();
-            for (int i = 0; i < linksCount; i++) {
-                ChainLink link = source.getLinks().get(i);
-                if (link.secondary != player) continue;
-                // We found a knot that is connected to the player.
+            // Move that link to this knot
+            ChainLink newLink = ChainLink.create(link.primary, this, link.chainType);
 
-                // Now move that link to this knot
-                ChainLink newLink = ChainLink.create(source, this, link.chainType);
-
-                // Check if the link does not already exist
-                if (newLink != null) {
-                    link.destroy(false);
-                    link.removeSilently = true;
-                    hasMadeConnection = true;
-                }
+            // Check if the link does not already exist
+            if (newLink != null) {
+                link.destroy(false);
+                link.removeSilently = true;
+                hasMadeConnection = true;
             }
         }
         return hasMadeConnection;
@@ -634,6 +654,30 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     }
 
     /**
+     * Searches for other {@link ChainKnotEntity ChainKnotEntities} that are in range of {@code target} and
+     * have a link to {@code player}.
+     *
+     * @param player the player wo tries to make a connection.
+     * @param target center of the range
+     * @return a list of all held chains that are in range of {@code target}
+     */
+    public static List<ChainLink> getHeldChainsInRange(PlayerEntity player, BlockPos target) {
+        Box searchBox = Box.of(Vec3d.of(target), getMaxRange() * 2, getMaxRange() * 2, getMaxRange() * 2);
+        List<ChainKnotEntity> otherKnots = player.world.getNonSpectatingEntities(ChainKnotEntity.class, searchBox);
+
+        List<ChainLink> attachableLinks = new ArrayList<>();
+
+        for (ChainKnotEntity source : otherKnots) {
+            for (ChainLink link : source.getLinks()) {
+                if (link.secondary != player) continue;
+                // We found a knot that is connected to the player.
+                attachableLinks.add(link);
+            }
+        }
+        return attachableLinks;
+    }
+
+    /**
      * @return all complete links that are associated with this knot.
      * @apiNote Operating on the list has potential for bugs as it does not include incomplete links.
      * For example {@link ChainLink#create(ChainKnotEntity, Entity, ChainType)} checks if the link already exists
@@ -644,6 +688,11 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     public List<ChainLink> getLinks() {
         return links;
+    }
+
+    @Override
+    public SoundCategory getSoundCategory() {
+        return SoundCategory.BLOCKS;
     }
 
     /**
@@ -658,6 +707,17 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             return packetByteBuf;
         };
         return PacketCreator.createSpawn(this, NetworkingPackets.S2C_SPAWN_CHAIN_KNOT_PACKET, extraData);
+    }
+
+    /**
+     * Checks if the knot model of the knot entity should be rendered.
+     * To determine if the knot entity including chains should be rendered use {@link #shouldRender(double)}
+     *
+     * @return true if the knot is not attached to a wall.
+     */
+    @Environment(EnvType.CLIENT)
+    public boolean shouldRenderKnot() {
+        return !BlockTags.WALLS.contains(attachTarget);
     }
 
     public void addLink(ChainLink link) {

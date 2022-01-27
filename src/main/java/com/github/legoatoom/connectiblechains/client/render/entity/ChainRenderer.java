@@ -22,6 +22,7 @@ import com.github.legoatoom.connectiblechains.chain.ChainType;
 import com.github.legoatoom.connectiblechains.chain.UVRect;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Quaternion;
@@ -43,6 +44,9 @@ public class ChainRenderer {
         } else {
             model = buildModel(chainVec, chainType);
             models.put(key, model);
+            if (FabricLoader.getInstance().isDevelopmentEnvironment() && models.size() > 10000) {
+                ConnectibleChains.LOGGER.error("Chain model leak found!");
+            }
         }
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
     }
@@ -53,10 +57,10 @@ public class ChainRenderer {
         ChainModel.Builder builder = ChainModel.builder(initialCapacity);
 
         if (chainVec.getX() == 0 && chainVec.getZ() == 0) {
-            buildFaceVertical(builder, chainVec, 45, chainType.uvSIdeA());
+            buildFaceVertical(builder, chainVec, 45, chainType.uvSideA());
             buildFaceVertical(builder, chainVec, -45, chainType.uvSideB());
         } else {
-            buildFace(builder, chainVec, 45, chainType.uvSIdeA());
+            buildFace(builder, chainVec, 45, chainType.uvSideA());
             buildFace(builder, chainVec, -45, chainType.uvSideB());
         }
 
@@ -248,7 +252,7 @@ public class ChainRenderer {
 
             int hash = Float.floatToIntBits(dY);
             hash = 31 * hash + Float.floatToIntBits(dXZ);
-            hash = 31 * hash + chainType.uvSIdeA().hashCode();
+            hash = 31 * hash + chainType.uvSideA().hashCode();
             hash = 31 * hash + chainType.uvSideB().hashCode();
             this.hash = hash;
         }
@@ -260,6 +264,11 @@ public class ChainRenderer {
 
             BakeKey bakeKey = (BakeKey) o;
             return hash == bakeKey.hash;
+        }
+
+        @Override
+        public int hashCode() {
+            return hash;
         }
     }
 }

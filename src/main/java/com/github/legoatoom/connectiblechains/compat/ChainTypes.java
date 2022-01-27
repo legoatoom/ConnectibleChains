@@ -154,11 +154,11 @@ public class ChainTypes implements SidedResourceReloadListener<List<ChainType>> 
         Identifier knotTexture = Identifier.tryParse(textureEntry.knot);
 
         if (chainTexture == null || !manager.containsResource(chainTexture)) {
-            ConnectibleChains.LOGGER.error("Missing 'chain' texture for {}, is {}", item, chainTexture);
+            ConnectibleChains.LOGGER.error("'chain' texture {} for {} not found", chainTexture, item);
             chainTexture = MISSING_ID;
         }
         if (knotTexture == null || !manager.containsResource(knotTexture)) {
-            ConnectibleChains.LOGGER.error("Missing 'knot' texture for {}, is {}", item, knotTexture);
+            ConnectibleChains.LOGGER.error("'knot' texture {} for {} not found", chainTexture, item);
             knotTexture = MISSING_ID;
         }
         return create(item, chainTexture, knotTexture);
@@ -203,6 +203,11 @@ public class ChainTypes implements SidedResourceReloadListener<List<ChainType>> 
 
     public ChainType get(Item item) {
         return registeredTypes.get(Registry.ITEM.getId(item));
+    }
+
+    @SuppressWarnings("unused")
+    public ChainType getOrDefault(Item item) {
+        return registeredTypes.getOrDefault(Registry.ITEM.getId(item), registeredTypes.get(DEFAULT_TYPE));
     }
 
     @SuppressWarnings("unused")

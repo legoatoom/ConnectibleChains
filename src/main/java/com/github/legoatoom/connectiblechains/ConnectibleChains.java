@@ -18,11 +18,13 @@
 package com.github.legoatoom.connectiblechains;
 
 
+import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.chain.ChainType;
 import com.github.legoatoom.connectiblechains.compat.ChainTypes;
 import com.github.legoatoom.connectiblechains.compat.SidedResourceReloadListener;
 import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.enitity.ChainLinkEntity;
 import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
@@ -43,6 +45,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.List;
 
 /**
  * Mod Initializer for Connectible chains.
@@ -99,7 +103,6 @@ public class ConnectibleChains implements ModInitializer {
      * @param hitResult General information about the block that was clicked.
      * @return An ActionResult.
      */
-    @SuppressWarnings("GrazieInspection")
     private static ActionResult chainUseEvent(PlayerEntity player, World world, Hand hand, BlockHitResult hitResult) {
         if (player == null || player.isSneaking()) return ActionResult.PASS;
         ItemStack stack = player.getStackInHand(hand);
@@ -114,11 +117,22 @@ public class ConnectibleChains implements ModInitializer {
                 return ActionResult.SUCCESS;
             }
 
+            // Check if any held chains can be attached. This can be done without holding a chain item
+            if (ChainKnotEntity.getHeldChainsInRange(player, blockPos).size() > 0) {
+                return ActionResult.SUCCESS;
+            }
+
+            // Check if a knot exists and can be destroyed
+            // Would work without this check but no swing animation would be played
+            if (ChainKnotEntity.getKnotAt(player.world, blockPos) != null && ChainLinkEntity.canDestroyWith(item)) {
+                return ActionResult.SUCCESS;
+            }
+
             return ActionResult.PASS;
         }
 
         // 1. Try with existing knot, regardless of hand item
-        ChainKnotEntity knot = ChainKnotEntity.get(world, blockPos);
+        ChainKnotEntity knot = ChainKnotEntity.getKnotAt(world, blockPos);
         if (knot != null) {
             if (knot.interact(player, hand) == ActionResult.CONSUME) {
                 return ActionResult.CONSUME;
@@ -126,11 +140,21 @@ public class ConnectibleChains implements ModInitializer {
             return ActionResult.PASS;
         }
 
-        // 2. Create new knot if none exists and try again
-        if (!ConnectibleChains.TYPES.has(item)) return ActionResult.PASS;
+        // 2. Check if any held chains can be attached.
+        List<ChainLink> attachableChains = ChainKnotEntity.getHeldChainsInRange(player, blockPos);
 
-        ChainType chainType = ConnectibleChains.TYPES.get(item);
-        knot = new ChainKnotEntity(world, blockPos, chainType);
+        // Use the held item as the new knot type
+        ChainType knotType = ConnectibleChains.TYPES.get(item);
+
+        // Allow default interaction behaviour.
+        if (attachableChains.size() == 0 && knotType == null) return ActionResult.PASS;
+
+        // Held item does not correspond to a type.
+        if (knotType == null)
+            knotType = attachableChains.get(0).chainType;
+
+        // 2. Create new knot if none exists and delegate interaction
+        knot = new ChainKnotEntity(world, blockPos, knotType);
         knot.setGraceTicks((byte) 0);
         world.spawnEntity(knot);
         knot.onPlace();
