@@ -37,12 +37,12 @@ public class ChainRenderer {
     private static final int MAX_SEGMENTS = 2048;
     private final Object2ObjectOpenHashMap<BakeKey, ChainModel> models = new Object2ObjectOpenHashMap<>(256);
 
-    public void renderBaked(VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vec3f chainVec, ChainType chainType, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
+    public void renderBaked(VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vec3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model;
         if (models.containsKey(key)) {
             model = models.get(key);
         } else {
-            model = buildModel(chainVec, chainType);
+            model = buildModel(chainVec);
             models.put(key, model);
             if (FabricLoader.getInstance().isDevelopmentEnvironment() && models.size() > 10000) {
                 ConnectibleChains.LOGGER.error("Chain model leak found!");
@@ -51,17 +51,17 @@ public class ChainRenderer {
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
     }
 
-    private ChainModel buildModel(Vec3f chainVec, ChainType chainType) {
+    private ChainModel buildModel(Vec3f chainVec) {
         float desiredSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
         int initialCapacity = (int) (2f * Helper.lengthOf(chainVec) / desiredSegmentLength);
         ChainModel.Builder builder = ChainModel.builder(initialCapacity);
 
         if (chainVec.getX() == 0 && chainVec.getZ() == 0) {
-            buildFaceVertical(builder, chainVec, 45, chainType.uvSideA());
-            buildFaceVertical(builder, chainVec, -45, chainType.uvSideB());
+            buildFaceVertical(builder, chainVec, 45, UVRect.DEFAULT_SIDE_A);
+            buildFaceVertical(builder, chainVec, -45, UVRect.DEFAULT_SIDE_B);
         } else {
-            buildFace(builder, chainVec, 45, chainType.uvSideA());
-            buildFace(builder, chainVec, -45, chainType.uvSideB());
+            buildFace(builder, chainVec, 45, UVRect.DEFAULT_SIDE_A);
+            buildFace(builder, chainVec, -45, UVRect.DEFAULT_SIDE_B);
         }
 
         return builder.build();
@@ -226,8 +226,8 @@ public class ChainRenderer {
         return (float) (s / Math.sqrt(1 + k * k));
     }
 
-    public void render(VertexConsumer buffer, MatrixStack matrices, Vec3f chainVec, ChainType chainType, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
-        ChainModel model = buildModel(chainVec, chainType);
+    public void render(VertexConsumer buffer, MatrixStack matrices, Vec3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
+        ChainModel model = buildModel(chainVec);
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
     }
 
@@ -244,7 +244,7 @@ public class ChainRenderer {
     public static class BakeKey {
         private final int hash;
 
-        public BakeKey(Vec3d srcPos, Vec3d dstPos, ChainType chainType) {
+        public BakeKey(Vec3d srcPos, Vec3d dstPos) {
             float dY = (float) (srcPos.y - dstPos.y);
             float dXZ = Helper.distanceBetween(
                     new Vec3f((float) srcPos.x, 0, (float) srcPos.z),
@@ -252,8 +252,6 @@ public class ChainRenderer {
 
             int hash = Float.floatToIntBits(dY);
             hash = 31 * hash + Float.floatToIntBits(dXZ);
-            hash = 31 * hash + chainType.uvSideA().hashCode();
-            hash = 31 * hash + chainType.uvSideB().hashCode();
             this.hash = hash;
         }
 

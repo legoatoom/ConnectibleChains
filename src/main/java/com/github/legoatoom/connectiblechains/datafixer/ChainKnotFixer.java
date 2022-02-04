@@ -1,6 +1,6 @@
 package com.github.legoatoom.connectiblechains.datafixer;
 
-import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
@@ -27,12 +27,12 @@ public class ChainKnotFixer extends NbtFixer {
     private NbtCompound fixChainType201(NbtCompound nbt) {
         if (isNotChainKnot201(nbt)) return nbt;
         if (!nbt.contains("ChainType")) {
-            nbt.putString("ChainType", ConnectibleChains.TYPES.getDefaultType().item().toString());
+            nbt.putString("ChainType", ChainTypesRegistry.DEFAULT_CHAIN_TYPE_ID.toString());
         }
         for (NbtElement linkElem : nbt.getList("Chains", NbtType.COMPOUND)) {
             if (linkElem instanceof NbtCompound link) {
                 if (!link.contains("ChainType")) {
-                    link.putString("ChainType", ConnectibleChains.TYPES.getDefaultType().item().toString());
+                    link.putString("ChainType", ChainTypesRegistry.DEFAULT_CHAIN_TYPE_ID.toString());
                 }
             }
         }

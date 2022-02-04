@@ -148,7 +148,7 @@ public class ChainLink {
 
         buf.writeVarInt(primary.getId());
         buf.writeVarInt(secondary.getId());
-        buf.writeVarInt(Registry.ITEM.getRawId(chainType.getItem()));
+        buf.writeVarInt(ChainTypesRegistry.REGISTRY.getRawId(chainType));
 
         for (ServerPlayerEntity player : trackingPlayers) {
             ServerPlayNetworking.send(player, NetworkingPackets.S2C_CHAIN_ATTACH_PACKET_ID, buf);
@@ -273,7 +273,7 @@ public class ChainLink {
         if (!world.getGameRules().getBoolean(GameRules.DO_TILE_DROPS)) drop = false;
 
         if (drop) {
-            ItemStack stack = new ItemStack(chainType.getItem());
+            ItemStack stack = new ItemStack(chainType.item());
             if (secondary instanceof PlayerEntity player) {
                 player.giveItemStack(stack);
             } else {

@@ -1,22 +1,18 @@
 package com.github.legoatoom.connectiblechains.chain;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import com.github.legoatoom.connectiblechains.client.ClientInitializer;
 import net.minecraft.item.Item;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
 
 /**
  * The 'material' of a chain
  */
-public record ChainType(
-        Identifier item,
-        @Environment(EnvType.CLIENT) Identifier texture,
-        @Environment(EnvType.CLIENT) Identifier knotTexture,
-        @Environment(EnvType.CLIENT) UVRect uvSideA,
-        @Environment(EnvType.CLIENT) UVRect uvSideB
-) {
-    public Item getItem() {
-        return Registry.ITEM.get(item);
+public record ChainType(Item item) {
+    public Identifier getKnotTexture() {
+        return ClientInitializer.getInstance().textureManager.getKnotTexture(ChainTypesRegistry.REGISTRY.getId(this));
+    }
+
+    public Identifier getChainTexture() {
+        return ClientInitializer.getInstance().textureManager.getChainTexture(ChainTypesRegistry.REGISTRY.getId(this));
     }
 }

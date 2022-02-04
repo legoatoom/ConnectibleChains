@@ -18,11 +18,13 @@
 package com.github.legoatoom.connectiblechains.client;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
+import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainTextureManager;
+import com.github.legoatoom.connectiblechains.compat.BuiltinCompat;
 import com.github.legoatoom.connectiblechains.compat.ChainTypes;
-import com.github.legoatoom.connectiblechains.compat.SidedResourceReloadListener;
 import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.enitity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
@@ -32,21 +34,29 @@ import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPickBlockGatherCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.tag.ServerTagManagerHolder;
+import net.minecraft.tag.Tag;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.registry.Registry;
 
 /**
  * ClientInitializer.
@@ -58,9 +68,10 @@ import net.minecraft.util.hit.EntityHitResult;
 public class ClientInitializer implements ClientModInitializer {
 
     public static final EntityModelLayer CHAIN_KNOT = new EntityModelLayer(Helper.identifier("chain_knot"), "main");
-    public static final ChainTypes TYPES = new ChainTypes();
-    private static ChainKnotEntityRenderer chainKnotEntityRenderer;
     private static ClientInitializer instance;
+//    public static final ChainTypes TYPES = new ChainTypes();
+    public final ChainTextureManager textureManager = new ChainTextureManager();
+    private ChainKnotEntityRenderer chainKnotEntityRenderer;
     private ChainPacketHandler chainPacketHandler;
 
     @Override
@@ -121,8 +132,6 @@ public class ClientInitializer implements ClientModInitializer {
                     }
                     getChainKnotEntityRenderer().getChainRenderer().purge();
                 });
-
-
     }
 
     private void registerClientEventHandlers() {
@@ -130,9 +139,9 @@ public class ClientInitializer implements ClientModInitializer {
             if (result instanceof EntityHitResult) {
                 Entity entity = ((EntityHitResult) result).getEntity();
                 if (entity instanceof ChainKnotEntity knot) {
-                    return new ItemStack(knot.getChainType().getItem());
+                    return new ItemStack(knot.getChainType().item());
                 } else if (entity instanceof ChainCollisionEntity collision) {
-                    return new ItemStack(collision.getChainType().getItem());
+                    return new ItemStack(collision.getChainType().item());
                 }
             }
             return ItemStack.EMPTY;
@@ -140,8 +149,29 @@ public class ClientInitializer implements ClientModInitializer {
 
         ClientTickEvents.START_WORLD_TICK.register(world -> chainPacketHandler.tick());
 
-        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(
-                SidedResourceReloadListener.proxy(ResourceType.CLIENT_RESOURCES, TYPES));
+        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(textureManager);
+        ServerLifecycleEvents.END_DATA_PACK_RELOAD.register((server, serverResourceManager, success) -> reloadTextures());
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            Tag<Item> tag = ChainTypesRegistry.CHAINABLE_TAG;
+            for (Item item : tag.values()) {
+                ChainTypesRegistry.registerDynamic(item);
+            }
+            reloadTextures();
+        });
+
+//        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(
+//                SidedResourceReloadListener.proxy(ResourceType.CLIENT_RESOURCES, TYPES));
+    }
+
+    private void reloadTextures() {
+        try {
+            long loadStart = System.nanoTime();
+            textureManager.apply(textureManager.load(MinecraftClient.getInstance().getResourceManager(), true), true);
+            double elapsed = (System.nanoTime() - loadStart) / 10e6;
+            ConnectibleChains.LOGGER.info("Loaded dynamic chain type assets, took {} ms.", elapsed);
+        } catch (Exception e) {
+            ConnectibleChains.LOGGER.error("Failed to load dynamic chain type assets!", e);
+        }
     }
 
     public static ClientInitializer getInstance() {

@@ -18,6 +18,7 @@
 package com.github.legoatoom.connectiblechains.util;
 
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
+import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -74,7 +75,7 @@ public class PacketCreator {
         for (ChainLink link : links) {
             if (link.primary == knot) {
                 ids.add(link.secondary.getId());
-                types.add(Registry.ITEM.getRawId(link.chainType.getItem()));
+                types.add(ChainTypesRegistry.REGISTRY.getRawId(link.chainType));
             }
         }
         if (ids.size() > 0) {

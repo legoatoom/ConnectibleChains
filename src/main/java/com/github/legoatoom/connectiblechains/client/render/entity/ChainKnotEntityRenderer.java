@@ -89,7 +89,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             matrices.translate(leashOffset.x, leashOffset.y + 6.5 / 16f, leashOffset.z);
             // The model is 6 px wide, but it should be rendered at 5px
             matrices.scale(5 / 6f, 1, 5 / 6f);
-            VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(chainKnotEntity.getChainType().knotTexture()));
+            VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(chainKnotEntity.getChainType().getKnotTexture()));
             this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
             matrices.pop();
         }
@@ -158,7 +158,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         // - does not have an overlay
         // - does not have vertex color
         // - uses a tri strip instead of quads
-        VertexConsumer buffer = vertexConsumerProvider.getBuffer(RenderLayer.getEntityCutoutNoCull(chainType.texture()));
+        VertexConsumer buffer = vertexConsumerProvider.getBuffer(RenderLayer.getEntityCutoutNoCull(chainType.getChainTexture()));
         if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
             buffer = vertexConsumerProvider.getBuffer(RenderLayer.getLines());
         }
@@ -182,10 +182,10 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         matrices.multiply(Quaternion.fromEulerXyz(0, angleY, 0));
 
         if (toEntity instanceof AbstractDecorationEntity) {
-            ChainRenderer.BakeKey key = new ChainRenderer.BakeKey(fromEntity.getPos(), toEntity.getPos(), chainType);
-            chainRenderer.renderBaked(buffer, matrices, key, chainVec, chainType, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd);
+            ChainRenderer.BakeKey key = new ChainRenderer.BakeKey(fromEntity.getPos(), toEntity.getPos());
+            chainRenderer.renderBaked(buffer, matrices, key, chainVec, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd);
         } else {
-            chainRenderer.render(buffer, matrices, chainVec, chainType, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd);
+            chainRenderer.render(buffer, matrices, chainVec, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd);
         }
 
         matrices.pop();
@@ -209,6 +209,6 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
     @Override
     public Identifier getTexture(ChainKnotEntity entity) {
-        return entity.getChainType().knotTexture();
+        return entity.getChainType().getKnotTexture();
     }
 }

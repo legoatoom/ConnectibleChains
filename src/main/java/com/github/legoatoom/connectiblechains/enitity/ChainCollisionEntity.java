@@ -17,9 +17,9 @@
 
 package com.github.legoatoom.connectiblechains.enitity;
 
-import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.chain.ChainType;
+import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
 import net.fabricmc.api.EnvType;
@@ -37,7 +37,6 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -206,8 +205,8 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Override
     public Packet<?> createSpawnPacket() {
         Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> {
-            ChainType chainType = link == null ? ConnectibleChains.TYPES.getDefaultType() : link.chainType;
-            packetByteBuf.writeVarInt(Registry.ITEM.getRawId(chainType.getItem()));
+            ChainType chainType = link == null ? ChainTypesRegistry.DEFAULT_CHAIN_TYPE : link.chainType;
+            packetByteBuf.writeVarInt(ChainTypesRegistry.REGISTRY.getRawId(chainType));
             return packetByteBuf;
         };
         return PacketCreator.createSpawn(this, NetworkingPackets.S2C_SPAWN_CHAIN_COLLISION_PACKET, extraData);

@@ -2,6 +2,7 @@ package com.github.legoatoom.connectiblechains.client;
 
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.chain.ChainType;
+import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import com.github.legoatoom.connectiblechains.chain.IncompleteChainLink;
 import com.github.legoatoom.connectiblechains.enitity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
@@ -40,7 +41,7 @@ public class ChainPacketHandler {
                         Entity from = client.world.getEntityById(fromId);
                         if (from instanceof ChainKnotEntity knot) {
                             Entity to = client.world.getEntityById(toId);
-                            ChainType chainType = ClientInitializer.TYPES.getOrDefault(typeId);
+                            ChainType chainType = ChainTypesRegistry.REGISTRY.get(typeId);
 
                             if (to == null) {
                                 incompleteLinks.add(new IncompleteChainLink(knot, toId, chainType));
@@ -91,7 +92,7 @@ public class ChainPacketHandler {
                         if (from instanceof ChainKnotEntity knot) {
                             for (int i = 0; i < toIds.length; i++) {
                                 Entity to = client.world.getEntityById(toIds[i]);
-                                ChainType chainType = ClientInitializer.TYPES.getOrDefault(types[i]);
+                                ChainType chainType = ChainTypesRegistry.REGISTRY.get(types[i]);
 
                                 if (to == null) {
                                     incompleteLinks.add(new IncompleteChainLink(knot, toIds[i], chainType));
@@ -128,7 +129,7 @@ public class ChainPacketHandler {
                         e.setUuid(uuid);
                         e.setVelocity(Vec3d.ZERO);
                         if (e instanceof ChainCollisionEntity collider) {
-                            collider.setChainType(ClientInitializer.TYPES.getOrDefault(typeId));
+                            collider.setChainType(ChainTypesRegistry.REGISTRY.get(typeId));
                         }
                         client.world.addEntity(entityId, e);
                     });
@@ -157,7 +158,7 @@ public class ChainPacketHandler {
                         e.setUuid(uuid);
                         e.setVelocity(Vec3d.ZERO);
                         if (e instanceof ChainKnotEntity knot) {
-                            knot.setChainType(ClientInitializer.TYPES.getOrDefault(typeId));
+                            knot.setChainType(ChainTypesRegistry.REGISTRY.get(typeId));
                             knot.setGraceTicks((byte) 0);
                         }
                         client.world.addEntity(entityId, e);
@@ -171,7 +172,7 @@ public class ChainPacketHandler {
             client.execute(() -> {
                 if (client.world == null) return;
                 Entity entity = client.world.getEntityById(knotId);
-                ChainType chainType = ClientInitializer.TYPES.getOrDefault(typeId);
+                ChainType chainType = ChainTypesRegistry.REGISTRY.get(typeId);
                 if (entity instanceof ChainKnotEntity knot) {
                     knot.updateChainType(chainType);
                 } else {
