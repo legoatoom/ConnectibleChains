@@ -1,0 +1,66 @@
+For version 2.1.0
+
+o ... Ok
+! ... Fail
+. ... N/A
+
+Update World
+    o Can update from 1.2.3
+    o Can update from 2.0.1
+    o Doesn't update from 2.1.0
+    o Converts to default type when type is removed
+
+Knots
+    o Can place on fence
+    o Can place on wall
+    o Can be summoned to create a link
+    o Can be summoned with chain type
+    o Can be summoned with link type
+    o Can be summoned with link and rotation
+    o Can change knot type
+    o Breaks after 5 seconds when summoned without links
+    o Can be broken within 5 seconds when spawned
+    o Can use a shield while looking at a knot, collider or fence
+    o Renders correctly on walls
+    o Does not play crit / kockback attack sounds
+
+Links
+    o Can be started with any chain item
+    o Can have multiple started on same player
+    o Can complete multiple on same player
+    o Can be completed with any hand item
+    o Secondary knot of completed link uses type of held item
+    o Can be aborted with any hand item
+    o Can be broken with different shears
+    o Can be broken with shears on primary
+    o Can be broken with shears on secondary
+    o Can be broken with shears on collider
+    o Can be broken with left and right click
+    o Destroyed when primary is killed
+    o Destroyed when secondary is killed
+    o Destroyed when primary fence is broken
+    o Destroyed when secondary fence is broken
+    o Does not drop when DO_TILE_DROPS is false
+    ! Drops when the secondary is a player and the primary is killed
+        No reference to link is left. Won't fix: very rare edge case where chats are involved anyway
+    o Drops when the secondary is a player and gets killed
+    o Drops when the secondary is a player and disconnects
+    o Drops when the secondary is a player is too far
+    o Drops when any chain link entity is destroyed
+    o Can't be created where a link already exists
+    o Breaks when secondary, primary or collider is exploded
+    o Does not play crit / kockback attack sounds
+
+Other
+    o Can be used with structure blocks
+    o Can be rotated with structure blocks
+    o Can be mirrored with structure blocks
+    o Can change texture with pack
+    o Can change single texture with pack
+    o Works on dedicated server
+    o Does not spam logs with "Skipping Entity"
+
+Dynamic Types
+    . Existing chains update when resources are reloaded
+    . Custom Chain Types works on server
+    . Works on dedicated server
