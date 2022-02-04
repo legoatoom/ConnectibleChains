@@ -12,7 +12,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Optional;
@@ -21,7 +20,7 @@ import java.util.OptionalInt;
 public class ChainTypesRegistry {
     public static final Identifier DEFAULT_CHAIN_TYPE_ID = Helper.identifier("iron_chain");
     public static final RegistryKey<? extends Registry<ChainType>> CHAIN_TYPE_KEY =
-            RegistryKey.ofRegistry(Helper.identifier("chainable"));
+            RegistryKey.ofRegistry(Helper.identifier("chain_types"));
     public static final DefaultedRegistry<ChainType> REGISTRY = FabricRegistryBuilder.from(
                     new DefaultedRegistry<>(DEFAULT_CHAIN_TYPE_ID.toString(), CHAIN_TYPE_KEY, Lifecycle.stable()))
             .attribute(RegistryAttribute.SYNCED).buildAndRegister();

@@ -2,49 +2,77 @@
 
 ## 1. Register the item
 
-To register you chain item you need to add it to the `connectiable_chains:chainable` tag.  
-This can be done by creating `data/connectiblechains/tags/items/chainable.json` in your `resources` directory.
+To register you chain item you need to add it to the `connectiable_chains:chain_types` registry.  
+This can be done by following these steps:
 
-The contents of the file should look something like this:
-```json
-{
-  "replace": false,
-  "values": [
-    "examplemod:my_chain_item_id",
-    "examplemod:my_other_chain_item_id"
-  ]
+### 1.1. Add the modrinth maven to you `build.gradle`.
+```groovy
+repositories {
+	maven {
+		name = "Modrinth"
+		url = "https://api.modrinth.com/maven"
+		content {
+			includeGroup "maven.modrinth"
+		}
+	}
 }
 ```
+
+### 1.2. Add Conectible Chains as a compile time dependency.
+```groovy
+dependencies {
+  modCompileOnly ("maven.modrinth:connectible_chains:${project.connectible_chains_version}")
+}
+```
+
+### 1.3. During your mods initialization run the following code
+```java
+import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
+
+[...]
+
+if(FabricLoader.getInstance().isModLoaded("connectiblechains")) {
+  ChainTypesRegistry.register(myChainItem);
+  ChainTypesRegistry.register(myOtherChainItem);
+}
+```
+
+### 1.4. Modify your fabric.mod.json
+```json
+{
+  "recommends": {
+    "connectiblechains": ">=2.1.0"
+  },
+  "breaks": {
+    "connectiblechains": "<2.1.0"
+  }
+}
+```
+This will ensure that the compatability does not break when an old version of connectible chains is loaed.
 
 ## 2. Specify the textures
 
 The textures of your chain are specified in a json file.
 The path has to follow this convention: 
 ```
-assets/<namespace_of_item>/textures/entity/connectible_chains_compat.json
+assets/<item_namespace>/models/entity/chain/<item_path>.json
 ```
-Where `<namespace_of_item>` is the namespace of the item id in the `chainable` tag.  
+Where `<item_namespace>` is the namespace and `<item_path>` is the path of the id of the item that you registered in step 1.3..  
 I.e.: 
-- `examplemod:my_chain_item_id` -> `examplemod`
-- `examplemod_extras:chains/pink_chain` -> `examplemod_extras`
+- `examplemod:my_chain_item_id` -> `assets/examplemod/models/entity/chain/my_chain_item_id.json`
+- `examplemod_extras:chains/pink_chain` -> `assets/examplemod_extras/models/entity/chain/chains/pink_chain.json`
 
-The file has to contain a `textures` object where the keys are the full item ids (same as in the `chainable` tag) 
-and the value is and object with `chain` and `knot` that specify the texture ids.
+The file has to contain a `textures` with `chain` and `knot` that specify the texture ids.
 
-For `minecraft:chain` the file is `assets/minecraft/textures/entity/connectible_chains_compat.json` and the contents are
+For `valley:golden_chain` the file is `assets/valley/models/entity/chain/golden_chain.json` and the contents are
 ```json
 {
-  "textures": {
-    "minecraft:chain": {
-      "chain": "minecraft:textures/block/chain",
-      "knot": "connectiblechains:textures/entity/chain_knot"
-    }
-  }
+	"textures": {
+		"chain": "valley:textures/blocks/golden_chain_block",
+		"knot": "connectiblechains:textures/entity/golden_chain_block_knot"
+	}
 }
-
 ```
-
-> Note: For every namespace the texture maps get merged in order of their resource priority.
 
 ## 3. Create a knot texture
 
@@ -62,6 +90,4 @@ You should now be able to use the custom chain.
 
 - **Check the log** for errors and fix them
 - If you can't place the chain then you messed up in step 1  
-   The tag file **has to** be in `data/connectiblechains/tags/items/`
 - If the texture is magenta and black you messed up in step 2  
-   The model file **has to** be in `assets/connectiblechains/models/entity/`
