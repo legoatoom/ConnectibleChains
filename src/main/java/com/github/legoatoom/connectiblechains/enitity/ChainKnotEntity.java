@@ -53,7 +53,6 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.*;
 import net.minecraft.util.math.*;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -388,7 +387,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             }
         }
 
-        // Opposite of Entity.applyMirror, again I am not sure why but it works
+        // Opposite of Entity.applyMirror, again I am not sure why, but it works
         float yaw = MathHelper.wrapDegrees(this.getYaw());
         return switch (mirror) {
             case LEFT_RIGHT -> 180 - yaw;

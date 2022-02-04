@@ -1,15 +1,10 @@
-package com.github.legoatoom.connectiblechains.client.render.entity.model;
+package com.github.legoatoom.connectiblechains.client.render.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.chain.ChainType;
 import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
-import com.github.legoatoom.connectiblechains.client.ClientInitializer;
-import com.github.legoatoom.connectiblechains.compat.BuiltinCompat;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
@@ -20,13 +15,11 @@ import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.profiler.Profiler;
-import net.minecraft.util.registry.Registry;
 
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -42,14 +35,6 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
     private final Object2ObjectMap<Identifier, Identifier> knotTextures = new Object2ObjectOpenHashMap<>(64);
     private final ObjectSet<Identifier> loadedModels = new ObjectArraySet<>();
 
-    public Identifier getChainTexture(Identifier chainType) {
-        return chainTextures.getOrDefault(chainType, MISSING_ID);
-    }
-
-    public Identifier getKnotTexture(Identifier chainType) {
-        return knotTextures.getOrDefault(chainType, MISSING_ID);
-    }
-
     @Override
     public Identifier getFabricId() {
         return Helper.identifier("chain_textures");
@@ -60,11 +45,17 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
         return CompletableFuture.supplyAsync(() -> load(manager, false));
     }
 
+    /**
+     * Loads all models for all registered chain types.
+     * @param manager The resource manager
+     * @param diff When true does not reload models that are already loaded
+     * @return A map of chain type ids to model data
+     */
     public Map<Identifier, JsonModel> load(ResourceManager manager, boolean diff) {
         Map<Identifier, JsonModel> map = new HashMap<>();
 
         for (Identifier chainType : ChainTypesRegistry.REGISTRY.getIds()) {
-            if(diff && loadedModels.contains(chainType)) continue;
+            if (diff && loadedModels.contains(chainType)) continue;
             try (Resource resource = manager.getResource(getResourceId(getModelId(chainType)))) {
                 Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
                 JsonModel jsonModel = GSON.fromJson(reader, JsonModel.class);
@@ -79,6 +70,10 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
         return map;
     }
 
+    public static Identifier getResourceId(Identifier modelId) {
+        return new Identifier(modelId.getNamespace(), "models/" + modelId.getPath() + ".json");
+    }
+
     /**
      * @see net.minecraft.data.client.model.Texture#getId(Item)
      * @see net.minecraft.data.client.model.ModelIds#getItemModelId(Item)
@@ -87,31 +82,32 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
         return new Identifier(chainType.getNamespace(), "entity/chain/" + chainType.getPath());
     }
 
-    public static Identifier getResourceId(Identifier modelId) {
-        return new Identifier(modelId.getNamespace(), "models/" + modelId.getPath() + ".json");
-    }
-    
     @Override
     public CompletableFuture<Void> apply(Map<Identifier, JsonModel> textureMap, ResourceManager manager, Profiler profiler, Executor executor) {
-        apply(textureMap, false);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    public void apply(Map<Identifier, JsonModel> textureMap, boolean diff) {
-        if(!diff) {
-            chainTextures.clear();
-            knotTextures.clear();
-            loadedModels.clear();
-        }
+        chainTextures.clear();
+        knotTextures.clear();
+        loadedModels.clear();
 
         textureMap.forEach((id, entry) -> {
-            if(diff && loadedModels.contains(id)) return;
             chainTextures.put(id, entry.textures.chainTextureId());
             knotTextures.put(id, entry.textures.knotTextureId());
             loadedModels.add(id);
         });
+        return CompletableFuture.completedFuture(null);
     }
 
+    public Identifier getChainTexture(Identifier chainType) {
+        return chainTextures.getOrDefault(chainType, MISSING_ID);
+    }
+
+    public Identifier getKnotTexture(Identifier chainType) {
+        return knotTextures.getOrDefault(chainType, MISSING_ID);
+    }
+
+    /**
+     * This class represents the json structure
+     */
+    @SuppressWarnings("unused")
     protected static final class JsonModel {
         public Textures textures;
 

@@ -21,10 +21,8 @@ import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
+import com.github.legoatoom.connectiblechains.client.render.entity.ChainTextureManager;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
-import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainTextureManager;
-import com.github.legoatoom.connectiblechains.compat.BuiltinCompat;
-import com.github.legoatoom.connectiblechains.compat.ChainTypes;
 import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.enitity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
@@ -41,22 +39,15 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPickBlockGatherCallback;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.entity.Entity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.tag.ServerTagManagerHolder;
-import net.minecraft.tag.Tag;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.registry.Registry;
 
 /**
  * ClientInitializer.
@@ -69,7 +60,6 @@ public class ClientInitializer implements ClientModInitializer {
 
     public static final EntityModelLayer CHAIN_KNOT = new EntityModelLayer(Helper.identifier("chain_knot"), "main");
     private static ClientInitializer instance;
-//    public static final ChainTypes TYPES = new ChainTypes();
     public final ChainTextureManager textureManager = new ChainTextureManager();
     private ChainKnotEntityRenderer chainKnotEntityRenderer;
     private ChainPacketHandler chainPacketHandler;
@@ -150,28 +140,7 @@ public class ClientInitializer implements ClientModInitializer {
         ClientTickEvents.START_WORLD_TICK.register(world -> chainPacketHandler.tick());
 
         ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(textureManager);
-        ServerLifecycleEvents.END_DATA_PACK_RELOAD.register((server, serverResourceManager, success) -> reloadTextures());
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-            Tag<Item> tag = ChainTypesRegistry.CHAINABLE_TAG;
-            for (Item item : tag.values()) {
-                ChainTypesRegistry.registerDynamic(item);
-            }
-            reloadTextures();
-        });
-
-//        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(
-//                SidedResourceReloadListener.proxy(ResourceType.CLIENT_RESOURCES, TYPES));
-    }
-
-    private void reloadTextures() {
-        try {
-            long loadStart = System.nanoTime();
-            textureManager.apply(textureManager.load(MinecraftClient.getInstance().getResourceManager(), true), true);
-            double elapsed = (System.nanoTime() - loadStart) / 10e6;
-            ConnectibleChains.LOGGER.info("Loaded dynamic chain type assets, took {} ms.", elapsed);
-        } catch (Exception e) {
-            ConnectibleChains.LOGGER.error("Failed to load dynamic chain type assets!", e);
-        }
+        ClientLifecycleEvents.CLIENT_STARTED.register((client) -> ChainTypesRegistry.lock());
     }
 
     public static ClientInitializer getInstance() {

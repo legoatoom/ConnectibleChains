@@ -20,11 +20,8 @@ package com.github.legoatoom.connectiblechains;
 
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.chain.ChainType;
-//import com.github.legoatoom.connectiblechains.compat.ChainTypes;
-//import com.github.legoatoom.connectiblechains.compat.SidedResourcesReloadListener;
 import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import com.github.legoatoom.connectiblechains.compat.BuiltinCompat;
-import com.github.legoatoom.connectiblechains.compat.ChainTypes;
 import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.enitity.ChainLinkEntity;
@@ -32,27 +29,20 @@ import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
+import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.fabricmc.fabric.api.event.registry.RegistryEntryAddedCallback;
-import net.fabricmc.fabric.api.event.registry.RegistryEntryRemovedCallback;
-import net.fabricmc.fabric.api.event.registry.RegistryIdRemapCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.tag.TagManager;
-import net.minecraft.tag.TagManagerLoader;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -70,7 +60,6 @@ public class ConnectibleChains implements ModInitializer {
      * it will be a lot easier!
      */
     public static final String MODID = "connectiblechains";
-//    public static final ChainTypes TYPES = new ChainTypes();
     public static final Logger LOGGER = LogManager.getLogger(MODID);
     /**
      * ModConfigs are helpful if people keep demanding for your chains to get longer...
@@ -91,11 +80,6 @@ public class ConnectibleChains implements ModInitializer {
         ChainTypesRegistry.init();
         BuiltinCompat.init();
 
-//        ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(
-//                SidedResourceReloadListener.proxy(ResourceType.SERVER_DATA, TYPES));
-
-        ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(new ChainTypes());
-
         AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
         ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
         fileConfig = configHolder.getConfig();
@@ -104,15 +88,11 @@ public class ConnectibleChains implements ModInitializer {
         UseBlockCallback.EVENT.register(ConnectibleChains::chainUseEvent);
 
         ServerPlayConnectionEvents.INIT.register((handler, server) -> fileConfig.syncToClient(handler.getPlayer()));
-        RegistryIdRemapCallback.event(ChainTypesRegistry.REGISTRY).register(state -> {
-            LOGGER.info("Id remap: {}", state.getRawIdChangeMap());
-        });
-        RegistryEntryAddedCallback.event(ChainTypesRegistry.REGISTRY).register((rawId, id, object) -> {
-            LOGGER.info("Entry added: {} {} {}", rawId, id, object);
-        });
-        RegistryEntryRemovedCallback.event(ChainTypesRegistry.REGISTRY).register((rawId, id, object) -> {
-            LOGGER.info("Entry removed: {} {} {}", rawId, id, object);
-        });
+
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER) {
+            // ClientInitializer uses CLIENT_STARTED
+            ServerLifecycleEvents.SERVER_STARTED.register((server) -> ChainTypesRegistry.lock());
+        }
     }
 
     /**
