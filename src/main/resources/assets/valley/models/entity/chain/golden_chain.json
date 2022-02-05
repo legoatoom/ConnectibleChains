@@ -1,6 +1,6 @@
 {
 	"textures": {
-		"chain": "valley:textures/blocks/golden_chain_block",
+		"chain": "connectiblechains:textures/block/golden_chain_block",
 		"knot": "connectiblechains:textures/entity/golden_chain_block_knot"
 	}
 }
