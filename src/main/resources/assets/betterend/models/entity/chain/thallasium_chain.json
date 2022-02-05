@@ -1,6 +1,6 @@
 {
 	"textures": {
-		"chain": "betterend:textures/block/thallasium_chain",
+		"chain": "connectiblechains:textures/block/thallasium_chain",
 		"knot": "connectiblechains:textures/entity/thallasium_chain_knot"
 	}
 }
