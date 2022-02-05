@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.0.1] - 12022-01-17
+### Fixed
+- Servers not working
+
 ## [2.0.0] - 12022-01-14
 ### Fixed
 - Fixed Collision doesn't work for mobs #7
