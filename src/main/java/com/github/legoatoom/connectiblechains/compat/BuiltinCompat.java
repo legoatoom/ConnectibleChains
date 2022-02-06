@@ -12,7 +12,7 @@ public class BuiltinCompat {
     /**
      * A list of item ids that this mod provides basic support for by default
      */
-    private static final Set<Identifier> BUILTIN_TYPES = new HashSet<>() {{
+    public static final Set<Identifier> BUILTIN_TYPES = new HashSet<>() {{
         add(new Identifier("betterend:thallasium_chain"));
         add(new Identifier("betterend:terminite_chain"));
         add(new Identifier("betternether:cincinnasite_chain"));

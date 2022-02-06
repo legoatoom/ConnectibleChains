@@ -2,6 +2,7 @@ package com.github.legoatoom.connectiblechains.client.render.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
+import com.github.legoatoom.connectiblechains.compat.BuiltinCompat;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,6 +16,7 @@ import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.profiler.Profiler;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
@@ -33,7 +35,6 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
     private static final Identifier MISSING_ID = new Identifier(ConnectibleChains.MODID, "textures/entity/missing.png");
     private final Object2ObjectMap<Identifier, Identifier> chainTextures = new Object2ObjectOpenHashMap<>(64);
     private final Object2ObjectMap<Identifier, Identifier> knotTextures = new Object2ObjectOpenHashMap<>(64);
-    private final ObjectSet<Identifier> loadedModels = new ObjectArraySet<>();
 
     @Override
     public Identifier getFabricId() {
@@ -42,26 +43,29 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
 
     @Override
     public CompletableFuture<Map<Identifier, JsonModel>> load(ResourceManager manager, Profiler profiler, Executor executor) {
-        return CompletableFuture.supplyAsync(() -> load(manager, false));
+        return CompletableFuture.supplyAsync(() -> load(manager));
     }
 
     /**
      * Loads all models for all registered chain types.
      * @param manager The resource manager
-     * @param diff When true does not reload models that are already loaded
      * @return A map of chain type ids to model data
      */
-    public Map<Identifier, JsonModel> load(ResourceManager manager, boolean diff) {
+    public Map<Identifier, JsonModel> load(ResourceManager manager) {
         Map<Identifier, JsonModel> map = new HashMap<>();
 
         for (Identifier chainType : ChainTypesRegistry.REGISTRY.getIds()) {
-            if (diff && loadedModels.contains(chainType)) continue;
             try (Resource resource = manager.getResource(getResourceId(getModelId(chainType)))) {
                 Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
                 JsonModel jsonModel = GSON.fromJson(reader, JsonModel.class);
                 map.put(chainType, jsonModel);
             } catch (FileNotFoundException e) {
-                ConnectibleChains.LOGGER.error("Missing model for {}.", chainType, e);
+                JsonModel builtinModel = loadBuiltinModel(manager, chainType);
+                if(builtinModel != null) {
+                    map.put(chainType, builtinModel);
+                } else {
+                    ConnectibleChains.LOGGER.error("Missing model for {}.", chainType, e);
+                }
             } catch (Exception e) {
                 ConnectibleChains.LOGGER.error("Failed to load model for {}.", chainType, e);
             }
@@ -70,8 +74,31 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
         return map;
     }
 
+    /**
+     * Checks if {@code chainType} is a builtin type and tries to load it's model
+     * @param manager The resource manager
+     * @param chainType A chain type, can be a builtin type or not
+     * @return The model for {@code chainType} or null of none exists
+     */
+    @Nullable
+    private JsonModel loadBuiltinModel(ResourceManager manager, Identifier chainType) {
+        if(BuiltinCompat.BUILTIN_TYPES.contains(chainType)) {
+            try (Resource resource = manager.getResource(getBuiltinResourceId(getModelId(chainType)))) {
+                Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
+                return GSON.fromJson(reader, JsonModel.class);
+            } catch (Exception e) {
+                ConnectibleChains.LOGGER.error("Error for builtin type {}.", chainType, e);
+            }
+        }
+        return null;
+    }
+
     public static Identifier getResourceId(Identifier modelId) {
         return new Identifier(modelId.getNamespace(), "models/" + modelId.getPath() + ".json");
+    }
+
+    private static Identifier getBuiltinResourceId(Identifier modelId) {
+        return new Identifier(ConnectibleChains.MODID, "models/" + modelId.getPath() + ".json");
     }
 
     /**
@@ -86,12 +113,10 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
     public CompletableFuture<Void> apply(Map<Identifier, JsonModel> textureMap, ResourceManager manager, Profiler profiler, Executor executor) {
         chainTextures.clear();
         knotTextures.clear();
-        loadedModels.clear();
 
         textureMap.forEach((id, entry) -> {
             chainTextures.put(id, entry.textures.chainTextureId());
             knotTextures.put(id, entry.textures.knotTextureId());
-            loadedModels.add(id);
         });
         return CompletableFuture.completedFuture(null);
     }
