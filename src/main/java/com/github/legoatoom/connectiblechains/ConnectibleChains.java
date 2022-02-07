@@ -157,7 +157,7 @@ public class ConnectibleChains implements ModInitializer {
         if (knotType == null)
             knotType = attachableChains.get(0).chainType;
 
-        // 2. Create new knot if none exists and delegate interaction
+        // 3. Create new knot if none exists and delegate interaction
         knot = new ChainKnotEntity(world, blockPos, knotType);
         knot.setGraceTicks((byte) 0);
         world.spawnEntity(knot);
