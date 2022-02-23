@@ -378,11 +378,13 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     @Override
     public float applyMirror(BlockMirror mirror) {
-        // Mirror the X axis, I am not sure why
-        for (NbtElement element : incompleteLinks) {
-            if (element instanceof NbtCompound link) {
-                if (link.contains("RelX")) {
-                    link.putInt("RelX", -link.getInt("RelX"));
+        if(mirror != BlockMirror.NONE) {
+            // Mirror the X axis, I am not sure why
+            for (NbtElement element : incompleteLinks) {
+                if (element instanceof NbtCompound link) {
+                    if (link.contains("RelX")) {
+                        link.putInt("RelX", -link.getInt("RelX"));
+                    }
                 }
             }
         }
