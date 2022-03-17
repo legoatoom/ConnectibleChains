@@ -17,6 +17,7 @@
 
 package com.github.legoatoom.connectiblechains.client.render.entity;
 
+import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumer;
@@ -30,7 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Used to avoid calculating the chain every frame.
+ * The geometry is baked (converted to an efficient format) into vertex and uv arrays.
+ * This prevents having to recalculate the model every frame.
  */
 public record ChainModel(float[] vertices, float[] uvs) {
 
@@ -99,8 +101,8 @@ public record ChainModel(float[] vertices, float[] uvs) {
         }
 
         public ChainModel build() {
-            if (vertices.size() != size * 3) throw new AssertionError("Wrong count of vertices");
-            if (uvs.size() != size * 2) throw new AssertionError("Wrong count of uvs");
+            if (vertices.size() != size * 3) ConnectibleChains.LOGGER.error("Wrong count of vertices");
+            if (uvs.size() != size * 2) ConnectibleChains.LOGGER.error("Wrong count of uvs");
 
             return new ChainModel(toFloatArray(vertices), toFloatArray(uvs));
         }

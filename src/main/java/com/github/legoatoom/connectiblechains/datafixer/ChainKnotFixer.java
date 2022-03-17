@@ -7,14 +7,24 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.util.math.MathHelper;
 
+/**
+ * Upgrades the NBT data of {@link com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity Chain Knots}
+ * to newer versions.
+ */
 public class ChainKnotFixer extends NbtFixer {
     public static final ChainKnotFixer INSTANCE = new ChainKnotFixer();
 
+    /**
+     * Not strictly the same as the mod version.
+     */
     @Override
     protected int getVersion() {
         return 2_01_00;
     }
 
+    /**
+     * The numbers in the function names represent the version for which the fix was created.
+     */
     @Override
     public void registerFixers() {
         addFix(2_01_00, "Add ChainType", this::fixChainType201);
@@ -66,6 +76,9 @@ public class ChainKnotFixer extends NbtFixer {
         return nbt;
     }
 
+    /**
+     * @return Returns true when {@code nbt} does not belong to a chain knot.
+     */
     private boolean isNotChainKnot201(NbtCompound nbt) {
         // Not using the registry here to avoid breaking when the id changes
         return !nbt.getString("id").equals("connectiblechains:chain_knot");

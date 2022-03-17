@@ -37,7 +37,7 @@ public class IncompleteChainLink {
     }
 
     /**
-     * Tries to complete the chain link.
+     * Tries to complete the chain link by looking for an entity with {@link #secondaryId}.
      *
      * @return true if the incomplete chain link should be removed
      */

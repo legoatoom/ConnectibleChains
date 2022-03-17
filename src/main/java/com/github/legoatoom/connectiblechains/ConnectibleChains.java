@@ -87,12 +87,8 @@ public class ConnectibleChains implements ModInitializer {
 
         UseBlockCallback.EVENT.register(ConnectibleChains::chainUseEvent);
 
+        // Need this event on dedicated and internal server because of 'open to lan'.
         ServerPlayConnectionEvents.INIT.register((handler, server) -> fileConfig.syncToClient(handler.getPlayer()));
-
-        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER) {
-            // ClientInitializer uses CLIENT_STARTED
-            ServerLifecycleEvents.SERVER_STARTED.register((server) -> ChainTypesRegistry.lock());
-        }
     }
 
     /**

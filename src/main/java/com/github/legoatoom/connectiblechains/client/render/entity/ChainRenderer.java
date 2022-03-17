@@ -18,7 +18,6 @@
 package com.github.legoatoom.connectiblechains.client.render.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.chain.UVRect;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.loader.api.FabricLoader;
@@ -32,10 +31,33 @@ import static com.github.legoatoom.connectiblechains.util.Helper.drip2;
 import static com.github.legoatoom.connectiblechains.util.Helper.drip2prime;
 
 public class ChainRenderer {
+    /**
+     * Changes the width of the chain but does not cause uv distortion.
+     */
     private static final float CHAIN_SCALE = 1f;
+    /**
+     * How many mesh segments a chain is allowed to have.
+     * This is to prevent extreme lag and the possibility of an infinite loop.
+     */
     private static final int MAX_SEGMENTS = 2048;
+    /**
+     * The geometry of a chain only depends on the vector from the source to the destination.
+     * The rotation/direction and translation of the chain do not matter as they are accounted for during rendering.
+     */
     private final Object2ObjectOpenHashMap<BakeKey, ChainModel> models = new Object2ObjectOpenHashMap<>(256);
 
+    /**
+     * Renders the cached model for the given {@code key}.
+     * If a model is not present for the given key it will be built.
+     * @param buffer The target vertex buffer
+     * @param matrices The chain transformation
+     * @param key The cache key for the {@code chainVec}
+     * @param chainVec The vector from the start position to the end position
+     * @param blockLight0 The block light level at the start
+     * @param blockLight1 The block light level at the end
+     * @param skyLight0 The sky light level at the start
+     * @param skyLight1 The sky light level at the end
+     */
     public void renderBaked(VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vec3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model;
         if (models.containsKey(key)) {
@@ -50,6 +72,11 @@ public class ChainRenderer {
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
     }
 
+    /**
+     * Generates a new baked chain model for the given vector.
+     * @param chainVec The vector from the chain start to the end
+     * @return The generated model
+     */
     private ChainModel buildModel(Vec3f chainVec) {
         float desiredSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
         int initialCapacity = (int) (2f * Helper.lengthOf(chainVec) / desiredSegmentLength);
@@ -112,6 +139,8 @@ public class ChainRenderer {
      * Creates geometry from the origin to {@code v} with the specified {@code angle}.
      * It uses an iterative approach meaning that it adds geometry until it's at the end or
      * has reached {@link #MAX_SEGMENTS}.
+     * The model is always generated along the local X axis and curves along the Y axis.
+     * This makes the calculation a lot simpler as we are only dealing with 2d coordinates.
      *
      * @param builder The target builder
      * @param v       The end position in relation to the origin
@@ -125,10 +154,13 @@ public class ChainRenderer {
         // That changed the look of chains when there was a big height difference, but it looks better.
         float wrongDistanceFactor = distance / distanceXZ;
 
+        // 00, 01, 11, 11 refers to the X and Y position of the vertex.
+        // 00 is the lower X and Y vertex. 10 Has the same y value as 00 but a higher x value.
         Vec3f vert00 = new Vec3f(), vert01 = new Vec3f(), vert11 = new Vec3f(), vert10 = new Vec3f();
         Vec3f normal = new Vec3f(), rotAxis = new Vec3f();
 
         float chainWidth = (uv.x1() - uv.x0()) / 16 * CHAIN_SCALE;
+        //
         float uvv0, uvv1 = 0, gradient, x, y;
         Vec3f point0 = new Vec3f(), point1 = new Vec3f();
         Quaternion rotator;
@@ -157,6 +189,8 @@ public class ChainRenderer {
 
         actualSegmentLength = Helper.distanceBetween(point0, point1);
 
+        // This is a pretty simple algorithm to convert the mathematical curve to a model.
+        // It uses an incremental approach, adding segments until the end is reached.
         boolean lastIter = false;
         for (int segment = 0; segment < MAX_SEGMENTS; segment++) {
             rotAxis.set(point1.getX() - point0.getX(), point1.getY() - point0.getY(), point1.getZ() - point0.getZ());
@@ -225,6 +259,11 @@ public class ChainRenderer {
         return (float) (s / Math.sqrt(1 + k * k));
     }
 
+    /**
+     * Same as {@link #renderBaked(VertexConsumer, MatrixStack, BakeKey, Vec3f, int, int, int, int)} but will not use
+     * the model cache. This should be used when {@code chainVec} is changed very frequently.
+     * @see #renderBaked
+     */
     public void render(VertexConsumer buffer, MatrixStack matrices, Vec3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model = buildModel(chainVec);
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
@@ -239,6 +278,7 @@ public class ChainRenderer {
 
     /**
      * Used to identify a cached model.
+     * Chains that have an identical bake key can use the same model as the geometry is the same.
      */
     public static class BakeKey {
         private final int hash;

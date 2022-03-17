@@ -140,6 +140,7 @@ public class ClientInitializer implements ClientModInitializer {
         ClientTickEvents.START_WORLD_TICK.register(world -> chainPacketHandler.tick());
 
         ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(textureManager);
+        // ServerInitializer uses SERVER_STARTED
         ClientLifecycleEvents.CLIENT_STARTED.register((client) -> ChainTypesRegistry.lock());
     }
 

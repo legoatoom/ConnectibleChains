@@ -34,6 +34,7 @@ public class ChainTypesRegistry {
 
     /**
      * Prevents registration with {@link #registerDynamic(Item)}
+     * Registry will be locked once the game has loaded.
      */
     public static void lock() {
         locked = true;
@@ -48,7 +49,8 @@ public class ChainTypesRegistry {
     public static ChainType register(Item item) {
         Identifier id = Registry.ITEM.getId(item);
         if (id == Registry.ITEM.getDefaultId()) {
-            throw new AssertionError("Cannot create chain type with unregistered item");
+            ConnectibleChains.LOGGER.error("Cannot create chain type with unregistered item: {}", item.getName());
+            return DEFAULT_CHAIN_TYPE;
         }
         if (REGISTRY.containsId(id)) return REGISTRY.get(id);
         ChainType chainType = Registry.register(REGISTRY, id, new ChainType(item));

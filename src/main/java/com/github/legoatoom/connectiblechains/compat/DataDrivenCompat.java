@@ -32,7 +32,9 @@ import java.util.concurrent.Executor;
  * so a custom packet would probably be required.
  * I (qendolin) can think of two solutions:
  * - Use a HashMap (I would rather not)
- * - Recreate the registry when joining a world
+ * - Recreate the registry when joining a world (This seems to be how vanilla does it)
+ *
+ * If you know how to do this or have an idea, please create an issue or pull request!
  */
 public class DataDrivenCompat implements SimpleResourceReloadListener<Set<Identifier>> {
     public static final String PATH = ConnectibleChains.MODID + "/types.json";

@@ -28,12 +28,20 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 /**
- * Inspired by {@link net.minecraft.client.render.model.BakedModelManager} and {@link net.minecraft.client.render.model.ModelLoader}
+ * The manager loads the chain models that contain the texture information for all chain types.
+ * It looks for models at models/entity/chain/ within the same namespace as the chain type.
+ * Inspired by {@link net.minecraft.client.render.model.BakedModelManager} and {@link net.minecraft.client.render.model.ModelLoader}.
  */
 public class ChainTextureManager implements SimpleResourceReloadListener<Map<Identifier, ChainTextureManager.JsonModel>> {
     private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final Identifier MISSING_ID = new Identifier(ConnectibleChains.MODID, "textures/entity/missing.png");
+    /**
+     * Maps chain types to chain texture ids.
+     */
     private final Object2ObjectMap<Identifier, Identifier> chainTextures = new Object2ObjectOpenHashMap<>(64);
+    /**
+     * Maps chain types to knot texture ids.
+     */
     private final Object2ObjectMap<Identifier, Identifier> knotTextures = new Object2ObjectOpenHashMap<>(64);
 
     @Override
@@ -130,7 +138,7 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
     }
 
     /**
-     * This class represents the json structure
+     * This class represents the json structure of the model file
      */
     @SuppressWarnings("unused")
     protected static final class JsonModel {

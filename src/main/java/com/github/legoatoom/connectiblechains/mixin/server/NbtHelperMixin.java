@@ -12,6 +12,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(NbtHelper.class)
 public abstract class NbtHelperMixin {
+    /**
+     * Minecraft has a singleton DataFixer so we need an injection point to run our own.
+     */
     @Inject(at = @At("RETURN"), method = "update(Lcom/mojang/datafixers/DataFixer;Lnet/minecraft/datafixer/DataFixTypes;Lnet/minecraft/nbt/NbtCompound;II)Lnet/minecraft/nbt/NbtCompound;", cancellable = true)
     private static void updateDataWithFixers(DataFixer fixer, DataFixTypes fixTypes, NbtCompound compound, int oldVersion, int targetVersion, CallbackInfoReturnable<NbtCompound> cir) {
         NbtCompound original = cir.getReturnValue(); // We do our fixes after vanilla.
