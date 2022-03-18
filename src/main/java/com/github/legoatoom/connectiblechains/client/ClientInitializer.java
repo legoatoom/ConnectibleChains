@@ -18,38 +18,36 @@
 package com.github.legoatoom.connectiblechains.client;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
+import com.github.legoatoom.connectiblechains.client.render.entity.ChainTextureManager;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
 import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.enitity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
 import com.github.legoatoom.connectiblechains.util.Helper;
-import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
-import com.github.legoatoom.connectiblechains.util.PacketBufUtil;
+import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPickBlockGatherCallback;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.resource.ResourceType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
-import org.apache.logging.log4j.LogManager;
-
-import java.util.UUID;
 
 /**
  * ClientInitializer.
@@ -61,14 +59,33 @@ import java.util.UUID;
 public class ClientInitializer implements ClientModInitializer {
 
     public static final EntityModelLayer CHAIN_KNOT = new EntityModelLayer(Helper.identifier("chain_knot"), "main");
-    private static ChainKnotEntityRenderer chainKnotEntityRenderer = null;
     private static ClientInitializer instance;
+    public final ChainTextureManager textureManager = new ChainTextureManager();
+    private ChainKnotEntityRenderer chainKnotEntityRenderer;
+    private ChainPacketHandler chainPacketHandler;
 
     @Override
     public void onInitializeClient() {
         instance = this;
         initRenderers();
-        registerReceiverClientPackages();
+
+        registerNetworkEventHandlers();
+        registerClientEventHandlers();
+
+        ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
+        configHolder.registerSaveListener((holder, modConfig) -> {
+            ClientInitializer clientInitializer = ClientInitializer.getInstance();
+            if (clientInitializer != null) {
+                clientInitializer.getChainKnotEntityRenderer().getChainRenderer().purge();
+            }
+            MinecraftServer server = MinecraftClient.getInstance().getServer();
+            if (server != null) {
+                ConnectibleChains.LOGGER.info("Syncing config to clients");
+                ConnectibleChains.fileConfig.syncToClients(server);
+                ConnectibleChains.runtimeConfig.copyFrom(ConnectibleChains.fileConfig);
+            }
+            return ActionResult.PASS;
+        });
     }
 
     private void initRenderers() {
@@ -82,113 +99,8 @@ public class ClientInitializer implements ClientModInitializer {
         EntityModelLayerRegistry.registerModelLayer(CHAIN_KNOT, ChainKnotEntityModel::getTexturedModelData);
     }
 
-    private void registerReceiverClientPackages() {
-        ClientPlayNetworking.registerGlobalReceiver(NetworkingPackages.S2C_CHAIN_ATTACH_PACKET_ID,
-                (client, handler, packetByteBuf, responseSender) -> {
-                    int[] fromTo = packetByteBuf.readIntArray();
-                    int fromPlayer = packetByteBuf.readInt();
-                    client.execute(() -> {
-                        if (client.world != null) {
-                            Entity entity = client.world.getEntityById(fromTo[0]);
-                            if (entity instanceof ChainKnotEntity) {
-                                ((ChainKnotEntity) entity).addHoldingEntityId(fromTo[1], fromPlayer);
-                            } else {
-                                LogManager.getLogger().warn("Received Attach Chain Package to unknown Entity.");
-                            }
-                        }
-                    });
-                });
-
-        ClientPlayNetworking.registerGlobalReceiver(NetworkingPackages.S2C_CHAIN_DETACH_PACKET_ID,
-                (client, handler, packetByteBuf, responseSender) -> {
-                    int[] fromTo = packetByteBuf.readIntArray();
-                    client.execute(() -> {
-                        if (client.world != null) {
-                            Entity entity = client.world.getEntityById(fromTo[0]);
-                            if (entity instanceof ChainKnotEntity) {
-                                ((ChainKnotEntity) entity).removeHoldingEntityId(fromTo[1]);
-                            }
-                        }
-                    });
-                });
-
-        ClientPlayNetworking.registerGlobalReceiver(NetworkingPackages.S2C_MULTI_CHAIN_ATTACH_PACKET_ID,
-                (client, handler, packetByteBuf, responseSender) -> {
-                    int from = packetByteBuf.readInt();
-                    int[] tos = packetByteBuf.readIntArray();
-                    client.execute(() -> {
-                        if (client.world != null) {
-                            Entity entity = client.world.getEntityById(from);
-                            if (entity instanceof ChainKnotEntity) {
-                                ((ChainKnotEntity) entity).addHoldingEntityIds(tos);
-                            }
-                        }
-                    });
-                });
-
-        ClientPlayNetworking.registerGlobalReceiver(NetworkingPackages.S2C_SPAWN_CHAIN_COLLISION_PACKET,
-                (client, handler, buf, responseSender) -> {
-                    int entityTypeID = buf.readVarInt();
-                    EntityType<?> entityType = Registry.ENTITY_TYPE.get(entityTypeID);
-                    UUID uuid = buf.readUuid();
-                    int entityId = buf.readVarInt();
-                    Vec3d pos = PacketBufUtil.readVec3d(buf);
-                    float pitch = PacketBufUtil.readAngle(buf);
-                    float yaw = PacketBufUtil.readAngle(buf);
-
-                    int startId = buf.readVarInt();
-                    int endId = buf.readVarInt();
-
-                    client.execute(() -> {
-                        if (MinecraftClient.getInstance().world == null){
-                            throw new IllegalStateException("Tried to spawn entity in a null world!");
-                        }
-                        Entity e = entityType.create(MinecraftClient.getInstance().world);
-                        if (e == null){
-                            throw new IllegalStateException("Failed to create instance of entity \"" + entityTypeID + "\"");
-                        }
-                        e.setPosition(pos.x, pos.y, pos.z);
-                        e.setPitch(pitch);
-                        e.setYaw(yaw);
-                        e.setId(entityId);
-                        e.setUuid(uuid);
-                        e.setVelocity(Vec3d.ZERO);
-                        if (e instanceof ChainCollisionEntity){
-
-                            ((ChainCollisionEntity) e).setStartOwnerId(startId);
-                            ((ChainCollisionEntity) e).setEndOwnerId(endId);
-                        }
-                        MinecraftClient.getInstance().world.addEntity(entityId, e);
-                    });
-                });
-
-        ClientPlayNetworking.registerGlobalReceiver(NetworkingPackages.S2C_SPAWN_CHAIN_KNOT_PACKET,
-                (client, handler, buf, responseSender) -> {
-                    int entityTypeID = buf.readVarInt();
-                    EntityType<?> entityType = Registry.ENTITY_TYPE.get(entityTypeID);
-                    UUID uuid = buf.readUuid();
-                    int entityId = buf.readVarInt();
-                    Vec3d pos = PacketBufUtil.readVec3d(buf);
-                    float pitch = PacketBufUtil.readAngle(buf);
-                    float yaw = PacketBufUtil.readAngle(buf);
-
-                    client.execute(() -> {
-                        if (MinecraftClient.getInstance().world == null){
-                            throw new IllegalStateException("Tried to spawn entity in a null world!");
-                        }
-                        Entity e = entityType.create(MinecraftClient.getInstance().world);
-                        if (e == null){
-                            throw new IllegalStateException("Failed to create instance of entity \"" + entityTypeID + "\"");
-                        }
-                        e.setPosition(pos.x, pos.y, pos.z);
-                        e.setPitch(pitch);
-                        e.setYaw(yaw);
-                        e.setId(entityId);
-                        e.setUuid(uuid);
-                        e.setVelocity(Vec3d.ZERO);
-                        MinecraftClient.getInstance().world.addEntity(entityId, e);
-                    });
-                });
+    private void registerNetworkEventHandlers() {
+        chainPacketHandler = new ChainPacketHandler();
 
         ClientPlayConnectionEvents.INIT.register((handler, client) -> {
             // Load client config
@@ -196,52 +108,47 @@ public class ClientInitializer implements ClientModInitializer {
             getChainKnotEntityRenderer().getChainRenderer().purge();
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(NetworkingPackages.S2C_CONFIG_SYNC_PACKET,
+        ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_CONFIG_SYNC_PACKET,
                 (client, handler, packetByteBuf, responseSender) -> {
                     // Apply server config
-                    if(client.isInSingleplayer()) {
+                    if (client.isInSingleplayer()) {
                         return;
                     }
                     try {
-                        LogManager.getLogger(ConnectibleChains.MODID).info("Received {} config from server", ConnectibleChains.MODID);
+                        ConnectibleChains.LOGGER.info("Received {} config from server", ConnectibleChains.MODID);
                         ConnectibleChains.runtimeConfig.readPacket(packetByteBuf);
                     } catch (Exception e) {
-                        LogManager.getLogger().error("Could not deserialize config: ", e);
+                        ConnectibleChains.LOGGER.error("Could not deserialize config: ", e);
                     }
                     getChainKnotEntityRenderer().getChainRenderer().purge();
                 });
+    }
 
+    private void registerClientEventHandlers() {
         ClientPickBlockGatherCallback.EVENT.register((player, result) -> {
-            if (result instanceof EntityHitResult){
+            if (result instanceof EntityHitResult) {
                 Entity entity = ((EntityHitResult) result).getEntity();
-                if (entity instanceof ChainKnotEntity || entity instanceof ChainCollisionEntity){
-                    return new ItemStack(Items.CHAIN);
+                if (entity instanceof ChainKnotEntity knot) {
+                    return new ItemStack(knot.getChainType().item());
+                } else if (entity instanceof ChainCollisionEntity collision) {
+                    return new ItemStack(collision.getChainType().item());
                 }
             }
             return ItemStack.EMPTY;
         });
 
-        ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
-        configHolder.registerSaveListener((holder, modConfig) -> {
-            ClientInitializer clientInitializer = ClientInitializer.getInstance();
-            if(clientInitializer != null) {
-                clientInitializer.getChainKnotEntityRenderer().getChainRenderer().purge();
-            }
-            MinecraftServer server = MinecraftClient.getInstance().getServer();
-            if(server != null) {
-                LogManager.getLogger(ConnectibleChains.MODID).info("Syncing config to clients");
-                ConnectibleChains.fileConfig.syncToClients(server);
-                ConnectibleChains.runtimeConfig.copyFrom(ConnectibleChains.fileConfig);
-            }
-            return ActionResult.PASS;
-        });
-    }
+        ClientTickEvents.START_WORLD_TICK.register(world -> chainPacketHandler.tick());
 
-    public ChainKnotEntityRenderer getChainKnotEntityRenderer() {
-        return chainKnotEntityRenderer;
+        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(textureManager);
+        // ServerInitializer uses SERVER_STARTED
+        ClientLifecycleEvents.CLIENT_STARTED.register((client) -> ChainTypesRegistry.lock());
     }
 
     public static ClientInitializer getInstance() {
         return instance;
+    }
+
+    public ChainKnotEntityRenderer getChainKnotEntityRenderer() {
+        return chainKnotEntityRenderer;
     }
 }

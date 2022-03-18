@@ -4,6 +4,7 @@
 build/
 out/
 classes/
+bin/
 
 # eclipse
 
@@ -20,3 +21,5 @@ classes/
 
 run/
 /run/
+run-server/
+/run-server/

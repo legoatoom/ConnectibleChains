@@ -44,6 +44,7 @@ public class Helper {
      * p1 = a * asinh( (h / (2*a)) * 1 / sinh(d / (2*a)) )
      * p2 = -a * cosh( (2*p1 - d) / (2*a) )
      * f(x) = p2 + a * cosh( (2*x + 2*p1 - d) / (2*a) )
+     *
      * @param x from 0 to d
      * @param d length of the chain
      * @param h height at x=d
@@ -56,10 +57,15 @@ public class Helper {
         return p2 + a * Math.cosh((((2D * x) + (2D * p1)) - d) / (2D * a));
     }
 
+    private static double asinh(double x) {
+        return Math.log(x + Math.sqrt(x * x + 1.0));
+    }
+
     /**
      * Derivative of drip2
      * For geogebra:
      * f'(x) = sinh( (2*x + 2*p1 - d) / (2*a) )
+     *
      * @param x from 0 to d
      * @param d length of the chain
      * @param h height at x=d
@@ -68,11 +74,7 @@ public class Helper {
     public static double drip2prime(double x, double d, double h) {
         double a = ConnectibleChains.runtimeConfig.getChainHangAmount();
         double p1 = a * asinh((h / (2D * a)) * (1D / Math.sinh(d / (2D * a))));
-        return Math.sinh( (2*x + 2*p1 - d) / (2*a) );
-    }
-
-    private static double asinh(double x) {
-        return Math.log(x + Math.sqrt(x * x + 1.0));
+        return Math.sinh((2 * x + 2 * p1 - d) / (2 * a));
     }
 
     public static Vec3d middleOf(Vec3d a, Vec3d b) {
@@ -86,27 +88,28 @@ public class Helper {
         float dx = a.getX() - b.getX();
         float dy = a.getY() - b.getY();
         float dz = a.getZ() - b.getZ();
-        return (float) Math.sqrt(dx*dx + dy*dy + dz*dz);
+        return (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     public static float lengthOf(Vec3f v) {
         float x = v.getX();
         float y = v.getY();
         float z = v.getZ();
-        return (float) Math.sqrt(x*x + y*y + z*z);
+        return (float) Math.sqrt(x * x + y * y + z * z);
     }
 
     /**
      * Get the x/z offset from a chain to a fence
+     *
      * @param start fence pos
-     * @param end fence pos
+     * @param end   fence pos
      * @return the x/z offset
      */
     public static Vec3f getChainOffset(Vec3d start, Vec3d end) {
         Vec3f offset = new Vec3f(end.subtract(start));
         offset.set(offset.getX(), 0, offset.getZ());
         offset.normalize();
-        offset.scale(2/16f);
+        offset.scale(2 / 16f);
         return offset;
     }
 }

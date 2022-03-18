@@ -18,7 +18,7 @@
 package com.github.legoatoom.connectiblechains.config;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
+import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import io.netty.buffer.Unpooled;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
@@ -63,8 +63,8 @@ public class ModConfig implements ConfigData {
         this.maxChainRange = maxChainRange;
     }
 
-    public boolean doDebugDraw() {
-        return IS_DEBUG_ENV && MinecraftClient.getInstance().options.debugEnabled;
+    public int getQuality() {
+        return quality;
     }
 
     @SuppressWarnings("unused")
@@ -72,8 +72,8 @@ public class ModConfig implements ConfigData {
         this.quality = quality;
     }
 
-    public int getQuality() {
-        return quality;
+    public boolean doDebugDraw() {
+        return IS_DEBUG_ENV && MinecraftClient.getInstance().options.debugEnabled;
     }
 
     public void syncToClients(MinecraftServer server) {
@@ -83,7 +83,7 @@ public class ModConfig implements ConfigData {
     }
 
     public void syncToClient(ServerPlayerEntity player) {
-        ServerPlayNetworking.send(player, NetworkingPackages.S2C_CONFIG_SYNC_PACKET, this.writePacket());
+        ServerPlayNetworking.send(player, NetworkingPackets.S2C_CONFIG_SYNC_PACKET, this.writePacket());
     }
 
     public PacketByteBuf writePacket() {

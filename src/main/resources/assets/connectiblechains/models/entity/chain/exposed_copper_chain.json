@@ -1,0 +1,6 @@
+{
+	"textures": {
+		"chain": "connectiblechains:textures/block/exposed_copper_chain",
+		"knot": "connectiblechains:textures/entity/exposed_copper_chain_knot"
+	}
+}

@@ -18,12 +18,9 @@
 package com.github.legoatoom.connectiblechains.mixin.server.network;
 
 import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
-import com.github.legoatoom.connectiblechains.util.NetworkingPackages;
-import io.netty.buffer.Unpooled;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import com.github.legoatoom.connectiblechains.util.PacketCreator;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.Packet;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.EntityTrackerEntry;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -42,17 +39,9 @@ abstract class EntityTrackerEntryMixin {
 
     @Inject(method = "sendPackets", at = @At("TAIL"))
     private void sendPackages(Consumer<Packet<?>> sender, CallbackInfo ci) {
-        if (this.entity instanceof ChainKnotEntity chainKnotEntity) {
-            PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
-            //Write our id and the id of the one we connect to.
-            int[] ids = chainKnotEntity.getHoldingEntities().stream().mapToInt(Entity::getId).toArray();
-            if (ids.length > 0) {
-                passedData.writeInt(chainKnotEntity.getId());
-                passedData.writeIntArray(ids);
-                sender.accept(ServerPlayNetworking.createS2CPacket(NetworkingPackages.S2C_MULTI_CHAIN_ATTACH_PACKET_ID, passedData));
-            }
+        if (this.entity instanceof ChainKnotEntity knot) {
+            Packet<?> packet = PacketCreator.createMultiAttach(knot);
+            if (packet != null) sender.accept(packet);
         }
     }
-
-
 }

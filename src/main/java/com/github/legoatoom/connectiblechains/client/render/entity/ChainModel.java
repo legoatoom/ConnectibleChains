@@ -17,6 +17,7 @@
 
 package com.github.legoatoom.connectiblechains.client.render.entity;
 
+import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumer;
@@ -29,15 +30,26 @@ import net.minecraft.util.math.Vec3f;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChainModel {
-    private final float[] vertices;
-    private final float[] uvs;
+/**
+ * The geometry is baked (converted to an efficient format) into vertex and uv arrays.
+ * This prevents having to recalculate the model every frame.
+ */
+public record ChainModel(float[] vertices, float[] uvs) {
 
-    public ChainModel(float[] vertices, float[] uvs) {
-        this.vertices = vertices;
-        this.uvs = uvs;
+    public static Builder builder(int initialCapacity) {
+        return new Builder(initialCapacity);
     }
 
+    /**
+     * Writes the model data to {@code buffer} and applies lighting.
+     *
+     * @param buffer   The target buffer.
+     * @param matrices The transformation stack
+     * @param bLight0  Block-light at the start.
+     * @param bLight1  Block-light at the end.
+     * @param sLight0  Sky-light at the start.
+     * @param sLight1  Sky-light at the end.
+     */
     public void render(VertexConsumer buffer, MatrixStack matrices, int bLight0, int bLight1, int sLight0, int sLight1) {
         Matrix4f modelMatrix = matrices.peek().getPositionMatrix();
         Matrix3f normalMatrix = matrices.peek().getNormalMatrix();
@@ -45,23 +57,20 @@ public class ChainModel {
         for (int i = 0; i < count; i++) {
             // divide by 2 because chain has 2 face sets
             @SuppressWarnings({"IntegerDivisionInFloatingPointContext"})
-            float f = (i % (count/2)) / (float) (count/2);
+            float f = (i % (count / 2)) / (float) (count / 2);
             int blockLight = (int) MathHelper.lerp(f, (float) bLight0, (float) bLight1);
             int skyLight = (int) MathHelper.lerp(f, (float) sLight0, (float) sLight1);
             int light = LightmapTextureManager.pack(blockLight, skyLight);
             buffer
-                    .vertex(modelMatrix, vertices[i*3], vertices[i*3+1] , vertices[i*3+2])
+                    .vertex(modelMatrix, vertices[i * 3], vertices[i * 3 + 1], vertices[i * 3 + 2])
                     .color(255, 255, 255, 255)
-                    .texture(uvs[i*2], uvs[i*2+1])
+                    .texture(uvs[i * 2], uvs[i * 2 + 1])
                     .overlay(OverlayTexture.DEFAULT_UV)
                     .light(light)
-                    .normal(normalMatrix, 0, 1, 0)
+                    // trial and error magic values that change the overall brightness of the chain
+                    .normal(normalMatrix, 1, 0.35f, 0)
                     .next();
         }
-    }
-
-    public static Builder builder(int initialCapacity) {
-        return new Builder(initialCapacity);
     }
 
     public static class Builder {
@@ -70,8 +79,8 @@ public class ChainModel {
         private int size;
 
         public Builder(int initialCapacity) {
-            vertices = new ArrayList<>(initialCapacity*3);
-            uvs = new ArrayList<>(initialCapacity*2);
+            vertices = new ArrayList<>(initialCapacity * 3);
+            uvs = new ArrayList<>(initialCapacity * 2);
         }
 
         public Builder vertex(Vec3f v) {
@@ -92,8 +101,8 @@ public class ChainModel {
         }
 
         public ChainModel build() {
-            if(vertices.size() != size*3) throw new AssertionError("Wrong count of vertices");
-            if(uvs.size() != size*2) throw new AssertionError("Wrong count of uvs");
+            if (vertices.size() != size * 3) ConnectibleChains.LOGGER.error("Wrong count of vertices");
+            if (uvs.size() != size * 2) ConnectibleChains.LOGGER.error("Wrong count of uvs");
 
             return new ChainModel(toFloatArray(vertices), toFloatArray(uvs));
         }

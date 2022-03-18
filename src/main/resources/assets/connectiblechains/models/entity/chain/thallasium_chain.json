@@ -1,0 +1,6 @@
+{
+	"textures": {
+		"chain": "connectiblechains:textures/block/thallasium_chain",
+		"knot": "connectiblechains:textures/entity/thallasium_chain_knot"
+	}
+}

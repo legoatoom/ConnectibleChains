@@ -46,7 +46,7 @@ https://www.curseforge.com/minecraft/mc-mods/connectible-chains-forge
 If there are invisible collisions for some reason, hold a shear while
 having entity hitboxes on (F3+B) to see the collisions and then attack them to remove them.
 
-I am currently considering adding chain's from other mods, if you have any in particular feel free to create an issue about it on github.
+I am currently considering adding chain's from other mods, if you have any in particular feel free to create an issue about it on GitHub.
 
 
 
