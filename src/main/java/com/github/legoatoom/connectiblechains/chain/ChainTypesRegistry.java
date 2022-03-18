@@ -35,7 +35,7 @@ public class ChainTypesRegistry {
 
     static {
         // ITEM_CHAIN_TYPES has to be initialized before 'register' is called.
-        // And InttliJ just insisted on breaking it.
+        // And IntelliJ just insisted on breaking it.
 
         DEFAULT_CHAIN_TYPE = register(DEFAULT_CHAIN_TYPE_ID, Items.CHAIN);
         IRON_CHAIN = DEFAULT_CHAIN_TYPE;
