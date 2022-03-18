@@ -32,7 +32,7 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.util.NbtType;
-import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityPose;
@@ -40,7 +40,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -106,7 +106,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * What block the knot is attached to.
      */
     @Environment(EnvType.CLIENT)
-    private Block attachTarget;
+    private BlockState attachTarget;
 
     public ChainKnotEntity(EntityType<? extends ChainKnotEntity> entityType, World world) {
         super(entityType, world);
@@ -170,7 +170,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         if (world.isClient) {
             // All other logic in handled on the server. The client only knows enough to render the entity.
             links.removeIf(ChainLink::isDead);
-            attachTarget = world.getBlockState(attachmentPos).getBlock();
+            attachTarget = world.getBlockState(attachmentPos);
             return;
         }
         attemptTickInVoid();
@@ -307,8 +307,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * @return true if it can stay attached.
      */
     public boolean canStayAttached() {
-        Block block = world.getBlockState(attachmentPos).getBlock();
-        return canAttachTo(block);
+        BlockState blockState = world.getBlockState(attachmentPos);
+        return canAttachTo(blockState);
     }
 
     /**
@@ -366,11 +366,11 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     /**
      * Is this block acceptable to attach a knot?
      *
-     * @param block the block in question.
+     * @param blockState The state of the block in question.
      * @return true if is allowed.
      */
-    public static boolean canAttachTo(Block block) {
-        return BlockTags.WALLS.contains(block) || BlockTags.FENCES.contains(block);
+    public static boolean canAttachTo(BlockState blockState) {
+        return blockState != null && (blockState.isIn(BlockTags.WALLS) || blockState.isIn(BlockTags.FENCES));
     }
 
     /**
@@ -378,7 +378,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     @Override
     public float applyMirror(BlockMirror mirror) {
-        if(mirror != BlockMirror.NONE) {
+        if (mirror != BlockMirror.NONE) {
             // Mirror the X axis, I am not sure why
             for (NbtElement element : incompleteLinks) {
                 if (element instanceof NbtCompound link) {
@@ -546,13 +546,13 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
-        Item handItem = player.getStackInHand(hand).getItem();
+        ItemStack handStack = player.getStackInHand(hand);
         if (world.isClient) {
-            if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(handItem)) {
+            if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(handStack.getItem())) {
                 return ActionResult.SUCCESS;
             }
 
-            if (ChainLinkEntity.canDestroyWith(handItem)) {
+            if (ChainLinkEntity.canDestroyWith(handStack)) {
                 return ActionResult.SUCCESS;
             }
 
@@ -579,10 +579,10 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         }
 
         // 3. Try to create a new connection
-        if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(handItem)) {
+        if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(handStack.getItem())) {
             // Interacted with a valid chain item, create a new link
             onPlace();
-            ChainType chainType = ChainTypesRegistry.ITEM_CHAIN_TYPES.get(handItem);
+            ChainType chainType = ChainTypesRegistry.ITEM_CHAIN_TYPES.get(handStack.getItem());
             ChainLink.create(this, player, chainType);
             if (!player.isCreative()) {
                 player.getStackInHand(hand).decrement(1);
@@ -594,7 +594,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         }
 
         // 4. Interacted with anything else, check for shears
-        if (ChainLinkEntity.canDestroyWith(handItem)) {
+        if (ChainLinkEntity.canDestroyWith(handStack)) {
             destroyLinks(!player.isCreative());
             graceTicks = 0;
             return ActionResult.CONSUME;
@@ -718,7 +718,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     @Environment(EnvType.CLIENT)
     public boolean shouldRenderKnot() {
-        return !BlockTags.WALLS.contains(attachTarget);
+        return attachTarget == null || !attachTarget.isIn(BlockTags.WALLS);
     }
 
     public void addLink(ChainLink link) {

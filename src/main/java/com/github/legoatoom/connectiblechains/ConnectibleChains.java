@@ -29,13 +29,10 @@ import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
-import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -106,11 +103,10 @@ public class ConnectibleChains implements ModInitializer {
     private static ActionResult chainUseEvent(PlayerEntity player, World world, Hand hand, BlockHitResult hitResult) {
         if (player == null || player.isSneaking()) return ActionResult.PASS;
         ItemStack stack = player.getStackInHand(hand);
-        Item item = stack.getItem();
         BlockPos blockPos = hitResult.getBlockPos();
-        Block block = world.getBlockState(blockPos).getBlock();
+        BlockState blockState = world.getBlockState(blockPos);
 
-        if (!ChainKnotEntity.canAttachTo(block)) return ActionResult.PASS;
+        if (!ChainKnotEntity.canAttachTo(blockState)) return ActionResult.PASS;
         else if (world.isClient) {
             Item handItem = player.getStackInHand(hand).getItem();
             if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(handItem)) {
@@ -124,7 +120,7 @@ public class ConnectibleChains implements ModInitializer {
 
             // Check if a knot exists and can be destroyed
             // Would work without this check but no swing animation would be played
-            if (ChainKnotEntity.getKnotAt(player.world, blockPos) != null && ChainLinkEntity.canDestroyWith(item)) {
+            if (ChainKnotEntity.getKnotAt(player.world, blockPos) != null && ChainLinkEntity.canDestroyWith(stack)) {
                 return ActionResult.SUCCESS;
             }
 
@@ -144,7 +140,7 @@ public class ConnectibleChains implements ModInitializer {
         List<ChainLink> attachableChains = ChainKnotEntity.getHeldChainsInRange(player, blockPos);
 
         // Use the held item as the new knot type
-        ChainType knotType = ChainTypesRegistry.ITEM_CHAIN_TYPES.get(item);
+        ChainType knotType = ChainTypesRegistry.ITEM_CHAIN_TYPES.get(stack.getItem());
 
         // Allow default interaction behaviour.
         if (attachableChains.size() == 0 && knotType == null) return ActionResult.PASS;

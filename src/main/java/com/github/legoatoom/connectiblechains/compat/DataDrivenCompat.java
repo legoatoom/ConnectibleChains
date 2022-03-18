@@ -48,7 +48,7 @@ public class DataDrivenCompat implements SimpleResourceReloadListener<Set<Identi
     @Override
     public CompletableFuture<Set<Identifier>> load(ResourceManager manager, Profiler profiler, Executor executor) {
         return CompletableFuture.supplyAsync(() -> {
-            if (ChainTypesRegistry.isLocked()) {
+            if (ChainTypesRegistry.isFrozen()) {
                 ConnectibleChains.LOGGER.warn("Dynamic chain types are not supported, a restart is required.");
                 return Set.of();
             }
