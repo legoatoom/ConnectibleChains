@@ -3,7 +3,6 @@ package com.github.legoatoom.connectiblechains.chain;
 import com.github.legoatoom.connectiblechains.client.ClientInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.item.Item;
 import net.minecraft.util.Identifier;
 

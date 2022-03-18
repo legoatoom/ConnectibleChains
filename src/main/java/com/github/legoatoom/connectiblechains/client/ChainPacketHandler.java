@@ -93,7 +93,7 @@ public class ChainPacketHandler {
 
                     client.execute(() -> {
                         Entity e = createEntity(client, entityType, uuid, entityId, pos);
-                        if(e == null) return;
+                        if (e == null) return;
                         if (e instanceof ChainCollisionEntity collider) {
                             collider.setChainType(ChainTypesRegistry.REGISTRY.get(typeId));
                         }
@@ -114,7 +114,7 @@ public class ChainPacketHandler {
 
                     client.execute(() -> {
                         Entity e = createEntity(client, entityType, uuid, entityId, pos);
-                        if(e == null) return;
+                        if (e == null) return;
                         if (e instanceof ChainKnotEntity knot) {
                             knot.setChainType(ChainTypesRegistry.REGISTRY.get(typeId));
                             knot.setGraceTicks((byte) 0);
@@ -143,10 +143,11 @@ public class ChainPacketHandler {
 
     /**
      * Will create links from the entity with the id {@code fromId} to multiple targets.
+     *
      * @param client The client
      * @param fromId Primary entity id
-     * @param toIds Secondary entity ids
-     * @param types Link type raw ids
+     * @param toIds  Secondary entity ids
+     * @param types  Link type raw ids
      */
     private void createLinks(MinecraftClient client, int fromId, int[] toIds, int[] types) {
         if (client.world == null) return;
@@ -167,13 +168,20 @@ public class ChainPacketHandler {
         }
     }
 
+    private void logBadActionTarget(String action, Entity target, int targetId, String expectedTarget) {
+        ConnectibleChains.LOGGER.error(String.format("Tried to %s %s (#%d) which is not %s",
+                action, target, targetId, expectedTarget
+        ));
+    }
+
     /**
      * Tries to create an entity with the given parameters. This does not add the entity to the world.
+     *
      * @param client The client
-     * @param type The type of entity
-     * @param uuid The uuid of the entity
-     * @param id The id of the entity
-     * @param pos The position of the entity
+     * @param type   The type of entity
+     * @param uuid   The uuid of the entity
+     * @param id     The id of the entity
+     * @param pos    The position of the entity
      * @return The created entity or null
      */
     @Nullable
@@ -192,12 +200,6 @@ public class ChainPacketHandler {
         e.setUuid(uuid);
         e.setVelocity(Vec3d.ZERO);
         return e;
-    }
-
-    private void logBadActionTarget(String action, Entity target, int targetId, String expectedTarget) {
-        ConnectibleChains.LOGGER.error(String.format("Tried to %s %s (#%d) which is not %s",
-                action, target, targetId, expectedTarget
-        ));
     }
 
     /**

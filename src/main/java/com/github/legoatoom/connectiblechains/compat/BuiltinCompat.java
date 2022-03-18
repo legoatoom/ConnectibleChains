@@ -44,6 +44,7 @@ public class BuiltinCompat {
 
     /**
      * Checks if a builtin type exists for {@code itemId} and then registers a type for it once.
+     *
      * @param itemId The id of an item
      */
     public static void registerTypeForBuiltin(Identifier itemId) {

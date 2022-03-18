@@ -49,14 +49,15 @@ public class ChainRenderer {
     /**
      * Renders the cached model for the given {@code key}.
      * If a model is not present for the given key it will be built.
-     * @param buffer The target vertex buffer
-     * @param matrices The chain transformation
-     * @param key The cache key for the {@code chainVec}
-     * @param chainVec The vector from the start position to the end position
+     *
+     * @param buffer      The target vertex buffer
+     * @param matrices    The chain transformation
+     * @param key         The cache key for the {@code chainVec}
+     * @param chainVec    The vector from the start position to the end position
      * @param blockLight0 The block light level at the start
      * @param blockLight1 The block light level at the end
-     * @param skyLight0 The sky light level at the start
-     * @param skyLight1 The sky light level at the end
+     * @param skyLight0   The sky light level at the start
+     * @param skyLight1   The sky light level at the end
      */
     public void renderBaked(VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vec3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model;
@@ -74,6 +75,7 @@ public class ChainRenderer {
 
     /**
      * Generates a new baked chain model for the given vector.
+     *
      * @param chainVec The vector from the chain start to the end
      * @return The generated model
      */
@@ -262,6 +264,7 @@ public class ChainRenderer {
     /**
      * Same as {@link #renderBaked(VertexConsumer, MatrixStack, BakeKey, Vec3f, int, int, int, int)} but will not use
      * the model cache. This should be used when {@code chainVec} is changed very frequently.
+     *
      * @see #renderBaked
      */
     public void render(VertexConsumer buffer, MatrixStack matrices, Vec3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {

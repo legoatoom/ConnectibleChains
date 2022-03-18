@@ -33,7 +33,7 @@ import java.util.concurrent.Executor;
  * I (qendolin) can think of two solutions:
  * - Use a HashMap (I would rather not)
  * - Recreate the registry when joining a world (This seems to be how vanilla does it)
- *
+ * <p>
  * If you know how to do this or have an idea, please create an issue or pull request!
  */
 public class DataDrivenCompat implements SimpleResourceReloadListener<Set<Identifier>> {
@@ -60,6 +60,7 @@ public class DataDrivenCompat implements SimpleResourceReloadListener<Set<Identi
     /**
      * Loads all chain types from all namespaces at {@link #PATH} and respects priority.
      * Like {@link net.minecraft.tag.TagGroupLoader}.
+     *
      * @param manager The resource manager
      * @return A set of all item ids that should become chain types
      */
