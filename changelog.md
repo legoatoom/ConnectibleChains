@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.1.0] - 12022-03-21
+### Added
+- Compatibility API for other mods
+- New chains for Valley Craft, BetterNether and Better End
+
+### Fixed
+- Sound and animation issues
+- Drops is creative mode
+- Not being able to place held chains when not holding a chain item
+
+
 ## [2.0.1] - 12022-01-17
 ### Fixed
 - Servers not working
