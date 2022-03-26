@@ -48,6 +48,8 @@ jobs:
           curseforge-id: 415681
           curseforge-token: ${{ secrets.CURSEFORGE_API_KEY }}
           
+          files: build/libs/!(*-@(dev|sources)).jar
           github-token: ${{ secrets.GITHUB_TOKEN }}
           loaders: fabric
+          game-versions: 1.18.2
           java: 17
