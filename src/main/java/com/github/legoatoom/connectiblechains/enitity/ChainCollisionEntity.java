@@ -20,11 +20,11 @@ package com.github.legoatoom.connectiblechains.enitity;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.chain.ChainType;
 import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
+import com.github.legoatoom.connectiblechains.tag.CommonTags;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.tool.attribute.v1.FabricToolTags;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
@@ -114,7 +114,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     }
 
     /**
-     * We only allow the collision box to be rendered if a player is holding an item that has tag {@link FabricToolTags#SHEARS}.
+     * We only allow the collision box to be rendered if a player is holding a shears type item.
      * This might be helpful when using F3+B to see the boxes of the chain.
      *
      * @param distance the camera distance from the collider.
@@ -124,7 +124,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Override
     public boolean shouldRender(double distance) {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player != null && player.isHolding(item -> item.isIn(FabricToolTags.SHEARS))) {
+        if (player != null && player.isHolding(CommonTags::isShear)) {
             return super.shouldRender(distance);
         } else {
             return false;
@@ -191,7 +191,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
      */
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
-        if (ChainLinkEntity.canDestroyWith(player.getStackInHand(hand).getItem())) {
+        if (ChainLinkEntity.canDestroyWith(player.getStackInHand(hand))) {
             destroyLinks(!player.isCreative());
             return ActionResult.SUCCESS;
         }

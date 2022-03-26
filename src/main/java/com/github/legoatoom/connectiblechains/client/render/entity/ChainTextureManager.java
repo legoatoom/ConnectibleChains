@@ -8,8 +8,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArraySet;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.fabricmc.fabric.api.resource.SimpleResourceReloadListener;
 import net.minecraft.item.Item;
 import net.minecraft.resource.Resource;
@@ -56,6 +54,7 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
 
     /**
      * Loads all models for all registered chain types.
+     *
      * @param manager The resource manager
      * @return A map of chain type ids to model data
      */
@@ -69,7 +68,7 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
                 map.put(chainType, jsonModel);
             } catch (FileNotFoundException e) {
                 JsonModel builtinModel = loadBuiltinModel(manager, chainType);
-                if(builtinModel != null) {
+                if (builtinModel != null) {
                     map.put(chainType, builtinModel);
                 } else {
                     ConnectibleChains.LOGGER.error("Missing model for {}.", chainType, e);
@@ -82,15 +81,27 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
         return map;
     }
 
+    public static Identifier getResourceId(Identifier modelId) {
+        return new Identifier(modelId.getNamespace(), "models/" + modelId.getPath() + ".json");
+    }
+
+    /**
+     * @see net.minecraft.data.client.ModelIds#getItemModelId(Item)
+     */
+    public static Identifier getModelId(Identifier chainType) {
+        return new Identifier(chainType.getNamespace(), "entity/chain/" + chainType.getPath());
+    }
+
     /**
      * Checks if {@code chainType} is a builtin type and tries to load it's model
-     * @param manager The resource manager
+     *
+     * @param manager   The resource manager
      * @param chainType A chain type, can be a builtin type or not
      * @return The model for {@code chainType} or null of none exists
      */
     @Nullable
     private JsonModel loadBuiltinModel(ResourceManager manager, Identifier chainType) {
-        if(BuiltinCompat.BUILTIN_TYPES.contains(chainType)) {
+        if (BuiltinCompat.BUILTIN_TYPES.contains(chainType)) {
             try (Resource resource = manager.getResource(getBuiltinResourceId(getModelId(chainType)))) {
                 Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
                 return GSON.fromJson(reader, JsonModel.class);
@@ -101,20 +112,8 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
         return null;
     }
 
-    public static Identifier getResourceId(Identifier modelId) {
-        return new Identifier(modelId.getNamespace(), "models/" + modelId.getPath() + ".json");
-    }
-
     private static Identifier getBuiltinResourceId(Identifier modelId) {
         return new Identifier(ConnectibleChains.MODID, "models/" + modelId.getPath() + ".json");
-    }
-
-    /**
-     * @see net.minecraft.data.client.model.Texture#getId(Item)
-     * @see net.minecraft.data.client.model.ModelIds#getItemModelId(Item)
-     */
-    public static Identifier getModelId(Identifier chainType) {
-        return new Identifier(chainType.getNamespace(), "entity/chain/" + chainType.getPath());
     }
 
     @Override

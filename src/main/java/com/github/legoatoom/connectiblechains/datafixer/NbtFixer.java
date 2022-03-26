@@ -1,19 +1,17 @@
 package com.github.legoatoom.connectiblechains.datafixer;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.mojang.datafixers.DataFixer;
 import net.fabricmc.fabric.api.util.NbtType;
-import net.minecraft.datafixer.DataFixTypes;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.*;
 
 /**
  * Little utility to upgrade NBT data to newer versions of the mod.
  * This is allows the mod to be updated without breaking existing worlds.
+ *
  * @implNote Only entity nbt fixes are supported.
  * See {@code NbtHelperMixin#updateDataWithFixers} to add support for more.
  * @apiNote {@link #update(NbtCompound)} and {@link #addVersionTag(NbtCompound)} have to be called manually.

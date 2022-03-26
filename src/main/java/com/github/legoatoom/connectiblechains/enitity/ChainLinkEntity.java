@@ -1,10 +1,10 @@
 package com.github.legoatoom.connectiblechains.enitity;
 
-import net.fabricmc.fabric.api.tool.attribute.v1.FabricToolTags;
+import com.github.legoatoom.connectiblechains.tag.CommonTags;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 
@@ -16,7 +16,7 @@ public interface ChainLinkEntity {
     /**
      * When a chain link entity is damaged by
      * <ul>
-     * <li>A player with a item that has Tag: {@link FabricToolTags#SHEARS}</li>
+     * <li>A player with an item that has the tag c:shears or is minecraft:shears</li>
      * <li>An explosion</li>
      * </ul>
      * it destroys the link that it is part of.
@@ -39,7 +39,7 @@ public interface ChainLinkEntity {
             return ActionResult.SUCCESS;
         }
         if (source.getSource() instanceof PlayerEntity player) {
-            if (canDestroyWith(player.getMainHandStack().getItem())) {
+            if (canDestroyWith(player.getMainHandStack())) {
                 return ActionResult.success(!player.isCreative());
             }
         }
@@ -57,8 +57,8 @@ public interface ChainLinkEntity {
      * @param item The item subject of an interaction
      * @return true if a chain link entity can be destroyed with the item
      */
-    static boolean canDestroyWith(Item item) {
-        return FabricToolTags.SHEARS.contains(item);
+    static boolean canDestroyWith(ItemStack item) {
+        return CommonTags.isShear(item);
     }
 
     /**
