@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.1.1] - 12022-03-26
+- Updated version specificly for 1.18.2.
+
 ## [2.1.0] - 12022-03-21
 ### Added
 - Compatibility API for other mods
