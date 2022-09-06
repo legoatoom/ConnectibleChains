@@ -34,6 +34,7 @@ import me.shedaniel.autoconfig.ConfigHolder;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
@@ -46,7 +47,9 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.EntityHitResult;
 
 /**
@@ -85,6 +88,13 @@ public class ClientInitializer implements ClientModInitializer {
                 ConnectibleChains.runtimeConfig.copyFrom(ConnectibleChains.fileConfig);
             }
             return ActionResult.PASS;
+        });
+
+        // Tooltip for chains.
+        ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
+            if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(stack.getItem())){
+                lines.add(1, new TranslatableText("message.connectiblechains.connectible_chain").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
+            }
         });
     }
 
