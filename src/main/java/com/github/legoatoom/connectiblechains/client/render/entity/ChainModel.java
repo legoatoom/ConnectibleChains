@@ -56,8 +56,7 @@ public record ChainModel(float[] vertices, float[] uvs) {
         int count = vertices.length / 3;
         for (int i = 0; i < count; i++) {
             // divide by 2 because chain has 2 face sets
-            @SuppressWarnings({"IntegerDivisionInFloatingPointContext"})
-            float f = (i % (count / 2)) / (float) (count / 2);
+            float f = (i % (count / 2f)) / (count / 2f);
             int blockLight = (int) MathHelper.lerp(f, (float) bLight0, (float) bLight1);
             int skyLight = (int) MathHelper.lerp(f, (float) sLight0, (float) sLight1);
             int light = LightmapTextureManager.pack(blockLight, skyLight);

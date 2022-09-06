@@ -1,5 +1,6 @@
 {
   "entity.connectiblechains.chain_knot" : "Chain Knot",
+  "message.connectiblechains.connectible_chain" : "Connectible to fences and walls",
   "entity.connectiblechains.chain_collision" : "Chain Collision",
   "text.autoconfig.connectiblechains.option.chainHangAmount" : "Chain Drip",
   "text.autoconfig.connectiblechains.option.maxChainRange" : "Max Chain Distance",

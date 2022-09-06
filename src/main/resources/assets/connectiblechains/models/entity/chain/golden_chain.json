@@ -1,6 +1,0 @@
-{
-	"textures": {
-		"chain": "connectiblechains:textures/block/golden_chain_block",
-		"knot": "connectiblechains:textures/entity/golden_chain_block_knot"
-	}
-}

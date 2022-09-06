@@ -89,7 +89,7 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
      * @see net.minecraft.data.client.ModelIds#getItemModelId(Item)
      */
     public static Identifier getModelId(Identifier chainType) {
-        return new Identifier(chainType.getNamespace(), "entity/chain/" + chainType.getPath());
+        return new Identifier(chainType.getNamespace(), "entity/connectiblechains/" + chainType.getPath());
     }
 
     /**
@@ -139,7 +139,6 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
     /**
      * This class represents the json structure of the model file
      */
-    @SuppressWarnings("unused")
     protected static final class JsonModel {
         public Textures textures;
 

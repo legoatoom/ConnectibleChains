@@ -1,0 +1,6 @@
+{
+	"textures": {
+		"chain": "valley:textures/block/oxidized_copper_chain",
+		"knot": "valley:textures/entity/connectiblechains/oxidized_copper_chain_knot"
+	}
+}

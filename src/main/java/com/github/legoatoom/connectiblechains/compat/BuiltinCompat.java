@@ -16,6 +16,7 @@ public class BuiltinCompat {
         add(new Identifier("betterend:thallasium_chain"));
         add(new Identifier("betterend:terminite_chain"));
         add(new Identifier("betternether:cincinnasite_chain"));
+        add(new Identifier("charm:golden_chain"));
         add(new Identifier("valley:golden_chain"));
         add(new Identifier("valley:netherite_chain"));
         add(new Identifier("valley:copper_chain"));

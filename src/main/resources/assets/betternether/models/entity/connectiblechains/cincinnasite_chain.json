@@ -1,0 +1,6 @@
+{
+	"textures": {
+		"chain": "betternether:textures/block/cincinnasite_chain",
+		"knot": "betternether:textures/entity/connectiblechains/cincinnasite_chain_knot"
+	}
+}

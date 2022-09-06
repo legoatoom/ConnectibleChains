@@ -57,7 +57,7 @@ public class ConnectibleChains implements ModInitializer {
      * it will be a lot easier!
      */
     public static final String MODID = "connectiblechains";
-    public static final Logger LOGGER = LogManager.getLogger(MODID);
+    public static final Logger LOGGER = LogManager.getLogger("ConnectibleChains");
     /**
      * ModConfigs are helpful if people keep demanding for your chains to get longer...
      * File config is what's saved on disk, runtimeConfig should be used in most cases
@@ -77,12 +77,14 @@ public class ConnectibleChains implements ModInitializer {
         ChainTypesRegistry.init();
         BuiltinCompat.init();
 
+
         AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
         ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
         fileConfig = configHolder.getConfig();
         runtimeConfig = new ModConfig().copyFrom(fileConfig);
 
         UseBlockCallback.EVENT.register(ConnectibleChains::chainUseEvent);
+
 
         // Need this event on dedicated and internal server because of 'open to lan'.
         ServerPlayConnectionEvents.INIT.register((handler, server) -> fileConfig.syncToClient(handler.getPlayer()));

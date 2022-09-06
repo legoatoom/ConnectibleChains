@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 
 public class ChainTypesRegistry {
-    public static final Identifier DEFAULT_CHAIN_TYPE_ID = Helper.identifier("iron_chain");
+    public static final Identifier DEFAULT_CHAIN_TYPE_ID = new Identifier("iron_chain");
     public static final RegistryKey<? extends Registry<ChainType>> CHAIN_TYPE_KEY =
             RegistryKey.ofRegistry(Helper.identifier("chain_types"));
     public static final DefaultedRegistry<ChainType> REGISTRY = FabricRegistryBuilder.from(

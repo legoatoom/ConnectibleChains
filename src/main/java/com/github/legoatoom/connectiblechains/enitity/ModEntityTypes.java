@@ -41,7 +41,7 @@ public class ModEntityTypes {
                 Registry.ENTITY_TYPE, Helper.identifier("chain_knot"),
                 FabricEntityTypeBuilder.create(SpawnGroup.MISC,
                                 (EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new)
-                        .trackRangeBlocks(10).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
+                        .trackRangeBlocks(20).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
                         .dimensions(EntityDimensions.fixed(6 / 16f, 0.5F))
                         .spawnableFarFromPlayer()
                         .fireImmune()

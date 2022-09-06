@@ -507,7 +507,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     @Environment(EnvType.CLIENT)
     @Override
     public boolean shouldRender(double distance) {
-        return distance < VISIBLE_RANGE;
+        return distance < 2048;
     }
 
     @Override
