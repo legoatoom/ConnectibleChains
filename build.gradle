@@ -20,6 +20,13 @@ repositories{
 	maven{
 		url "https://maven.terraformersmc.com/"
 	}
+	maven {
+		name = "Modrinth"
+		url = "https://api.modrinth.com/maven"
+		content {
+			includeGroup "maven.modrinth"
+		}
+	}
 }
 
 dependencies {
