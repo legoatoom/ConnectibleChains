@@ -36,6 +36,10 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
+	modImplementation "maven.modrinth:no-chat-reports:Fabric-1.19.2-v1.11.2"
+	modImplementation "maven.modrinth:no-telemetry:1.4.0"
+
+
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
