@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "mythicmetals_decorations:textures/blocks/prometheum_chain",
+    "knot": "mythicmetals_decorations:textures/entity/connectiblechains/prometheum_chain_knot"
+  }
+}

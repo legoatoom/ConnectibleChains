@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "mythicmetals_decorations:textures/blocks/hallowed_chain",
+    "knot": "mythicmetals_decorations:textures/entity/connectiblechains/hallowed_chain_knot"
+  }
+}

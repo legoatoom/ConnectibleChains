@@ -1,4 +1,4 @@
-# Changelog
+**# Changelog
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
@@ -6,8 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.1.2] - 12022-09-08
+- Support for Charm and Mythicmetals Decorations chains.
+- Added tooltip for supported chains.
+- Resources file structure changed, wiki will be adapted accordingly.
+
 ## [2.1.1] - 12022-03-26
-- Updated version specificly for 1.18.2.
+- Updated version specifically for 1.18.2.
 
 ## [2.1.0] - 12022-03-21
 ### Added
@@ -92,4 +97,4 @@ Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene
 ### Fixed
 - Chains disappear after leaving the area
 - Some data was not synchronized
-- Chain_Knot had no lang name.
+- Chain_Knot had no lang name.**

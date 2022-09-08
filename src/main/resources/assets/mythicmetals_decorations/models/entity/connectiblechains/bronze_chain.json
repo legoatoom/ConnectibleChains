@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "mythicmetals_decorations:textures/blocks/bronze_chain",
+    "knot": "mythicmetals_decorations:textures/entity/connectiblechains/bronze_chain_knot"
+  }
+}

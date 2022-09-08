@@ -2,9 +2,11 @@ package com.github.legoatoom.connectiblechains.compat;
 
 import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import net.fabricmc.fabric.api.event.registry.RegistryEntryAddedCallback;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,21 +15,25 @@ public class BuiltinCompat {
      * A list of item ids that this mod provides basic support for by default
      */
     public static final Set<Identifier> BUILTIN_TYPES = new HashSet<>() {{
-        add(new Identifier("betterend:thallasium_chain"));
-        add(new Identifier("betterend:terminite_chain"));
-        add(new Identifier("betternether:cincinnasite_chain"));
-        add(new Identifier("charm:golden_chain"));
-        add(new Identifier("valley:golden_chain"));
-        add(new Identifier("valley:netherite_chain"));
-        add(new Identifier("valley:copper_chain"));
-        add(new Identifier("valley:exposed_copper_chain"));
-        add(new Identifier("valley:weathered_copper_chain"));
-        add(new Identifier("valley:oxidized_copper_chain"));
-        add(new Identifier("valley:waxed_copper_chain"));
-        add(new Identifier("valley:waxed_exposed_copper_chain"));
-        add(new Identifier("valley:waxed_weathered_copper_chain"));
-        add(new Identifier("valley:waxed_oxidized_copper_chain"));
+        FabricLoader instance = FabricLoader.getInstance();
+        if (instance.isModLoaded("mythicmetals_decorations")) {
+            for (String s : Arrays.asList("adamantite", "aquarium", "banglum", "bronze", "carmot", "celestium", "durasteel", "hallowed", "kyber", "manganese", "metallurgium", "midas_gold", "mythril", "orichalcum", "osmium", "palladium", "platinum", "prometheum", "quadrillum", "runite", "silver", "star_platinum", "steel", "stormyx")) {
+                add(new Identifier("mythicmetals_decorations:%s_chain".formatted(s)));
+            }
+        }
+        if (instance.isModLoaded("valley")) {
+            for (String s : Arrays.asList("golden", "netherite", "copper", "exposed_copper", "weathered_copper", "oxidized_copper", "waxed_copper", "waxed_exposed_copper", "waxed_weathered_copper", "waxed_oxidized_copper")) {
+                add(new Identifier("valley:%s_chain".formatted(s)));
+            }
+        }
+        if (instance.isModLoaded("betterend")){
+            add(new Identifier("betterend:thallasium_chain"));
+            add(new Identifier("betterend:terminite_chain"));
+        }
+        if (instance.isModLoaded("betternether")) add(new Identifier("betternether:cincinnasite_chain"));
+        if (instance.isModLoaded("charm")) add(new Identifier("charm:golden_chain"));
     }};
+
 
     private static final Set<Identifier> REGISTERED_BUILTIN_TYPES = new HashSet<>();
 

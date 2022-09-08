@@ -19,7 +19,7 @@ They are under the [CC BY 3.0](ttps://creativecommons.org/licenses/by/3.0/) lice
 
 ---
 
-The following textures were created by the ['BetterNether'](https://github.com/paulevsGitch/BetterNether) team.  
+The following textures were created by the ['Better Nether'](https://github.com/paulevsGitch/BetterNether) team.  
 They are under the [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.txt) license.
 
  - cincinnasite_chain.png
@@ -38,3 +38,31 @@ The following textures were created by the ['Charm'](https://github.com/svenhjol
 They are under the MIT license.
 
  - gold_chain.png
+
+The following textures were created by the ['MythicMetals Deportations'](https://github.com/Noaaan/MythicMetalsDecorations) team.  
+They are under the MIT license.
+
+- adamantite_chain.png
+- aquarium_chain.png
+- banglum_chain.png
+- bronze_chain.png
+- carmot_chain.png
+- celestium_chain.png
+- durasteel_chain.png 
+- hallowed_chain.png 
+- kyber_chain.png 
+- manganese_chain.png 
+- metallurgium_chain.png 
+- midas_gold_chain.png 
+- mythril_chain.png 
+- orichalcum_chain.png 
+- osmium_chain.png 
+- palladium_chain.png 
+- platinum_chain.png 
+- prometheum_chain.png 
+- quadrillum_chain.png 
+- runite_chain.png 
+- silver_chain.png 
+- star_platinum_chain.png 
+- steel_chain.png 
+- stormyx_chain.png

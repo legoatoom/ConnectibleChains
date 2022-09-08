@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "mythicmetals_decorations:textures/blocks/kyber_chain",
+    "knot": "mythicmetals_decorations:textures/entity/connectiblechains/kyber_chain_knot"
+  }
+}

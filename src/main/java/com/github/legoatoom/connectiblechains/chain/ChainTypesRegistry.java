@@ -90,12 +90,6 @@ public class ChainTypesRegistry {
         ITEM_CHAIN_TYPES.put(item, chainType.value());
     }
 
-    private static ChainType register(Identifier id, Item item) {
-        ChainType chainType = Registry.register(REGISTRY, Registry.ITEM.getId(item), new ChainType(item));
-        ITEM_CHAIN_TYPES.put(item, chainType);
-        return chainType;
-    }
-
     @SuppressWarnings("EmptyMethod")
     public static void init() {
         // Static fields are now initialized
