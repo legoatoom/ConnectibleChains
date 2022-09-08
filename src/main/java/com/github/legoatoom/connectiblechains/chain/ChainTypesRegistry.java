@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 
 public class ChainTypesRegistry {
-    public static final Identifier DEFAULT_CHAIN_TYPE_ID = new Identifier("iron_chain");
+    public static final Identifier DEFAULT_CHAIN_TYPE_ID = Registry.ITEM.getId(Items.CHAIN);
     public static final RegistryKey<? extends Registry<ChainType>> CHAIN_TYPE_KEY =
             RegistryKey.ofRegistry(Helper.identifier("chain_types"));
     public static final DefaultedRegistry<ChainType> REGISTRY = FabricRegistryBuilder.from(
@@ -37,8 +37,8 @@ public class ChainTypesRegistry {
         // ITEM_CHAIN_TYPES has to be initialized before 'register' is called.
         // And IntelliJ just insisted on breaking it.
 
-        DEFAULT_CHAIN_TYPE = register(DEFAULT_CHAIN_TYPE_ID, Items.CHAIN);
-        IRON_CHAIN = DEFAULT_CHAIN_TYPE;
+        IRON_CHAIN = register(Items.CHAIN);
+        DEFAULT_CHAIN_TYPE = IRON_CHAIN;
     }
 
     /**
@@ -91,7 +91,7 @@ public class ChainTypesRegistry {
     }
 
     private static ChainType register(Identifier id, Item item) {
-        ChainType chainType = Registry.register(REGISTRY, id, new ChainType(item));
+        ChainType chainType = Registry.register(REGISTRY, Registry.ITEM.getId(item), new ChainType(item));
         ITEM_CHAIN_TYPES.put(item, chainType);
         return chainType;
     }
