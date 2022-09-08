@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "mythicmetals_decorations:textures/blocks/midas_gold_chain",
+    "knot": "mythicmetals_decorations:textures/entity/connectiblechains/midas_gold_chain_knot"
+  }
+}

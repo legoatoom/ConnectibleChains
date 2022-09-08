@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "mythicmetals_decorations:textures/blocks/mythril_chain",
+    "knot": "mythicmetals_decorations:textures/entity/connectiblechains/mythril_chain_knot"
+  }
+}

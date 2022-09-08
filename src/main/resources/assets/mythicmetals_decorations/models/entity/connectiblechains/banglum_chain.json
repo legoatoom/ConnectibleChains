@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "mythicmetals_decorations:textures/blocks/banglum_chain",
+    "knot": "mythicmetals_decorations:textures/entity/connectiblechains/banglum_chain_knot"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "mythicmetals_decorations:textures/blocks/durasteel_chain",
+    "knot": "mythicmetals_decorations:textures/entity/connectiblechains/durasteel_chain_knot"
+  }
+}

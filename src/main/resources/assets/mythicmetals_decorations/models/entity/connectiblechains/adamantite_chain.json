@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "mythicmetals_decorations:textures/blocks/adamantite_chain",
+    "knot": "mythicmetals_decorations:textures/entity/connectiblechains/adamantite_chain_knot"
+  }
+}

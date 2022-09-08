@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "mythicmetals_decorations:textures/blocks/star_platinum_chain",
+    "knot": "mythicmetals_decorations:textures/entity/connectiblechains/star_platinum_chain_knot"
+  }
+}
