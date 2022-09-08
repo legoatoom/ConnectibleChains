@@ -92,14 +92,8 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     protected void initDataTracker() {
     }
 
-    /**
-     * If this entity can even be collided with.
-     * Different from {@link #isCollidable()} as this tells if something can collide with this.
-     *
-     * @return true when not removed.
-     */
     @Override
-    public boolean collides() {
+    public boolean canHit() {
         return !isRemoved();
     }
 

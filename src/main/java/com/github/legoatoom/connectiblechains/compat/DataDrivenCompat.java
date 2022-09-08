@@ -13,8 +13,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.util.registry.Registry;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
@@ -35,6 +33,7 @@ import java.util.concurrent.Executor;
  * - Recreate the registry when joining a world (This seems to be how vanilla does it)
  * <p>
  * If you know how to do this or have an idea, please create an issue or pull request!
+ * @deprecated
  */
 public class DataDrivenCompat implements SimpleResourceReloadListener<Set<Identifier>> {
     public static final String PATH = ConnectibleChains.MODID + "/types.json";
@@ -68,22 +67,17 @@ public class DataDrivenCompat implements SimpleResourceReloadListener<Set<Identi
         Set<Identifier> chainTypes = new HashSet<>();
 
         for (String ns : manager.getAllNamespaces()) {
-            try {
-                for (Resource res : manager.getAllResources(new Identifier(ns, PATH))) {
-                    try (res) {
-                        InputStreamReader reader = new InputStreamReader(res.getInputStream(), StandardCharsets.UTF_8);
-                        String[] strings = GSON.fromJson(reader, String[].class);
-                        for (String string : strings) {
-                            Identifier id = new Identifier(string);
-                            chainTypes.add(id);
-                        }
-                    } catch (Exception e) {
-                        ConnectibleChains.LOGGER.error("Failed to load {}.", res.getId(), e);
+            for (Resource res : manager.getAllResources(new Identifier(ns, PATH))) {
+                try {
+                    InputStreamReader reader = new InputStreamReader(res.getInputStream(), StandardCharsets.UTF_8);
+                    String[] strings = GSON.fromJson(reader, String[].class);
+                    for (String string : strings) {
+                        Identifier id = new Identifier(string);
+                        chainTypes.add(id);
                     }
+                } catch (Exception e) {
+//                        ConnectibleChains.LOGGER.error("Failed to load {}.", res.getId(), e);
                 }
-            } catch (FileNotFoundException ignored) {
-            } catch (IOException e) {
-                ConnectibleChains.LOGGER.error("Failed to load {} for namespace {}.", PATH, ns, e);
             }
         }
 

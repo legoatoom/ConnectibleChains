@@ -86,6 +86,7 @@ public abstract class NbtFixer {
      * @param name    A descriptive name
      * @param fix     The fixer
      */
+    @SuppressWarnings("SameParameterValue")
     protected void addFix(int version, String name, Fix fix) {
         if (!fixes.containsKey(version)) fixes.put(version, new ArrayList<>());
         fixes.get(version).add(new NamedFix(name, fix));

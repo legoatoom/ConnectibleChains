@@ -47,7 +47,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.TranslatableTextContent;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.EntityHitResult;
@@ -93,7 +94,7 @@ public class ClientInitializer implements ClientModInitializer {
         // Tooltip for chains.
         ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
             if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(stack.getItem())){
-                lines.add(1, new TranslatableText("message.connectiblechains.connectible_chain").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
+                lines.add(1, MutableText.of(new TranslatableTextContent("message.connectiblechains.connectible_chain")).formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
             }
         });
     }

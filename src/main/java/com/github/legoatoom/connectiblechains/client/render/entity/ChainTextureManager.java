@@ -10,16 +10,13 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.fabric.api.resource.SimpleResourceReloadListener;
 import net.minecraft.item.Item;
-import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.profiler.Profiler;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
-import java.io.InputStreamReader;
+import java.io.IOException;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -62,27 +59,19 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
         Map<Identifier, JsonModel> map = new HashMap<>();
 
         for (Identifier chainType : ChainTypesRegistry.REGISTRY.getIds()) {
-            try (Resource resource = manager.getResource(getResourceId(getModelId(chainType)))) {
-                Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
+            try(Reader reader =  manager.openAsReader(getBuiltinResourceId(getModelId(chainType)))){
                 JsonModel jsonModel = GSON.fromJson(reader, JsonModel.class);
                 map.put(chainType, jsonModel);
-            } catch (FileNotFoundException e) {
+            } catch (IOException e){
                 JsonModel builtinModel = loadBuiltinModel(manager, chainType);
                 if (builtinModel != null) {
                     map.put(chainType, builtinModel);
                 } else {
                     ConnectibleChains.LOGGER.error("Missing model for {}.", chainType, e);
                 }
-            } catch (Exception e) {
-                ConnectibleChains.LOGGER.error("Failed to load model for {}.", chainType, e);
             }
         }
-
         return map;
-    }
-
-    public static Identifier getResourceId(Identifier modelId) {
-        return new Identifier(modelId.getNamespace(), "models/" + modelId.getPath() + ".json");
     }
 
     /**
@@ -102,10 +91,9 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
     @Nullable
     private JsonModel loadBuiltinModel(ResourceManager manager, Identifier chainType) {
         if (BuiltinCompat.BUILTIN_TYPES.contains(chainType)) {
-            try (Resource resource = manager.getResource(getBuiltinResourceId(getModelId(chainType)))) {
-                Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8);
+            try (Reader reader = manager.openAsReader(chainType)){
                 return GSON.fromJson(reader, JsonModel.class);
-            } catch (Exception e) {
+            } catch (IOException e) {
                 ConnectibleChains.LOGGER.error("Error for builtin type {}.", chainType, e);
             }
         }
@@ -113,7 +101,7 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
     }
 
     private static Identifier getBuiltinResourceId(Identifier modelId) {
-        return new Identifier(ConnectibleChains.MODID, "models/" + modelId.getPath() + ".json");
+        return new Identifier(modelId.getNamespace(), "models/" + modelId.getPath() + ".json");
     }
 
     @Override

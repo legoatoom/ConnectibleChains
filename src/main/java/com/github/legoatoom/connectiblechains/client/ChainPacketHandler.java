@@ -39,9 +39,7 @@ public class ChainPacketHandler {
                     int fromId = packetByteBuf.readVarInt();
                     int toId = packetByteBuf.readVarInt();
                     int typeId = packetByteBuf.readVarInt();
-                    client.execute(() -> {
-                        createLinks(client, fromId, new int[]{toId}, new int[]{typeId});
-                    });
+                    client.execute(() -> createLinks(client, fromId, new int[]{toId}, new int[]{typeId}));
                 });
 
         ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_CHAIN_DETACH_PACKET_ID,
@@ -76,9 +74,7 @@ public class ChainPacketHandler {
                     int fromId = packetByteBuf.readInt();
                     int[] toIds = packetByteBuf.readIntArray();
                     int[] types = packetByteBuf.readIntArray();
-                    client.execute(() -> {
-                        createLinks(client, fromId, toIds, types);
-                    });
+                    client.execute(() -> createLinks(client, fromId, toIds, types));
                 });
 
         ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_SPAWN_CHAIN_COLLISION_PACKET,
