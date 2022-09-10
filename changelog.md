@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
 ## [2.1.2] - 12022-09-08
+- Support for Golden Chain of Dustrial Decor
+- Crash Fixed with ShowMeYourSkin mod.
+
+## [2.1.2] - 12022-09-08
 - Support for Charm and Mythicmetals Decorations chains.
 - Added tooltip for supported chains.
 - Resources file structure changed, wiki will be adapted accordingly.

@@ -39,6 +39,8 @@ They are under the MIT license.
 
  - gold_chain.png
 
+---
+
 The following textures were created by the ['MythicMetals Deportations'](https://github.com/Noaaan/MythicMetalsDecorations) team.  
 They are under the MIT license.
 
@@ -66,3 +68,11 @@ They are under the MIT license.
 - star_platinum_chain.png 
 - steel_chain.png 
 - stormyx_chain.png
+
+---
+
+The following textures were created by the ['DustrialDecor'](https://github.com/Slomaxonical-907/Dustrial-Decor-Fabric) team.  
+They are under the MIT license.
+
+
+- gold_chain.png
