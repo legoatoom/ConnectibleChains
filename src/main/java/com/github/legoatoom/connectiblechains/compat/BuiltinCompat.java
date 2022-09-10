@@ -32,6 +32,7 @@ public class BuiltinCompat {
         }
         if (instance.isModLoaded("betternether")) add(new Identifier("betternether:cincinnasite_chain"));
         if (instance.isModLoaded("charm")) add(new Identifier("charm:golden_chain"));
+        if (instance.isModLoaded("dustrial_decor")) add(new Identifier("dustrial_decor:gold_chain"));
     }};
 
 

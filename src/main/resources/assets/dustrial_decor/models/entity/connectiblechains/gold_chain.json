@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "dustrial_decor:textures/block/gold_chain",
+    "knot": "dustrial_decor:textures/entity/connectiblechains/gold_chain_knot"
+  }
+}
