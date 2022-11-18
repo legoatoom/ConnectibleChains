@@ -46,6 +46,9 @@ public class ModConfig implements ConfigData {
     @ConfigEntry.Gui.Tooltip()
     private int quality = 4;
 
+    @ConfigEntry.Gui.RequiresRestart
+    @ConfigEntry.Gui.Tooltip()
+    private boolean showToolTip = true;
     public float getChainHangAmount() {
         return chainHangAmount;
     }
@@ -103,4 +106,9 @@ public class ModConfig implements ConfigData {
         this.quality = config.quality;
         return this;
     }
+
+    public boolean doShowToolTip() {
+        return showToolTip;
+    }
+
 }

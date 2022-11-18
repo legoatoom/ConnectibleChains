@@ -76,3 +76,11 @@ They are under the MIT license.
 
 
 - gold_chain.png
+
+---
+
+The following textures were created by the ['Blockus'](https://github.com/Brandcraf06/Blockus) team.  
+They are under the MIT license.
+
+
+- golden_chain.png

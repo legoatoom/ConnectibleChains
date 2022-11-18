@@ -46,7 +46,7 @@ public class ChainTypesRegistry {
      * Registry will be locked once the game has loaded.
      */
     public static void lock() {
-        frozen = true;
+//        frozen = true;
     }
 
     /**

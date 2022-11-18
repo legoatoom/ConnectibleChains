@@ -78,6 +78,20 @@ public class ClientInitializer implements ClientModInitializer {
         registerNetworkEventHandlers();
         registerClientEventHandlers();
 
+        registerConfigSync();
+
+        // Tooltip for chains.
+        if (ConnectibleChains.runtimeConfig.doShowToolTip()){
+            ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
+                if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(stack.getItem())) {
+                    lines.add(1, MutableText.of(new TranslatableTextContent("message.connectiblechains.connectible_chain")).formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
+                }
+            });
+        }
+
+    }
+
+    private static void registerConfigSync() {
         ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
         configHolder.registerSaveListener((holder, modConfig) -> {
             ClientInitializer clientInitializer = ClientInitializer.getInstance();
@@ -91,13 +105,6 @@ public class ClientInitializer implements ClientModInitializer {
                 ConnectibleChains.runtimeConfig.copyFrom(ConnectibleChains.fileConfig);
             }
             return ActionResult.PASS;
-        });
-
-        // Tooltip for chains.
-        ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
-            if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(stack.getItem())){
-                lines.add(1, MutableText.of(new TranslatableTextContent("message.connectiblechains.connectible_chain")).formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
-            }
         });
     }
 
@@ -116,10 +123,10 @@ public class ClientInitializer implements ClientModInitializer {
     private void registerNetworkEventHandlers() {
         chainPacketHandler = new ChainPacketHandler();
 
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+        ClientPlayConnectionEvents.INIT.register((handler, client) -> {
             // Load client config
             ConnectibleChains.runtimeConfig.copyFrom(ConnectibleChains.fileConfig);
-            getChainKnotEntityRenderer().ifPresent(r->r.getChainRenderer().purge());
+            getChainKnotEntityRenderer().ifPresent(r -> r.getChainRenderer().purge());
         });
 
         ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_CONFIG_SYNC_PACKET,

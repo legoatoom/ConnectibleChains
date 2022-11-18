@@ -2,18 +2,15 @@ package com.github.legoatoom.connectiblechains.client.render.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
-import com.github.legoatoom.connectiblechains.compat.BuiltinCompat;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.fabric.api.resource.SimpleResourceReloadListener;
-import net.minecraft.item.Item;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.profiler.Profiler;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -59,49 +56,18 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
         Map<Identifier, JsonModel> map = new HashMap<>();
 
         for (Identifier chainType : ChainTypesRegistry.REGISTRY.getIds()) {
-            try(Reader reader =  manager.openAsReader(getBuiltinResourceId(getModelId(chainType)))){
+            try(Reader reader =  manager.openAsReader(getResourceID(chainType))){
                 JsonModel jsonModel = GSON.fromJson(reader, JsonModel.class);
                 map.put(chainType, jsonModel);
             } catch (IOException e){
-                JsonModel builtinModel = loadBuiltinModel(manager, chainType);
-                if (builtinModel != null) {
-                    map.put(chainType, builtinModel);
-                } else {
-                    ConnectibleChains.LOGGER.error("Missing model for {}.", chainType, e);
-                }
+                ConnectibleChains.LOGGER.error("Missing model for {}.", chainType, e);
             }
         }
         return map;
     }
 
-    /**
-     * @see net.minecraft.data.client.ModelIds#getItemModelId(Item)
-     */
-    public static Identifier getModelId(Identifier chainType) {
-        return new Identifier(chainType.getNamespace(), "entity/connectiblechains/" + chainType.getPath());
-    }
-
-    /**
-     * Checks if {@code chainType} is a builtin type and tries to load it's model
-     *
-     * @param manager   The resource manager
-     * @param chainType A chain type, can be a builtin type or not
-     * @return The model for {@code chainType} or null of none exists
-     */
-    @Nullable
-    private JsonModel loadBuiltinModel(ResourceManager manager, Identifier chainType) {
-        if (BuiltinCompat.BUILTIN_TYPES.contains(chainType)) {
-            try (Reader reader = manager.openAsReader(chainType)){
-                return GSON.fromJson(reader, JsonModel.class);
-            } catch (IOException e) {
-                ConnectibleChains.LOGGER.error("Error for builtin type {}.", chainType, e);
-            }
-        }
-        return null;
-    }
-
-    private static Identifier getBuiltinResourceId(Identifier modelId) {
-        return new Identifier(modelId.getNamespace(), "models/" + modelId.getPath() + ".json");
+    private static Identifier getResourceID(Identifier modelId) {
+        return new Identifier(modelId.getNamespace(), "models/entity/connectiblechains/%s.json".formatted(modelId.getPath()));
     }
 
     @Override
