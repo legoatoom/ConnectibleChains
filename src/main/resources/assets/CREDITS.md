@@ -82,5 +82,10 @@ They are under the MIT license.
 The following textures were created by the ['Blockus'](https://github.com/Brandcraf06/Blockus) team.  
 They are under the MIT license.
 
-
 - golden_chain.png
+---
+
+The following textures were created by the ['Architect's Palette [FABRIC]'](https://github.com/Slomaxonical-907/Architects-Palette-Fabric) team.  
+They are under the MIT license.
+
+- nether_brass_chain.png

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
 ## [2.1.4] - 12022-11-18
+- Fix Gold Chain Charm
+- Added `nether_brass_chain` from Architects Palette
+- Added `golden_chain` from Blockus
+- Added config to remove the tooltip.
 
 ## [2.1.3] - 12022-09-08
 - Support for Golden Chain of Dustrial Decor
