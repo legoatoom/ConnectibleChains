@@ -33,17 +33,22 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 @Config(name = ConnectibleChains.MODID)
 public class ModConfig implements ConfigData {
+    @SuppressWarnings("UnnecessaryModifier")
     @ConfigEntry.Gui.Excluded
     private static final transient boolean IS_DEBUG_ENV = FabricLoader.getInstance().isDevelopmentEnvironment();
 
     @ConfigEntry.Gui.Tooltip(count = 3)
-    private float chainHangAmount = 9.0F;
+    private float chainHangAmount = 7.0F;
     @ConfigEntry.BoundedDiscrete(max = 32)
-    @ConfigEntry.Gui.Tooltip(count = 3)
+    @ConfigEntry.Gui.Tooltip(count = 2)
     private int maxChainRange = 7;
     @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
     @ConfigEntry.Gui.Tooltip()
     private int quality = 4;
+
+    @ConfigEntry.Gui.RequiresRestart
+    @ConfigEntry.Gui.Tooltip()
+    private boolean showToolTip = true;
 
     public float getChainHangAmount() {
         return chainHangAmount;
@@ -102,4 +107,9 @@ public class ModConfig implements ConfigData {
         this.quality = config.quality;
         return this;
     }
+
+    public boolean doShowToolTip() {
+        return showToolTip;
+    }
+
 }

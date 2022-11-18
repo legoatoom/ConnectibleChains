@@ -283,6 +283,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             ConnectibleChains.LOGGER.warn("Chain knot NBT is missing UUID or relative position.");
         }
 
+        // TODO: 18/11/2022 Issue #31 maybe here? It could be that we need to check if connection chunk is loaded or not.
+
         // At the start the server and client need to tell each other the info.
         // So we need to check if the object is old enough for these things to exist before we delete them.
         if (graceTicks <= 0) {

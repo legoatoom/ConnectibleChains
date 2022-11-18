@@ -11,7 +11,8 @@
   ],
   "contact": {
     "homepage": "https://github.com/legoatoom/ConnectibleChains",
-    "sources": "https://github.com/legoatoom/ConnectibleChains"
+    "sources": "https://github.com/legoatoom/ConnectibleChains",
+    "issues": "https://github.com/legoatoom/ConnectibleChains/issues"
   },
 
   "license": "LGPL-3.0",

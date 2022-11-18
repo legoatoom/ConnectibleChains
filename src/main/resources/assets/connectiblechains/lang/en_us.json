@@ -6,11 +6,13 @@
   "text.autoconfig.connectiblechains.option.maxChainRange" : "Max Chain Distance",
   "text.autoconfig.connectiblechains.option.quality" : "Chain Quality",
   "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[0]" : "Effects how much the chain hangs.",
-  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[1]" : "Collision will update on new chains or world loading.",
-  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[2]" : "Has no effect in multiplayer.",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[1]" : "Lower numbers equals more a bigger curve.",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[2]" : "Collision will update on new chains or world loading.",
+  "text.autoconfig.connectiblechains.option.showToolTip" : "Show Compatibility Tooltip",
+  "text.autoconfig.connectiblechains.option.showToolTip.@Tooltip" : "Show tooltip over chain items that are compatible.",
+
   "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[0]" : "Effects how long a chain can be.",
   "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[1]" : "§nWarning§r: Long chains can sometimes become invisible!",
-  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[2]" : "Has no effect in multiplayer.",
   "text.autoconfig.connectiblechains.option.quality.@Tooltip" : "Effects the visual quality the chain.",
   "text.autoconfig.connectiblechains.title": "Connectible Chains Configs"
 }

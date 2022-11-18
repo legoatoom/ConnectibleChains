@@ -52,6 +52,8 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.EntityHitResult;
 
+import java.util.Optional;
+
 /**
  * ClientInitializer.
  * This method is called when the game starts with a client.
@@ -75,11 +77,25 @@ public class ClientInitializer implements ClientModInitializer {
         registerNetworkEventHandlers();
         registerClientEventHandlers();
 
+        registerConfigSync();
+
+        // Tooltip for chains.
+        if (ConnectibleChains.runtimeConfig.doShowToolTip()){
+            ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
+                if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(stack.getItem())){
+                    lines.add(1, new TranslatableText("message.connectiblechains.connectible_chain").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
+                }
+            });
+        }
+
+    }
+
+    private static void registerConfigSync() {
         ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
         configHolder.registerSaveListener((holder, modConfig) -> {
             ClientInitializer clientInitializer = ClientInitializer.getInstance();
             if (clientInitializer != null) {
-                clientInitializer.getChainKnotEntityRenderer().getChainRenderer().purge();
+                clientInitializer.getChainKnotEntityRenderer().ifPresent(renderer -> renderer.getChainRenderer().purge());
             }
             MinecraftServer server = MinecraftClient.getInstance().getServer();
             if (server != null) {
@@ -89,16 +105,10 @@ public class ClientInitializer implements ClientModInitializer {
             }
             return ActionResult.PASS;
         });
-
-        // Tooltip for chains.
-        ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
-            if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(stack.getItem())){
-                lines.add(1, new TranslatableText("message.connectiblechains.connectible_chain").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
-            }
-        });
     }
 
     private void initRenderers() {
+        ConnectibleChains.LOGGER.info("Initializing Renderers.");
         EntityRendererRegistry.register(ModEntityTypes.CHAIN_KNOT, ctx -> {
             chainKnotEntityRenderer = new ChainKnotEntityRenderer(ctx);
             return chainKnotEntityRenderer;
@@ -115,7 +125,7 @@ public class ClientInitializer implements ClientModInitializer {
         ClientPlayConnectionEvents.INIT.register((handler, client) -> {
             // Load client config
             ConnectibleChains.runtimeConfig.copyFrom(ConnectibleChains.fileConfig);
-            getChainKnotEntityRenderer().getChainRenderer().purge();
+            getChainKnotEntityRenderer().ifPresent(r -> r.getChainRenderer().purge());
         });
 
         ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_CONFIG_SYNC_PACKET,
@@ -130,7 +140,7 @@ public class ClientInitializer implements ClientModInitializer {
                     } catch (Exception e) {
                         ConnectibleChains.LOGGER.error("Could not deserialize config: ", e);
                     }
-                    getChainKnotEntityRenderer().getChainRenderer().purge();
+                    getChainKnotEntityRenderer().ifPresent(renderer -> renderer.getChainRenderer().purge());
                 });
     }
 
@@ -158,7 +168,7 @@ public class ClientInitializer implements ClientModInitializer {
         return instance;
     }
 
-    public ChainKnotEntityRenderer getChainKnotEntityRenderer() {
-        return chainKnotEntityRenderer;
+    private Optional<ChainKnotEntityRenderer> getChainKnotEntityRenderer() {
+        return Optional.ofNullable(chainKnotEntityRenderer);
     }
 }

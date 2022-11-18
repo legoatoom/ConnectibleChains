@@ -35,6 +35,7 @@ import java.util.concurrent.Executor;
  * - Recreate the registry when joining a world (This seems to be how vanilla does it)
  * <p>
  * If you know how to do this or have an idea, please create an issue or pull request!
+ * @deprecated
  */
 public class DataDrivenCompat implements SimpleResourceReloadListener<Set<Identifier>> {
     public static final String PATH = ConnectibleChains.MODID + "/types.json";
@@ -48,7 +49,7 @@ public class DataDrivenCompat implements SimpleResourceReloadListener<Set<Identi
     @Override
     public CompletableFuture<Set<Identifier>> load(ResourceManager manager, Profiler profiler, Executor executor) {
         return CompletableFuture.supplyAsync(() -> {
-            if (ChainTypesRegistry.isFrozen()) {
+            if (ChainTypesRegistry.isFrozen() && false) {
                 ConnectibleChains.LOGGER.warn("Dynamic chain types are not supported, a restart is required.");
                 return Set.of();
             }
