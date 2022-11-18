@@ -37,6 +37,9 @@ Sneak on fences if you do want to place them normally.
 
 If you have encountered any bugs or have some feedback, go to the GitHub [issues](https://github.com/legoatoom/ConnectibleChains/issues) page.
 
+#### Versions
+I will not be supporting versions lower than 1.18.2.
+
 #### Forge?
 There is a Forge Port made for 1.18.2 Made by lilypuree
 https://www.curseforge.com/minecraft/mc-mods/connectible-chains-forge
