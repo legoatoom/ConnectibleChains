@@ -1,0 +1,16 @@
+{
+  "entity.connectiblechains.chain_knot" : "锁链",
+  "message.connectiblechains.connectible_chain" : "可连接到栅栏与墙上",
+  "entity.connectiblechains.chain_collision" : "锁链",
+  "text.autoconfig.connectiblechains.option.chainHangAmount" : "锁链垂落指数",
+  "text.autoconfig.connectiblechains.option.maxChainRange" : "锁链长度最大值",
+  "text.autoconfig.connectiblechains.option.quality" : "锁链渲染质量",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[0]" : "影响锁链的受重力弯曲程度",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[1]" : "锁链状态将在添加新锁链或重载世界后更新",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[2]" : "对多人游戏无影响",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[0]" : "影响锁链最大长度",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[1]" : "§n注意§r: 过长的锁链有时会无法渲染出来！",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[2]" : "对多人游戏无影响",
+  "text.autoconfig.connectiblechains.option.quality.@Tooltip" : "影响渲染锁链质量",
+  "text.autoconfig.connectiblechains.title": "可连接锁链模组配置"
+}
