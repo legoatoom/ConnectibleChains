@@ -25,9 +25,6 @@
     "client": [
       "com.github.legoatoom.connectiblechains.client.ClientInitializer"
     ],
-    "server": [
-      "com.github.legoatoom.connectiblechains.server.ServerInitializer"
-    ],
     "modmenu": [
       "com.github.legoatoom.connectiblechains.config.ModMenuIntegration"
     ]

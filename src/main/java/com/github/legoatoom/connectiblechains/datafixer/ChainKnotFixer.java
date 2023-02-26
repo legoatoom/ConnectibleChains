@@ -1,6 +1,5 @@
 package com.github.legoatoom.connectiblechains.datafixer;
 
-import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
@@ -11,6 +10,7 @@ import net.minecraft.util.math.MathHelper;
  * Upgrades the NBT data of {@link com.github.legoatoom.connectiblechains.entity.ChainKnotEntity Chain Knots}
  * to newer versions.
  */
+@Deprecated
 public class ChainKnotFixer extends NbtFixer {
     public static final ChainKnotFixer INSTANCE = new ChainKnotFixer();
 
@@ -35,17 +35,17 @@ public class ChainKnotFixer extends NbtFixer {
      * Add the chain types
      */
     private NbtCompound fixChainType201(NbtCompound nbt) {
-        if (isNotChainKnot201(nbt)) return nbt;
-        if (!nbt.contains("ChainType")) {
-            nbt.putString("ChainType", ChainTypesRegistry.DEFAULT_CHAIN_TYPE_ID.toString());
-        }
-        for (NbtElement linkElem : nbt.getList("Chains", NbtType.COMPOUND)) {
-            if (linkElem instanceof NbtCompound link) {
-                if (!link.contains("ChainType")) {
-                    link.putString("ChainType", ChainTypesRegistry.DEFAULT_CHAIN_TYPE_ID.toString());
-                }
-            }
-        }
+//        if (isNotChainKnot201(nbt)) return nbt;
+//        if (!nbt.contains("ChainType")) {
+//            nbt.putString("ChainType", ChainTypesRegistry.DEFAULT_CHAIN_TYPE_ID.toString());
+//        }
+//        for (NbtElement linkElem : nbt.getList("Chains", NbtType.COMPOUND)) {
+//            if (linkElem instanceof NbtCompound link) {
+//                if (!link.contains("ChainType")) {
+//                    link.putString("ChainType", ChainTypesRegistry.DEFAULT_CHAIN_TYPE_ID.toString());
+//                }
+//            }
+//        }
         return nbt;
     }
 

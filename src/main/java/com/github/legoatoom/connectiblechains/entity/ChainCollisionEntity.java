@@ -18,8 +18,6 @@
 package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
-import com.github.legoatoom.connectiblechains.chain.ChainType;
-import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import com.github.legoatoom.connectiblechains.tag.CommonTags;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
@@ -31,12 +29,15 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
      * On the client only the chainType information is present, for the pick item action mostly
      */
     @Environment(EnvType.CLIENT)
-    private ChainType chainType;
+    private Item sourceItem;
 
     public ChainCollisionEntity(World world, double x, double y, double z, @NotNull ChainLink link) {
         this(ModEntityTypes.CHAIN_COLLISION, world);
@@ -79,13 +80,13 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     }
 
     @Environment(EnvType.CLIENT)
-    public ChainType getChainType() {
-        return chainType;
+    public Item getSourceItem() {
+        return sourceItem;
     }
 
     @Environment(EnvType.CLIENT)
-    public void setChainType(ChainType chainType) {
-        this.chainType = chainType;
+    public void setSourceItem(Item sourceItem) {
+        this.sourceItem = sourceItem;
     }
 
     @Override
@@ -199,8 +200,8 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Override
     public Packet<?> createSpawnPacket() {
         Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> {
-            ChainType chainType = link == null ? ChainTypesRegistry.DEFAULT_CHAIN_TYPE : link.chainType;
-            packetByteBuf.writeVarInt(ChainTypesRegistry.REGISTRY.getRawId(chainType));
+            Item chainType = link == null ? Items.CHAIN : link.sourceItem;
+            packetByteBuf.writeVarInt(Registry.ITEM.getRawId(chainType));
             return packetByteBuf;
         };
         return PacketCreator.createSpawn(this, NetworkingPackets.S2C_SPAWN_CHAIN_COLLISION_PACKET, extraData);

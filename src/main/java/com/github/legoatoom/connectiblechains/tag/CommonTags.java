@@ -13,6 +13,7 @@ import net.minecraft.util.registry.Registry;
 public class CommonTags {
 
     public static final TagKey<Item> SHEARS = makeCommonItemTag("shears");
+    public static final TagKey<Item> CHAINS = makeCommonItemTag("chains");
 
     /**
      * Get or create {@link Item} {@link TagKey}.
@@ -42,6 +43,10 @@ public class CommonTags {
 
     public static boolean isShear(ItemStack tool) {
         return tool.isOf(Items.SHEARS) | tool.isIn(SHEARS);
+    }
+
+    public static boolean isChain(ItemStack itemStack) {
+        return itemStack.isIn(CHAINS);
     }
 
 }

@@ -19,9 +19,8 @@ package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
-import com.github.legoatoom.connectiblechains.chain.ChainType;
-import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import com.github.legoatoom.connectiblechains.datafixer.ChainKnotFixer;
+import com.github.legoatoom.connectiblechains.tag.CommonTags;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
 import io.netty.buffer.Unpooled;
@@ -40,7 +39,9 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -53,6 +54,7 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.*;
 import net.minecraft.util.math.*;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,6 +92,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * Links where the 'secondary' might not exist yet. Will be cleared after the grace period.
      */
     private final ObjectList<NbtElement> incompleteLinks = new ObjectArrayList<>();
+    private final static String SOURCE_ITEM_KEY = "SourceItem";
     /**
      * Increments each tick, when it reached 100 it resets and checks {@link #canStayAttached()}.
      */
@@ -97,7 +100,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     /**
      * The chain type, used for rendering
      */
-    private ChainType chainType = ChainTypesRegistry.DEFAULT_CHAIN_TYPE;
+    private Item chainItemSource = Items.CHAIN;
     /**
      * Remaining grace ticks, will be set to 0 when the last incomplete link is removed.
      */
@@ -112,10 +115,10 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         super(entityType, world);
     }
 
-    public ChainKnotEntity(World world, BlockPos pos, ChainType chainType) {
+    public ChainKnotEntity(World world, BlockPos pos, Item source) {
         super(ModEntityTypes.CHAIN_KNOT, world, pos);
         setPosition((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D);
-        this.chainType = chainType;
+        this.chainItemSource = source;
     }
 
     /**
@@ -128,12 +131,12 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         super.setPosition((double) MathHelper.floor(x) + 0.5D, (double) MathHelper.floor(y) + 0.5D, (double) MathHelper.floor(z) + 0.5D);
     }
 
-    public ChainType getChainType() {
-        return chainType;
+    public Item getChainItemSource() {
+        return chainItemSource;
     }
 
-    public void setChainType(ChainType chainType) {
-        this.chainType = chainType;
+    public void setChainItemSource(Item chainItemSource) {
+        this.chainItemSource = chainItemSource;
     }
 
     public void setGraceTicks(byte graceTicks) {
@@ -261,13 +264,13 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         assert element instanceof NbtCompound;
         NbtCompound tag = (NbtCompound) element;
 
-        ChainType chainType = ChainTypesRegistry.REGISTRY.get(Identifier.tryParse(tag.getString("ChainType")));
+        Item source = Registry.ITEM.get(Identifier.tryParse(tag.getString(SOURCE_ITEM_KEY)));
 
         if (tag.contains("UUID")) {
             UUID uuid = tag.getUuid("UUID");
             Entity entity = ((ServerWorld) world).getEntity(uuid);
             if (entity != null) {
-                ChainLink.create(this, entity, chainType);
+                ChainLink.create(this, entity, source);
                 return true;
             }
         } else if (tag.contains("RelX") || tag.contains("RelY") || tag.contains("RelZ")) {
@@ -276,7 +279,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             blockPos = getBlockPosAsFacingRelative(blockPos, Direction.fromRotation(this.getYaw()));
             ChainKnotEntity entity = ChainKnotEntity.getKnotAt(world, blockPos.add(attachmentPos));
             if (entity != null) {
-                ChainLink.create(this, entity, chainType);
+                ChainLink.create(this, entity, source);
                 return true;
             }
         } else {
@@ -288,7 +291,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         // At the start the server and client need to tell each other the info.
         // So we need to check if the object is old enough for these things to exist before we delete them.
         if (graceTicks <= 0) {
-            dropItem(chainType.item());
+            dropItem(source);
             onBreak(null);
             return true;
         }
@@ -434,7 +437,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     }
 
     /**
-     * Stores the {@link #chainType chain type} and all primary links
+     * Stores the {@link #chainItemSource chain type} and all primary links
      * and old, incomplete links inside {@code root}
      *
      * @param root the tag to write info in.
@@ -442,7 +445,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     @Override
     public void writeCustomDataToNbt(NbtCompound root) {
         ChainKnotFixer.INSTANCE.addVersionTag(root);
-        root.putString("ChainType", ChainTypesRegistry.REGISTRY.getId(chainType).toString());
+        root.putString(SOURCE_ITEM_KEY, Registry.ITEM.getId(chainItemSource).toString());
         NbtList linksTag = new NbtList();
 
         // Write complete links
@@ -451,7 +454,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             if (link.primary != this) continue;
             Entity secondary = link.secondary;
             NbtCompound compoundTag = new NbtCompound();
-            compoundTag.putString("ChainType", ChainTypesRegistry.REGISTRY.getId(link.chainType).toString());
+            compoundTag.putString(SOURCE_ITEM_KEY, Registry.ITEM.getId(link.sourceItem).toString());
             if (secondary instanceof PlayerEntity) {
                 UUID uuid = secondary.getUuid();
                 compoundTag.putUuid("UUID", uuid);
@@ -487,7 +490,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         if (root.contains("Chains")) {
             incompleteLinks.addAll(root.getList("Chains", NbtType.COMPOUND));
         }
-        chainType = ChainTypesRegistry.REGISTRY.get(Identifier.tryParse(root.getString("ChainType")));
+        chainItemSource = Registry.ITEM.get(Identifier.tryParse(root.getString(SOURCE_ITEM_KEY)));
     }
 
     @Override
@@ -550,7 +553,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     public ActionResult interact(PlayerEntity player, Hand hand) {
         ItemStack handStack = player.getStackInHand(hand);
         if (world.isClient) {
-            if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(handStack.getItem())) {
+            if (handStack.isIn(CommonTags.CHAINS)) {
                 return ActionResult.SUCCESS;
             }
 
@@ -581,16 +584,15 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         }
 
         // 3. Try to create a new connection
-        if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(handStack.getItem())) {
+        if (handStack.isIn(CommonTags.CHAINS)) {
             // Interacted with a valid chain item, create a new link
             onPlace();
-            ChainType chainType = ChainTypesRegistry.ITEM_CHAIN_TYPES.get(handStack.getItem());
-            ChainLink.create(this, player, chainType);
+            ChainLink.create(this, player, handStack.getItem());
             if (!player.isCreative()) {
                 player.getStackInHand(hand).decrement(1);
             }
             // Allow changing the chainType of the knot
-            updateChainType(chainType);
+            updateChainType(handStack.getItem());
 
             return ActionResult.CONSUME;
         }
@@ -619,7 +621,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             if (link.primary == this) continue;
 
             // Move that link to this knot
-            ChainLink newLink = ChainLink.create(link.primary, this, link.chainType);
+            ChainLink newLink = ChainLink.create(link.primary, this, link.sourceItem);
 
             // Check if the link does not already exist
             if (newLink != null) {
@@ -639,16 +641,16 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     /**
      * Sets the chain type and sends a packet to the client.
      *
-     * @param chainType The new chain type.
+     * @param sourceItem The new chain type.
      */
-    public void updateChainType(ChainType chainType) {
-        this.chainType = chainType;
+    public void updateChainType(Item sourceItem) {
+        this.chainItemSource = sourceItem;
 
         if (!world.isClient) {
             Collection<ServerPlayerEntity> trackingPlayers = PlayerLookup.around((ServerWorld) world, getBlockPos(), ChainKnotEntity.VISIBLE_RANGE);
             PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
             buf.writeVarInt(getId());
-            buf.writeVarInt(ChainTypesRegistry.REGISTRY.getRawId(chainType));
+            buf.writeVarInt(Registry.ITEM.getRawId(sourceItem));
 
             for (ServerPlayerEntity player : trackingPlayers) {
                 ServerPlayNetworking.send(player, NetworkingPackets.S2C_KNOT_CHANGE_TYPE_PACKET, buf);
@@ -683,7 +685,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     /**
      * @return all complete links that are associated with this knot.
      * @apiNote Operating on the list has potential for bugs as it does not include incomplete links.
-     * For example {@link ChainLink#create(ChainKnotEntity, Entity, ChainType)} checks if the link already exists
+     * For example {@link ChainLink#create(ChainKnotEntity, Entity, Item)} checks if the link already exists
      * using this list. Same goes for {@link #tryAttachHeldChains(PlayerEntity)}
      * but at the end of the day it doesn't really matter.
      * When an incomplete link is not resolved within the first two ticks it is unlikely to ever complete.
@@ -706,7 +708,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     @Override
     public Packet<?> createSpawnPacket() {
         Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> {
-            packetByteBuf.writeVarInt(ChainTypesRegistry.REGISTRY.getRawId(chainType));
+            packetByteBuf.writeVarInt(Registry.ITEM.getRawId(chainItemSource));
             return packetByteBuf;
         };
         return PacketCreator.createSpawn(this, NetworkingPackets.S2C_SPAWN_CHAIN_KNOT_PACKET, extraData);

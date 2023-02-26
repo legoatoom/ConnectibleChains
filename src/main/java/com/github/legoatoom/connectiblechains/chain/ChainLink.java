@@ -14,6 +14,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -21,6 +22,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3f;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +59,7 @@ public class ChainLink {
      * The type of the link
      */
     @NotNull
-    public final ChainType chainType;
+    public final Item sourceItem;
     /**
      * Holds the entity ids of associated {@link ChainCollisionEntity collision entities}.
      */
@@ -71,12 +73,12 @@ public class ChainLink {
      */
     private boolean alive = true;
 
-    private ChainLink(@NotNull ChainKnotEntity primary, @NotNull Entity secondary, @NotNull ChainType chainType) {
+    private ChainLink(@NotNull ChainKnotEntity primary, @NotNull Entity secondary, @NotNull Item sourceItem) {
         if (primary.equals(secondary))
             throw new IllegalStateException("Tried to create a link between a knot and itself");
         this.primary = Objects.requireNonNull(primary);
         this.secondary = Objects.requireNonNull(secondary);
-        this.chainType = Objects.requireNonNull(chainType);
+        this.sourceItem = Objects.requireNonNull(sourceItem);
     }
 
     /**
@@ -86,12 +88,12 @@ public class ChainLink {
      *
      * @param primary   The source knot
      * @param secondary A different chain knot or player
-     * @param chainType The type of the link
+     * @param sourceItem The type of the link
      * @return A new chain link or null if it already exists
      */
     @Nullable
-    public static ChainLink create(@NotNull ChainKnotEntity primary, @NotNull Entity secondary, @NotNull ChainType chainType) {
-        ChainLink link = new ChainLink(primary, secondary, chainType);
+    public static ChainLink create(@NotNull ChainKnotEntity primary, @NotNull Entity secondary, @NotNull Item sourceItem) {
+        ChainLink link = new ChainLink(primary, secondary, sourceItem);
         // Prevent multiple links between same targets.
         // Checking on the secondary is not required as the link always exists on both sides.
         if (primary.getLinks().contains(link)) return null;
@@ -147,7 +149,7 @@ public class ChainLink {
 
         buf.writeVarInt(primary.getId());
         buf.writeVarInt(secondary.getId());
-        buf.writeVarInt(ChainTypesRegistry.REGISTRY.getRawId(chainType));
+        buf.writeVarInt(Registry.ITEM.getRawId(sourceItem));
 
         for (ServerPlayerEntity player : trackingPlayers) {
             ServerPlayNetworking.send(player, NetworkingPackets.S2C_CHAIN_ATTACH_PACKET_ID, buf);
@@ -272,7 +274,7 @@ public class ChainLink {
         if (!world.getGameRules().getBoolean(GameRules.DO_TILE_DROPS)) drop = false;
 
         if (drop) {
-            ItemStack stack = new ItemStack(chainType.item());
+            ItemStack stack = new ItemStack(sourceItem);
             if (secondary instanceof PlayerEntity player) {
                 player.giveItemStack(stack);
             } else {

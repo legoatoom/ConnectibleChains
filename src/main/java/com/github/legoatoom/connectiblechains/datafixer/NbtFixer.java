@@ -16,6 +16,7 @@ import java.util.*;
  * See {@code NbtHelperMixin#updateDataWithFixers} to add support for more.
  * @apiNote {@link #update(NbtCompound)} and {@link #addVersionTag(NbtCompound)} have to be called manually.
  */
+@Deprecated
 public abstract class NbtFixer {
     /**
      * Key for the nbt value that holds the data version.

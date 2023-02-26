@@ -1,6 +1,5 @@
 package com.github.legoatoom.connectiblechains.compat;
 
-import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import net.fabricmc.fabric.api.event.registry.RegistryEntryAddedCallback;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
@@ -52,10 +51,10 @@ public class BuiltinCompat {
      * @param itemId The id of an item
      */
     public static void registerTypeForBuiltin(Identifier itemId) {
-        if (!BUILTIN_TYPES.contains(itemId)) return;
-        if (REGISTERED_BUILTIN_TYPES.contains(itemId)) return;
-        if (!Registry.ITEM.containsId(itemId)) return;
-        ChainTypesRegistry.register(Registry.ITEM.get(itemId));
-        REGISTERED_BUILTIN_TYPES.add(itemId);
+//        if (!BUILTIN_TYPES.contains(itemId)) return;
+//        if (REGISTERED_BUILTIN_TYPES.contains(itemId)) return;
+//        if (!Registry.ITEM.containsId(itemId)) return;
+//        ChainTypesRegistry.register(Registry.ITEM.get(itemId));
+//        REGISTERED_BUILTIN_TYPES.add(itemId);
     }
 }

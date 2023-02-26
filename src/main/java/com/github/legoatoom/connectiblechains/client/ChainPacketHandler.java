@@ -2,8 +2,6 @@ package com.github.legoatoom.connectiblechains.client;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
-import com.github.legoatoom.connectiblechains.chain.ChainType;
-import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import com.github.legoatoom.connectiblechains.chain.IncompleteChainLink;
 import com.github.legoatoom.connectiblechains.entity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
@@ -15,6 +13,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.item.Item;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +90,7 @@ public class ChainPacketHandler {
                         Entity e = createEntity(client, entityType, uuid, entityId, pos);
                         if (e == null) return;
                         if (e instanceof ChainCollisionEntity collider) {
-                            collider.setChainType(ChainTypesRegistry.REGISTRY.get(typeId));
+                            collider.setSourceItem(Registry.ITEM.get(typeId));
                         }
                         assert client.world != null;
                         client.world.addEntity(entityId, e);
@@ -112,7 +111,7 @@ public class ChainPacketHandler {
                         Entity e = createEntity(client, entityType, uuid, entityId, pos);
                         if (e == null) return;
                         if (e instanceof ChainKnotEntity knot) {
-                            knot.setChainType(ChainTypesRegistry.REGISTRY.get(typeId));
+                            knot.setChainItemSource(Registry.ITEM.get(typeId));
                             knot.setGraceTicks((byte) 0);
                         }
                         assert client.world != null;
@@ -127,7 +126,7 @@ public class ChainPacketHandler {
             client.execute(() -> {
                 if (client.world == null) return;
                 Entity entity = client.world.getEntityById(knotId);
-                ChainType chainType = ChainTypesRegistry.REGISTRY.get(typeId);
+                Item chainType = Registry.ITEM.get(typeId);
                 if (entity instanceof ChainKnotEntity knot) {
                     knot.updateChainType(chainType);
                 } else {
@@ -151,7 +150,7 @@ public class ChainPacketHandler {
         if (from instanceof ChainKnotEntity knot) {
             for (int i = 0; i < toIds.length; i++) {
                 Entity to = client.world.getEntityById(toIds[i]);
-                ChainType chainType = ChainTypesRegistry.REGISTRY.get(types[i]);
+                Item chainType = Registry.ITEM.get(types[i]);
 
                 if (to == null) {
                     incompleteLinks.add(new IncompleteChainLink(knot, toIds[i], chainType));

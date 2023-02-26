@@ -18,7 +18,6 @@
 package com.github.legoatoom.connectiblechains.client;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainTextureManager;
@@ -27,12 +26,12 @@ import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.entity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
+import com.github.legoatoom.connectiblechains.tag.CommonTags;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -83,7 +82,7 @@ public class ClientInitializer implements ClientModInitializer {
         // Tooltip for chains.
         if (ConnectibleChains.fileConfig.doShowToolTip()){
             ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
-                if (ChainTypesRegistry.ITEM_CHAIN_TYPES.containsKey(stack.getItem())) {
+                if (stack.isIn(CommonTags.CHAINS)) {
                     lines.add(1, MutableText.of(new TranslatableTextContent("message.connectiblechains.connectible_chain")).formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
                 }
             });
@@ -150,9 +149,9 @@ public class ClientInitializer implements ClientModInitializer {
             if (result instanceof EntityHitResult) {
                 Entity entity = ((EntityHitResult) result).getEntity();
                 if (entity instanceof ChainKnotEntity knot) {
-                    return new ItemStack(knot.getChainType().item());
+                    return new ItemStack(knot.getChainItemSource());
                 } else if (entity instanceof ChainCollisionEntity collision) {
-                    return new ItemStack(collision.getChainType().item());
+                    return new ItemStack(collision.getSourceItem());
                 }
             }
             return ItemStack.EMPTY;
@@ -161,8 +160,6 @@ public class ClientInitializer implements ClientModInitializer {
         ClientTickEvents.START_WORLD_TICK.register(world -> chainPacketHandler.tick());
 
         ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(textureManager);
-        // ServerInitializer uses SERVER_STARTED
-        ClientLifecycleEvents.CLIENT_STARTED.register((client) -> ChainTypesRegistry.lock());
     }
 
     public static ClientInitializer getInstance() {

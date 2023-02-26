@@ -44,6 +44,7 @@ public class ChainRenderer {
      * The geometry of a chain only depends on the vector from the source to the destination.
      * The rotation/direction and translation of the chain do not matter as they are accounted for during rendering.
      */
+    @Deprecated
     private final Object2ObjectOpenHashMap<BakeKey, ChainModel> models = new Object2ObjectOpenHashMap<>(256);
 
     /**
