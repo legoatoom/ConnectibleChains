@@ -17,7 +17,7 @@
 
 package com.github.legoatoom.connectiblechains.mixin.server.world;
 
-import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;

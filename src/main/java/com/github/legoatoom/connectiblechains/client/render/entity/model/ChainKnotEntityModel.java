@@ -24,7 +24,7 @@ import net.minecraft.client.render.entity.model.SinglePartEntityModel;
 import net.minecraft.entity.Entity;
 
 /**
- * Model for the {@link com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity}.
+ * Model for the {@link com.github.legoatoom.connectiblechains.entity.ChainKnotEntity}.
  * Similar to the {@link net.minecraft.client.render.entity.model.LeashKnotEntityModel} code.
  * <p>
  * The model is 6x3x6 pixels big.

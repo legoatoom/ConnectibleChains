@@ -1,6 +1,6 @@
 package com.github.legoatoom.connectiblechains.chain;
 
-import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.entity.Entity;

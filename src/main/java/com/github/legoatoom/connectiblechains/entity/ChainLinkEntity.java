@@ -1,4 +1,4 @@
-package com.github.legoatoom.connectiblechains.enitity;
+package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.tag.CommonTags;
 import net.minecraft.entity.Entity;

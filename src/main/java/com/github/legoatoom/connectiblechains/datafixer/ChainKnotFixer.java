@@ -8,7 +8,7 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.util.math.MathHelper;
 
 /**
- * Upgrades the NBT data of {@link com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity Chain Knots}
+ * Upgrades the NBT data of {@link com.github.legoatoom.connectiblechains.entity.ChainKnotEntity Chain Knots}
  * to newer versions.
  */
 public class ChainKnotFixer extends NbtFixer {

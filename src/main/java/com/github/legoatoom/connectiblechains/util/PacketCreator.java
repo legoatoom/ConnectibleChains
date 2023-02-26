@@ -19,7 +19,7 @@ package com.github.legoatoom.connectiblechains.util;
 
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
-import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;

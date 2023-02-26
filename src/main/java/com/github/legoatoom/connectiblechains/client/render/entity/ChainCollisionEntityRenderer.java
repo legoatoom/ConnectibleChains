@@ -17,7 +17,7 @@
 
 package com.github.legoatoom.connectiblechains.client.render.entity;
 
-import com.github.legoatoom.connectiblechains.enitity.ChainCollisionEntity;
+import com.github.legoatoom.connectiblechains.entity.ChainCollisionEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.entity.EntityRenderer;

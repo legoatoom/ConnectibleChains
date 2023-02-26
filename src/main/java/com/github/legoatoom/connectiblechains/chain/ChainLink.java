@@ -1,9 +1,9 @@
 package com.github.legoatoom.connectiblechains.chain;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.enitity.ChainCollisionEntity;
-import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
-import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
+import com.github.legoatoom.connectiblechains.entity.ChainCollisionEntity;
+import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import io.netty.buffer.Unpooled;

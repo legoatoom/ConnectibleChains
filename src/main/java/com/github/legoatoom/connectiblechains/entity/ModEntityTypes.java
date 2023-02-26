@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.github.legoatoom.connectiblechains.enitity;
+package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.util.Helper;

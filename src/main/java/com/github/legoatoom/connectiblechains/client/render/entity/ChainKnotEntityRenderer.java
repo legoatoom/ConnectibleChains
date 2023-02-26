@@ -22,7 +22,7 @@ import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.chain.ChainType;
 import com.github.legoatoom.connectiblechains.client.ClientInitializer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
-import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

@@ -17,7 +17,7 @@
 
 package com.github.legoatoom.connectiblechains.mixin.server.network;
 
-import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.Packet;
