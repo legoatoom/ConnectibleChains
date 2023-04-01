@@ -23,9 +23,9 @@ import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Matrix3f;
-import net.minecraft.util.math.Matrix4f;
-import net.minecraft.util.math.Vec3f;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,10 +82,10 @@ public record ChainModel(float[] vertices, float[] uvs) {
             uvs = new ArrayList<>(initialCapacity * 2);
         }
 
-        public Builder vertex(Vec3f v) {
-            vertices.add(v.getX());
-            vertices.add(v.getY());
-            vertices.add(v.getZ());
+        public Builder vertex(Vector3f v) {
+            vertices.add(v.x());
+            vertices.add(v.y());
+            vertices.add(v.z());
             return this;
         }
 

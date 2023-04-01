@@ -19,7 +19,6 @@ package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
-import com.github.legoatoom.connectiblechains.datafixer.ChainKnotFixer;
 import com.github.legoatoom.connectiblechains.tag.CommonTags;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
@@ -30,7 +29,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityDimensions;
@@ -45,16 +43,17 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.tag.BlockTags;
 import net.minecraft.util.*;
 import net.minecraft.util.math.*;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -264,7 +263,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         assert element instanceof NbtCompound;
         NbtCompound tag = (NbtCompound) element;
 
-        Item source = Registry.ITEM.get(Identifier.tryParse(tag.getString(SOURCE_ITEM_KEY)));
+        Item source = Registries.ITEM.get(Identifier.tryParse(tag.getString(SOURCE_ITEM_KEY)));
 
         if (tag.contains("UUID")) {
             UUID uuid = tag.getUuid("UUID");
@@ -414,7 +413,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     @Override
     public boolean handleAttack(Entity attacker) {
         if (attacker instanceof PlayerEntity playerEntity) {
-            damage(DamageSource.player(playerEntity), 0.0F);
+            damage(this.getDamageSources().playerAttack(playerEntity), 0.0F);
         } else {
             playSound(SoundEvents.BLOCK_CHAIN_HIT, 0.5F, 1.0F);
         }
@@ -444,8 +443,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     @Override
     public void writeCustomDataToNbt(NbtCompound root) {
-        ChainKnotFixer.INSTANCE.addVersionTag(root);
-        root.putString(SOURCE_ITEM_KEY, Registry.ITEM.getId(chainItemSource).toString());
+//        ChainKnotFixer.INSTANCE.addVersionTag(root);
+        root.putString(SOURCE_ITEM_KEY, Registries.ITEM.getId(chainItemSource).toString());
         NbtList linksTag = new NbtList();
 
         // Write complete links
@@ -454,7 +453,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             if (link.primary != this) continue;
             Entity secondary = link.secondary;
             NbtCompound compoundTag = new NbtCompound();
-            compoundTag.putString(SOURCE_ITEM_KEY, Registry.ITEM.getId(link.sourceItem).toString());
+            compoundTag.putString(SOURCE_ITEM_KEY, Registries.ITEM.getId(link.sourceItem).toString());
             if (secondary instanceof PlayerEntity) {
                 UUID uuid = secondary.getUuid();
                 compoundTag.putUuid("UUID", uuid);
@@ -488,9 +487,9 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     public void readCustomDataFromNbt(NbtCompound root) {
         if (root.contains("Chains")) {
-            incompleteLinks.addAll(root.getList("Chains", NbtType.COMPOUND));
+            incompleteLinks.addAll(root.getList("Chains", NbtElement.COMPOUND_TYPE));
         }
-        chainItemSource = Registry.ITEM.get(Identifier.tryParse(root.getString(SOURCE_ITEM_KEY)));
+        chainItemSource = Registries.ITEM.get(Identifier.tryParse(root.getString(SOURCE_ITEM_KEY)));
     }
 
     @Override
@@ -650,7 +649,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             Collection<ServerPlayerEntity> trackingPlayers = PlayerLookup.around((ServerWorld) world, getBlockPos(), ChainKnotEntity.VISIBLE_RANGE);
             PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
             buf.writeVarInt(getId());
-            buf.writeVarInt(Registry.ITEM.getRawId(sourceItem));
+            buf.writeVarInt(Registries.ITEM.getRawId(sourceItem));
 
             for (ServerPlayerEntity player : trackingPlayers) {
                 ServerPlayNetworking.send(player, NetworkingPackets.S2C_KNOT_CHANGE_TYPE_PACKET, buf);
@@ -706,11 +705,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * @see PacketCreator
      */
     @Override
-    public Packet<?> createSpawnPacket() {
-        Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> {
-            packetByteBuf.writeVarInt(Registry.ITEM.getRawId(chainItemSource));
-            return packetByteBuf;
-        };
+    public Packet<ClientPlayPacketListener> createSpawnPacket() {
+        Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> packetByteBuf.writeVarInt(Registries.ITEM.getRawId(chainItemSource));
         return PacketCreator.createSpawn(this, NetworkingPackets.S2C_SPAWN_CHAIN_KNOT_PACKET, extraData);
     }
 

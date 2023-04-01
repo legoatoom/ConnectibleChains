@@ -18,7 +18,6 @@
 package com.github.legoatoom.connectiblechains;
 
 
-import com.github.legoatoom.connectiblechains.compat.BuiltinCompat;
 import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
 import com.github.legoatoom.connectiblechains.item.ChainItemInfo;
@@ -59,7 +58,6 @@ public class ConnectibleChains implements ModInitializer {
     @Override
     public void onInitialize() {
         ModEntityTypes.init();
-        BuiltinCompat.init();
 
 
         AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);

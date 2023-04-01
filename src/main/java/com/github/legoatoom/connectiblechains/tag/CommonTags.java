@@ -3,9 +3,10 @@ package com.github.legoatoom.connectiblechains.tag;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.tag.TagKey;
+import net.minecraft.registry.DefaultedRegistry;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
 
 /**
  * @see <a href="https://github.com/paulevsGitch/BCLib/blob/1.18.2/src/main/java/ru/bclib/api/tag/TagAPI.java">github.com/paulevsGitch/BCLib</>
@@ -23,7 +24,7 @@ public class CommonTags {
      * @see <a href="https://fabricmc.net/wiki/tutorial:tags">Fabric Wiki (Tags)</a>
      */
     public static TagKey<Item> makeCommonItemTag(String name) {
-        return makeTag(Registry.ITEM, new Identifier("c", name));
+        return makeTag(Registries.ITEM, new Identifier("c", name));
     }
 
     /**
@@ -33,7 +34,7 @@ public class CommonTags {
      * @param id       The tag id.
      * @return An existing or new {@link TagKey}.
      */
-    public static <T> TagKey<T> makeTag(Registry<T> registry, Identifier id) {
+    public static <T> TagKey<T> makeTag(DefaultedRegistry<T> registry, Identifier id) {
         return registry
                 .streamTags()
                 .filter(tagKey -> tagKey.id().equals(id))
@@ -48,5 +49,6 @@ public class CommonTags {
     public static boolean isChain(ItemStack itemStack) {
         return itemStack.isIn(CHAINS);
     }
+
 
 }

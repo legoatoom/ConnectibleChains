@@ -20,7 +20,7 @@ package com.github.legoatoom.connectiblechains.util;
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3f;
+import org.joml.Vector3f;
 
 public class Helper {
 
@@ -84,20 +84,6 @@ public class Helper {
         return new Vec3d(x, y, z);
     }
 
-    public static float distanceBetween(Vec3f a, Vec3f b) {
-        float dx = a.getX() - b.getX();
-        float dy = a.getY() - b.getY();
-        float dz = a.getZ() - b.getZ();
-        return (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
-    }
-
-    public static float lengthOf(Vec3f v) {
-        float x = v.getX();
-        float y = v.getY();
-        float z = v.getZ();
-        return (float) Math.sqrt(x * x + y * y + z * z);
-    }
-
     /**
      * Get the x/z offset from a chain to a fence
      *
@@ -105,11 +91,11 @@ public class Helper {
      * @param end   fence pos
      * @return the x/z offset
      */
-    public static Vec3f getChainOffset(Vec3d start, Vec3d end) {
-        Vec3f offset = new Vec3f(end.subtract(start));
-        offset.set(offset.getX(), 0, offset.getZ());
+    public static Vec3d getChainOffset(Vec3d start, Vec3d end) {
+        Vector3f offset = end.subtract(start).toVector3f();
+        offset.set(offset.x(), 0, offset.z());
         offset.normalize();
-        offset.scale(2 / 16f);
-        return offset;
+        offset.normalize(2 / 16f);
+        return new Vec3d(offset);
     }
 }

@@ -23,7 +23,8 @@ import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
 
 /**
  * This class keeps track of all entities that this mod has.
@@ -38,7 +39,7 @@ public class ModEntityTypes {
 
     static {
         CHAIN_KNOT = Registry.register(
-                Registry.ENTITY_TYPE, Helper.identifier("chain_knot"),
+                Registries.ENTITY_TYPE, Helper.identifier("chain_knot"),
                 FabricEntityTypeBuilder.create(SpawnGroup.MISC,
                                 (EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new)
                         .trackRangeBlocks(20).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
@@ -48,7 +49,7 @@ public class ModEntityTypes {
                         .build()
         );
         CHAIN_COLLISION = Registry.register(
-                Registry.ENTITY_TYPE, Helper.identifier("chain_collision"),
+                Registries.ENTITY_TYPE, Helper.identifier("chain_collision"),
                 FabricEntityTypeBuilder.create(SpawnGroup.MISC,
                                 (EntityType.EntityFactory<ChainCollisionEntity>) ChainCollisionEntity::new)
                         .trackRangeBlocks(10).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)

@@ -18,14 +18,13 @@
 package com.github.legoatoom.connectiblechains.client.render.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.util.Helper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Quaternion;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import static com.github.legoatoom.connectiblechains.util.Helper.drip2;
 import static com.github.legoatoom.connectiblechains.util.Helper.drip2prime;
@@ -60,7 +59,7 @@ public class ChainRenderer {
      * @param skyLight0   The sky light level at the start
      * @param skyLight1   The sky light level at the end
      */
-    public void renderBaked(VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vec3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
+    public void renderBaked(VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model;
         if (models.containsKey(key)) {
             model = models.get(key);
@@ -80,12 +79,12 @@ public class ChainRenderer {
      * @param chainVec The vector from the chain start to the end
      * @return The generated model
      */
-    private ChainModel buildModel(Vec3f chainVec) {
+    private ChainModel buildModel(Vector3f chainVec) {
         float desiredSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
-        int initialCapacity = (int) (2f * Helper.lengthOf(chainVec) / desiredSegmentLength);
+        int initialCapacity = (int) (2f * chainVec.lengthSquared() / desiredSegmentLength);
         ChainModel.Builder builder = ChainModel.builder(initialCapacity);
 
-        if (chainVec.getX() == 0 && chainVec.getZ() == 0) {
+        if (chainVec.x() == 0 && chainVec.z() == 0) {
             buildFaceVertical(builder, chainVec, 45, UVRect.DEFAULT_SIDE_A);
             buildFaceVertical(builder, chainVec, -45, UVRect.DEFAULT_SIDE_B);
         } else {
@@ -99,24 +98,24 @@ public class ChainRenderer {
     /**
      * {@link #buildFace} does not work when {@code v} is pointing straight up or down.
      */
-    private void buildFaceVertical(ChainModel.Builder builder, Vec3f v, float angle, UVRect uv) {
+    private void buildFaceVertical(ChainModel.Builder builder, Vector3f v, float angle, UVRect uv) {
         float actualSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
         float chainWidth = (uv.x1() - uv.x0()) / 16 * CHAIN_SCALE;
 
-        Vec3f normal = new Vec3f((float) Math.cos(Math.toRadians(angle)), 0, (float) Math.sin(Math.toRadians(angle)));
-        normal.scale(chainWidth);
+        Vector3f normal = new Vector3f((float) Math.cos(Math.toRadians(angle)), 0, (float) Math.sin(Math.toRadians(angle)));
+        normal.normalize(chainWidth);
 
-        Vec3f vert00 = new Vec3f(-normal.getX() / 2, 0, -normal.getZ() / 2), vert01 = vert00.copy();
+        Vector3f vert00 = new Vector3f(-normal.x() / 2, 0, -normal.z() / 2), vert01 = new Vector3f(vert00);
         vert01.add(normal);
-        Vec3f vert10 = new Vec3f(-normal.getX() / 2, 0, -normal.getZ() / 2), vert11 = vert10.copy();
+        Vector3f vert10 = new Vector3f(-normal.x() / 2, 0, -normal.z() / 2), vert11 = new Vector3f(vert10);
         vert11.add(normal);
 
         float uvv0 = 0, uvv1 = 0;
         boolean lastIter = false;
         for (int segment = 0; segment < MAX_SEGMENTS; segment++) {
-            if (vert00.getY() + actualSegmentLength >= v.getY()) {
+            if (vert00.y() + actualSegmentLength >= v.y()) {
                 lastIter = true;
-                actualSegmentLength = v.getY() - vert00.getY();
+                actualSegmentLength = v.y() - vert00.y();
             }
 
             vert10.add(0, actualSegmentLength, 0);
@@ -150,66 +149,68 @@ public class ChainRenderer {
      * @param angle   The angle of the face
      * @param uv      The uv bounds of the face
      */
-    private void buildFace(ChainModel.Builder builder, Vec3f v, float angle, UVRect uv) {
+    private void buildFace(ChainModel.Builder builder, Vector3f v, float angle, UVRect uv) {
         float actualSegmentLength, desiredSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
-        float distance = Helper.lengthOf(v), distanceXZ = (float) Math.sqrt(v.getX() * v.getX() + v.getZ() * v.getZ());
+        float distance = v.lengthSquared(), distanceXZ = (float) Math.sqrt(Math.fma(v.x(), v.x(), v.z() * v.z()));
         // Original code used total distance between start and end instead of horizontal distance
         // That changed the look of chains when there was a big height difference, but it looks better.
         float wrongDistanceFactor = distance / distanceXZ;
 
         // 00, 01, 11, 11 refers to the X and Y position of the vertex.
         // 00 is the lower X and Y vertex. 10 Has the same y value as 00 but a higher x value.
-        Vec3f vert00 = new Vec3f(), vert01 = new Vec3f(), vert11 = new Vec3f(), vert10 = new Vec3f();
-        Vec3f normal = new Vec3f(), rotAxis = new Vec3f();
+        Vector3f vert00 = new Vector3f(), vert01 = new Vector3f(), vert11 = new Vector3f(), vert10 = new Vector3f();
+        Vector3f normal = new Vector3f(), rotAxis = new Vector3f();
 
         float chainWidth = (uv.x1() - uv.x0()) / 16 * CHAIN_SCALE;
         //
         float uvv0, uvv1 = 0, gradient, x, y;
-        Vec3f point0 = new Vec3f(), point1 = new Vec3f();
-        Quaternion rotator;
+        Vector3f point0 = new Vector3f(), point1 = new Vector3f();
+        Quaternionf rotator = new Quaternionf();
 
         // All of this setup can probably go, but I can't figure out
         // how to integrate it into the loop :shrug:
-        point0.set(0, (float) drip2(0, distance, v.getY()), 0);
-        gradient = (float) drip2prime(0, distance, v.getY());
+        point0.set(0, (float) drip2(0, distance, v.y()), 0);
+        gradient = (float) drip2prime(0, distance, v.y());
         normal.set(-gradient, Math.abs(distanceXZ / distance), 0);
         normal.normalize();
 
         x = estimateDeltaX(desiredSegmentLength, gradient);
-        gradient = (float) drip2prime(x * wrongDistanceFactor, distance, v.getY());
-        y = (float) drip2(x * wrongDistanceFactor, distance, v.getY());
+        gradient = (float) drip2prime(x * wrongDistanceFactor, distance, v.y());
+        y = (float) drip2(x * wrongDistanceFactor, distance, v.y());
         point1.set(x, y, 0);
 
-        rotAxis.set(point1.getX() - point0.getX(), point1.getY() - point0.getY(), point1.getZ() - point0.getZ());
+        rotAxis.set(point1.x() - point0.x(), point1.y() - point0.y(), point1.z() - point0.z());
         rotAxis.normalize();
-        rotator = rotAxis.getDegreesQuaternion(angle);
+        rotator.fromAxisAngleDeg(rotAxis, angle);
+
 
         normal.rotate(rotator);
-        normal.scale(chainWidth);
-        vert10.set(point0.getX() - normal.getX() / 2, point0.getY() - normal.getY() / 2, point0.getZ() - normal.getZ() / 2);
+        normal.normalize(chainWidth);
+        vert10.set(point0.x() - normal.x() / 2, point0.y() - normal.y() / 2, point0.z() - normal.z() / 2);
         vert11.set(vert10);
         vert11.add(normal);
 
-        actualSegmentLength = Helper.distanceBetween(point0, point1);
+
+        actualSegmentLength = point0.distance(point1);
 
         // This is a pretty simple algorithm to convert the mathematical curve to a model.
         // It uses an incremental approach, adding segments until the end is reached.
         boolean lastIter = false;
         for (int segment = 0; segment < MAX_SEGMENTS; segment++) {
-            rotAxis.set(point1.getX() - point0.getX(), point1.getY() - point0.getY(), point1.getZ() - point0.getZ());
+            rotAxis.set(point1.x() - point0.x(), point1.y() - point0.y(), point1.z() - point0.z());
             rotAxis.normalize();
-            rotator = rotAxis.getDegreesQuaternion(angle);
+            rotator = rotator.fromAxisAngleDeg(rotAxis, angle);
 
             // This normal is orthogonal to the face normal
             normal.set(-gradient, Math.abs(distanceXZ / distance), 0);
             normal.normalize();
             normal.rotate(rotator);
-            normal.scale(chainWidth);
+            normal.normalize(chainWidth);
 
             vert00.set(vert10);
             vert01.set(vert11);
 
-            vert10.set(point1.getX() - normal.getX() / 2, point1.getY() - normal.getY() / 2, point1.getZ() - normal.getZ() / 2);
+            vert10.set(point1.x() - normal.x() / 2, point1.y() - normal.y() / 2, point1.z() - normal.z() / 2);
             vert11.set(vert10);
             vert11.add(normal);
 
@@ -231,11 +232,11 @@ public class ChainRenderer {
                 x = distanceXZ;
             }
 
-            gradient = (float) drip2prime(x * wrongDistanceFactor, distance, v.getY());
-            y = (float) drip2(x * wrongDistanceFactor, distance, v.getY());
+            gradient = (float) drip2prime(x * wrongDistanceFactor, distance, v.y());
+            y = (float) drip2(x * wrongDistanceFactor, distance, v.y());
             point1.set(x, y, 0);
 
-            actualSegmentLength = Helper.distanceBetween(point0, point1);
+            actualSegmentLength = point0.distance(point1);
         }
     }
 
@@ -263,12 +264,12 @@ public class ChainRenderer {
     }
 
     /**
-     * Same as {@link #renderBaked(VertexConsumer, MatrixStack, BakeKey, Vec3f, int, int, int, int)} but will not use
+     * Same as {@link #renderBaked(VertexConsumer, MatrixStack, BakeKey, Vector3f, int, int, int, int)} but will not use
      * the model cache. This should be used when {@code chainVec} is changed very frequently.
      *
      * @see #renderBaked
      */
-    public void render(VertexConsumer buffer, MatrixStack matrices, Vec3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
+    public void render(VertexConsumer buffer, MatrixStack matrices, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model = buildModel(chainVec);
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
     }
@@ -289,10 +290,8 @@ public class ChainRenderer {
 
         public BakeKey(Vec3d srcPos, Vec3d dstPos) {
             float dY = (float) (srcPos.y - dstPos.y);
-            float dXZ = Helper.distanceBetween(
-                    new Vec3f((float) srcPos.x, 0, (float) srcPos.z),
-                    new Vec3f((float) dstPos.x, 0, (float) dstPos.z));
-
+            float dXZ = new Vector3f((float) srcPos.x, 0, (float) srcPos.z)
+                    .distance((float) dstPos.x, 0, (float) dstPos.z);
             int hash = Float.floatToIntBits(dY);
             hash = 31 * hash + Float.floatToIntBits(dXZ);
             this.hash = hash;

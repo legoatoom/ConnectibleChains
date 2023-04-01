@@ -1,14 +1,18 @@
 package com.github.legoatoom.connectiblechains.item;
 
+import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.ChainLinkEntity;
 import com.github.legoatoom.connectiblechains.tag.CommonTags;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -92,5 +96,13 @@ public class ChainItemInfo {
         world.spawnEntity(knot);
         knot.onPlace();
         return knot.interact(player, hand);
+    }
+
+    public static void infoToolTip(ItemStack stack, TooltipContext ignoredContext, List<Text> lines) {
+        if (ConnectibleChains.runtimeConfig.doShowToolTip()) {
+            if (stack.isIn(CommonTags.CHAINS)) {
+                lines.add(1, Text.translatable("message.connectiblechains.connectible_chain").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
+            }
+        }
     }
 }

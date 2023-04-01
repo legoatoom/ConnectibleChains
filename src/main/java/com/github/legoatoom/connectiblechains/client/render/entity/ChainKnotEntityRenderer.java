@@ -33,13 +33,17 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.LiteralTextContent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.*;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.LightType;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.util.List;
 
@@ -123,12 +127,12 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     }
 
     private Identifier getKnotTexture(Item item) {
-        Identifier id = Registry.ITEM.getId(item);
+        Identifier id = Registries.ITEM.getId(item);
         return new Identifier(id.getNamespace(), "textures/item/" + id.getPath() + ".png");
     }
 
     private Identifier getChainTexture(Item item) {
-        Identifier id = Registry.ITEM.getId(item);
+        Identifier id = Registries.ITEM.getId(item);
         return new Identifier(id.getNamespace(), "textures/block/" + id.getPath() + ".png");
     }
 
@@ -175,12 +179,12 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             buffer = vertexConsumerProvider.getBuffer(RenderLayer.getLines());
         }
 
-        Vec3f offset = Helper.getChainOffset(srcPos, dstPos);
+        Vec3d offset = Helper.getChainOffset(srcPos, dstPos);
         matrices.translate(offset.getX(), 0, offset.getZ());
 
         // Now we gather light information for the chain. Since the chain is lighter if there is more light.
-        BlockPos blockPosOfStart = new BlockPos(fromEntity.getCameraPosVec(tickDelta));
-        BlockPos blockPosOfEnd = new BlockPos(toEntity.getCameraPosVec(tickDelta));
+        BlockPos blockPosOfStart = BlockPos.ofFloored(fromEntity.getCameraPosVec(tickDelta));
+        BlockPos blockPosOfEnd = BlockPos.ofFloored(toEntity.getCameraPosVec(tickDelta));
         int blockLightLevelOfStart = fromEntity.world.getLightLevel(LightType.BLOCK, blockPosOfStart);
         int blockLightLevelOfEnd = toEntity.world.getLightLevel(LightType.BLOCK, blockPosOfEnd);
         int skylightLevelOfStart = fromEntity.world.getLightLevel(LightType.SKY, blockPosOfStart);
@@ -188,10 +192,11 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
         Vec3d startPos = srcPos.add(offset.getX(), 0, offset.getZ());
         Vec3d endPos = dstPos.add(-offset.getX(), 0, -offset.getZ());
-        Vec3f chainVec = new Vec3f((float) (endPos.x - startPos.x), (float) (endPos.y - startPos.y), (float) (endPos.z - startPos.z));
+        Vector3f chainVec = new Vector3f((float) (endPos.x - startPos.x), (float) (endPos.y - startPos.y), (float) (endPos.z - startPos.z));
 
-        float angleY = -(float) Math.atan2(chainVec.getZ(), chainVec.getX());
-        matrices.multiply(Quaternion.fromEulerXyz(0, angleY, 0));
+        float angleY = -(float) Math.atan2(chainVec.z(), chainVec.x());
+
+        matrices.multiply(new Quaternionf().rotateXYZ(0, angleY, 0));
 
         if (toEntity instanceof AbstractDecorationEntity) {
             ChainRenderer.BakeKey key = new ChainRenderer.BakeKey(fromEntity.getPos(), toEntity.getPos());

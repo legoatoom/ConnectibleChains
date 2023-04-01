@@ -20,13 +20,12 @@ package com.github.legoatoom.connectiblechains.client;
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
-import com.github.legoatoom.connectiblechains.client.render.entity.ChainTextureManager;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
 import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.entity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
-import com.github.legoatoom.connectiblechains.tag.CommonTags;
+import com.github.legoatoom.connectiblechains.item.ChainItemInfo;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import me.shedaniel.autoconfig.AutoConfig;
@@ -39,17 +38,12 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.player.ClientPickBlockGatherCallback;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.resource.ResourceType;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.TranslatableTextContent;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.EntityHitResult;
 
 import java.util.Optional;
@@ -65,7 +59,7 @@ public class ClientInitializer implements ClientModInitializer {
 
     public static final EntityModelLayer CHAIN_KNOT = new EntityModelLayer(Helper.identifier("chain_knot"), "main");
     private static ClientInitializer instance;
-    public final ChainTextureManager textureManager = new ChainTextureManager();
+//    public final ChainTextureManager textureManager = new ChainTextureManager();
     private ChainKnotEntityRenderer chainKnotEntityRenderer;
     private ChainPacketHandler chainPacketHandler;
 
@@ -80,13 +74,8 @@ public class ClientInitializer implements ClientModInitializer {
         registerConfigSync();
 
         // Tooltip for chains.
-        if (ConnectibleChains.fileConfig.doShowToolTip()){
-            ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
-                if (stack.isIn(CommonTags.CHAINS)) {
-                    lines.add(1, MutableText.of(new TranslatableTextContent("message.connectiblechains.connectible_chain")).formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
-                }
-            });
-        }
+        ItemTooltipCallback.EVENT.register(ChainItemInfo::infoToolTip);
+
 
     }
 
@@ -159,7 +148,7 @@ public class ClientInitializer implements ClientModInitializer {
 
         ClientTickEvents.START_WORLD_TICK.register(world -> chainPacketHandler.tick());
 
-        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(textureManager);
+//        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(textureManager);
     }
 
     public static ClientInitializer getInstance() {

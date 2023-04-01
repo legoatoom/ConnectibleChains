@@ -14,8 +14,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -79,7 +79,7 @@ public class ChainPacketHandler {
         ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_SPAWN_CHAIN_COLLISION_PACKET,
                 (client, handler, buf, responseSender) -> {
                     int entityTypeID = buf.readVarInt();
-                    EntityType<?> entityType = Registry.ENTITY_TYPE.get(entityTypeID);
+                    EntityType<?> entityType = Registries.ENTITY_TYPE.get(entityTypeID);
                     UUID uuid = buf.readUuid();
                     int entityId = buf.readVarInt();
                     Vec3d pos = PacketBufUtil.readVec3d(buf);
@@ -90,7 +90,7 @@ public class ChainPacketHandler {
                         Entity e = createEntity(client, entityType, uuid, entityId, pos);
                         if (e == null) return;
                         if (e instanceof ChainCollisionEntity collider) {
-                            collider.setSourceItem(Registry.ITEM.get(typeId));
+                            collider.setSourceItem(Registries.ITEM.get(typeId));
                         }
                         assert client.world != null;
                         client.world.addEntity(entityId, e);
@@ -100,7 +100,7 @@ public class ChainPacketHandler {
         ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_SPAWN_CHAIN_KNOT_PACKET,
                 (client, handler, buf, responseSender) -> {
                     int entityTypeId = buf.readVarInt();
-                    EntityType<?> entityType = Registry.ENTITY_TYPE.get(entityTypeId);
+                    EntityType<?> entityType = Registries.ENTITY_TYPE.get(entityTypeId);
                     UUID uuid = buf.readUuid();
                     int entityId = buf.readVarInt();
                     Vec3d pos = PacketBufUtil.readVec3d(buf);
@@ -111,7 +111,7 @@ public class ChainPacketHandler {
                         Entity e = createEntity(client, entityType, uuid, entityId, pos);
                         if (e == null) return;
                         if (e instanceof ChainKnotEntity knot) {
-                            knot.setChainItemSource(Registry.ITEM.get(typeId));
+                            knot.setChainItemSource(Registries.ITEM.get(typeId));
                             knot.setGraceTicks((byte) 0);
                         }
                         assert client.world != null;
@@ -126,7 +126,7 @@ public class ChainPacketHandler {
             client.execute(() -> {
                 if (client.world == null) return;
                 Entity entity = client.world.getEntityById(knotId);
-                Item chainType = Registry.ITEM.get(typeId);
+                Item chainType = Registries.ITEM.get(typeId);
                 if (entity instanceof ChainKnotEntity knot) {
                     knot.updateChainType(chainType);
                 } else {
@@ -150,7 +150,7 @@ public class ChainPacketHandler {
         if (from instanceof ChainKnotEntity knot) {
             for (int i = 0; i < toIds.length; i++) {
                 Entity to = client.world.getEntityById(toIds[i]);
-                Item chainType = Registry.ITEM.get(types[i]);
+                Item chainType = Registries.ITEM.get(types[i]);
 
                 if (to == null) {
                     incompleteLinks.add(new IncompleteChainLink(knot, toIds[i], chainType));

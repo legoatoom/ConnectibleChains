@@ -4,7 +4,6 @@
   "package": "com.github.legoatoom.connectiblechains.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "server.NbtHelperMixin",
     "server.network.EntityTrackerEntryMixin",
     "server.world.ThreadedAnvilChunkStorageMixin"
   ],

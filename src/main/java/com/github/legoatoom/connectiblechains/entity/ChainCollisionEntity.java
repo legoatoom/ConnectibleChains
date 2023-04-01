@@ -32,12 +32,13 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.registry.Registries;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -150,7 +151,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Override
     public boolean handleAttack(Entity attacker) {
         if (attacker instanceof PlayerEntity playerEntity) {
-            this.damage(DamageSource.player(playerEntity), 0.0F);
+            this.damage(this.getDamageSources().playerAttack(playerEntity), 0.0F);
         } else {
             playSound(SoundEvents.BLOCK_CHAIN_HIT, 0.5F, 1.0F);
         }
@@ -198,12 +199,9 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
      * Links are handled server-side.
      */
     @Override
-    public Packet<?> createSpawnPacket() {
-        Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> {
-            Item chainType = link == null ? Items.CHAIN : link.sourceItem;
-            packetByteBuf.writeVarInt(Registry.ITEM.getRawId(chainType));
-            return packetByteBuf;
-        };
+    public Packet<ClientPlayPacketListener> createSpawnPacket() {
+        Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf
+                -> packetByteBuf.writeVarInt(Registries.ITEM.getRawId(link == null ? Items.CHAIN : link.sourceItem));
         return PacketCreator.createSpawn(this, NetworkingPackets.S2C_SPAWN_CHAIN_COLLISION_PACKET, extraData);
     }
 

@@ -17,12 +17,11 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3f;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
@@ -149,7 +148,7 @@ public class ChainLink {
 
         buf.writeVarInt(primary.getId());
         buf.writeVarInt(secondary.getId());
-        buf.writeVarInt(Registry.ITEM.getRawId(sourceItem));
+        buf.writeVarInt(Registries.ITEM.getRawId(sourceItem));
 
         for (ServerPlayerEntity player : trackingPlayers) {
             ServerPlayNetworking.send(player, NetworkingPackets.S2C_CHAIN_ATTACH_PACKET_ID, buf);
@@ -168,8 +167,8 @@ public class ChainLink {
     @Nullable
     private Entity spawnCollision(boolean reverse, Entity start, Entity end, double v) {
         assert primary.world instanceof ServerWorld;
-        Vec3d startPos = start.getPos().add(start.getLeashOffset());
-        Vec3d endPos = end.getPos().add(end.getLeashOffset());
+        Vec3d startPos = start.getPos().add(start.getLeashOffset(0));
+        Vec3d endPos = end.getPos().add(end.getLeashOffset(0));
 
         Vec3d tmp = endPos;
         if (reverse) {
@@ -177,7 +176,8 @@ public class ChainLink {
             startPos = tmp;
         }
 
-        Vec3f offset = Helper.getChainOffset(startPos, endPos);
+
+        Vec3d offset = Helper.getChainOffset(startPos, endPos);
         startPos = startPos.add(offset.getX(), 0, offset.getZ());
         endPos = endPos.add(-offset.getX(), 0, -offset.getZ());
 

@@ -24,10 +24,11 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
-import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -45,11 +46,11 @@ public class PacketCreator {
      * @param extraData Extra data supplier
      * @return A S2C packet
      */
-    public static Packet<?> createSpawn(Entity e, Identifier packetID, Function<PacketByteBuf, PacketByteBuf> extraData) {
+    public static Packet<ClientPlayPacketListener> createSpawn(Entity e, Identifier packetID, Function<PacketByteBuf, PacketByteBuf> extraData) {
         if (e.world.isClient)
             throw new IllegalStateException("Called on the logical client!");
         PacketByteBuf byteBuf = new PacketByteBuf(Unpooled.buffer());
-        byteBuf.writeVarInt(Registry.ENTITY_TYPE.getRawId(e.getType()));
+        byteBuf.writeVarInt(Registries.ENTITY_TYPE.getRawId(e.getType()));
         byteBuf.writeUuid(e.getUuid());
         byteBuf.writeVarInt(e.getId());
 
@@ -66,7 +67,7 @@ public class PacketCreator {
      * @return Packet or null if no data is to be sent
      */
     @Nullable
-    public static Packet<?> createMultiAttach(ChainKnotEntity knot) {
+    public static Packet<ClientPlayPacketListener> createMultiAttach(ChainKnotEntity knot) {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         List<ChainLink> links = knot.getLinks();
         IntList ids = new IntArrayList(links.size());
@@ -74,7 +75,7 @@ public class PacketCreator {
         for (ChainLink link : links) {
             if (link.primary == knot) {
                 ids.add(link.secondary.getId());
-                types.add(Registry.ITEM.getRawId(link.sourceItem));
+                types.add(Registries.ITEM.getRawId(link.sourceItem));
             }
         }
         if (ids.size() > 0) {
