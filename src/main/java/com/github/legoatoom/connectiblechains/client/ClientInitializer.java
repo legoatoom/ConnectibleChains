@@ -83,6 +83,7 @@ public class ClientInitializer implements ClientModInitializer {
         ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
         configHolder.registerSaveListener((holder, modConfig) -> {
             ClientInitializer clientInitializer = ClientInitializer.getInstance();
+
             if (clientInitializer != null) {
                 clientInitializer.getChainKnotEntityRenderer().ifPresent(renderer -> renderer.getChainRenderer().purge());
             }

@@ -19,6 +19,7 @@ package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
+import com.github.legoatoom.connectiblechains.datafixer.ChainKnotFixer;
 import com.github.legoatoom.connectiblechains.tag.CommonTags;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
@@ -443,7 +444,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     @Override
     public void writeCustomDataToNbt(NbtCompound root) {
-//        ChainKnotFixer.INSTANCE.addVersionTag(root);
+        ChainKnotFixer.INSTANCE.addVersionTag(root);
         root.putString(SOURCE_ITEM_KEY, Registries.ITEM.getId(chainItemSource).toString());
         NbtList linksTag = new NbtList();
 
@@ -706,7 +707,10 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     @Override
     public Packet<ClientPlayPacketListener> createSpawnPacket() {
-        Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> packetByteBuf.writeVarInt(Registries.ITEM.getRawId(chainItemSource));
+        Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> {
+            packetByteBuf.writeVarInt(Registries.ITEM.getRawId(chainItemSource));
+            return packetByteBuf;
+        };
         return PacketCreator.createSpawn(this, NetworkingPackets.S2C_SPAWN_CHAIN_KNOT_PACKET, extraData);
     }
 

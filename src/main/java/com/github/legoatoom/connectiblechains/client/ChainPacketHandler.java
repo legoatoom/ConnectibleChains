@@ -185,6 +185,7 @@ public class ChainPacketHandler {
             ConnectibleChains.LOGGER.error("Tried to spawn entity in a null world!");
             return null;
         }
+
         Entity e = type.create(client.world);
         if (e == null) {
             ConnectibleChains.LOGGER.error("Failed to create instance of entity with type {}.", type);

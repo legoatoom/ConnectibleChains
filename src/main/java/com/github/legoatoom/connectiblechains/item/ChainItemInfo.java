@@ -5,7 +5,10 @@ import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.ChainLinkEntity;
 import com.github.legoatoom.connectiblechains.tag.CommonTags;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
@@ -84,7 +87,9 @@ public class ChainItemInfo {
         Item knotType = stack.getItem();
 
         // Allow default interaction behaviour.
-        if (attachableChains.size() == 0 && !stack.isIn(CommonTags.CHAINS)) return ActionResult.PASS;
+        if (attachableChains.size() == 0 && !stack.isIn(CommonTags.CHAINS)) {
+            return ActionResult.PASS;
+        }
 
         // Held item does not correspond to a type.
         if (!stack.isIn(CommonTags.CHAINS))
@@ -94,15 +99,27 @@ public class ChainItemInfo {
         knot = new ChainKnotEntity(world, blockPos, knotType);
         knot.setGraceTicks((byte) 0);
         world.spawnEntity(knot);
-        knot.onPlace();
+//        knot.onPlace();
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         return knot.interact(player, hand);
     }
 
+    @Environment(EnvType.CLIENT)
     public static void infoToolTip(ItemStack stack, TooltipContext ignoredContext, List<Text> lines) {
         if (ConnectibleChains.runtimeConfig.doShowToolTip()) {
+
             if (stack.isIn(CommonTags.CHAINS)) {
-                lines.add(1, Text.translatable("message.connectiblechains.connectible_chain").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
+                if (Screen.hasShiftDown()) {
+                    lines.add(1, Text.translatable("message.connectiblechains.connectible_chain_detailed").formatted(Formatting.AQUA));
+                } else {
+                    lines.add(1, Text.translatable("message.connectiblechains.connectible_chain").formatted(Formatting.YELLOW));
+                }
             }
+
         }
     }
 }

@@ -151,7 +151,7 @@ public class ChainRenderer {
      */
     private void buildFace(ChainModel.Builder builder, Vector3f v, float angle, UVRect uv) {
         float actualSegmentLength, desiredSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
-        float distance = v.lengthSquared(), distanceXZ = (float) Math.sqrt(Math.fma(v.x(), v.x(), v.z() * v.z()));
+        float distance = v.length(), distanceXZ = (float) Math.sqrt(Math.fma(v.x(), v.x(), v.z() * v.z()));
         // Original code used total distance between start and end instead of horizontal distance
         // That changed the look of chains when there was a big height difference, but it looks better.
         float wrongDistanceFactor = distance / distanceXZ;

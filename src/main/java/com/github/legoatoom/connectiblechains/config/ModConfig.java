@@ -103,6 +103,7 @@ public class ModConfig implements ConfigData {
         this.chainHangAmount = config.chainHangAmount;
         this.maxChainRange = config.maxChainRange;
         this.quality = config.quality;
+        this.showToolTip = config.showToolTip;
         return this;
     }
 
