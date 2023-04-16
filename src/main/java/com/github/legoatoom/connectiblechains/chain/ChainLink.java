@@ -1,9 +1,23 @@
+/*
+ * Copyright (C) 2023 legoatoom
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.github.legoatoom.connectiblechains.chain;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.enitity.ChainCollisionEntity;
-import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
-import com.github.legoatoom.connectiblechains.enitity.ModEntityTypes;
+import com.github.legoatoom.connectiblechains.entity.ChainCollisionEntity;
+import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import io.netty.buffer.Unpooled;
@@ -14,13 +28,14 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3f;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +72,7 @@ public class ChainLink {
      * The type of the link
      */
     @NotNull
-    public final ChainType chainType;
+    public final Item sourceItem;
     /**
      * Holds the entity ids of associated {@link ChainCollisionEntity collision entities}.
      */
@@ -71,12 +86,12 @@ public class ChainLink {
      */
     private boolean alive = true;
 
-    private ChainLink(@NotNull ChainKnotEntity primary, @NotNull Entity secondary, @NotNull ChainType chainType) {
+    private ChainLink(@NotNull ChainKnotEntity primary, @NotNull Entity secondary, @NotNull Item sourceItem) {
         if (primary.equals(secondary))
             throw new IllegalStateException("Tried to create a link between a knot and itself");
         this.primary = Objects.requireNonNull(primary);
         this.secondary = Objects.requireNonNull(secondary);
-        this.chainType = Objects.requireNonNull(chainType);
+        this.sourceItem = Objects.requireNonNull(sourceItem);
     }
 
     /**
@@ -86,12 +101,12 @@ public class ChainLink {
      *
      * @param primary   The source knot
      * @param secondary A different chain knot or player
-     * @param chainType The type of the link
+     * @param sourceItem The type of the link
      * @return A new chain link or null if it already exists
      */
     @Nullable
-    public static ChainLink create(@NotNull ChainKnotEntity primary, @NotNull Entity secondary, @NotNull ChainType chainType) {
-        ChainLink link = new ChainLink(primary, secondary, chainType);
+    public static ChainLink create(@NotNull ChainKnotEntity primary, @NotNull Entity secondary, @NotNull Item sourceItem) {
+        ChainLink link = new ChainLink(primary, secondary, sourceItem);
         // Prevent multiple links between same targets.
         // Checking on the secondary is not required as the link always exists on both sides.
         if (primary.getLinks().contains(link)) return null;
@@ -147,7 +162,7 @@ public class ChainLink {
 
         buf.writeVarInt(primary.getId());
         buf.writeVarInt(secondary.getId());
-        buf.writeVarInt(ChainTypesRegistry.REGISTRY.getRawId(chainType));
+        buf.writeVarInt(Registries.ITEM.getRawId(sourceItem));
 
         for (ServerPlayerEntity player : trackingPlayers) {
             ServerPlayNetworking.send(player, NetworkingPackets.S2C_CHAIN_ATTACH_PACKET_ID, buf);
@@ -166,8 +181,8 @@ public class ChainLink {
     @Nullable
     private Entity spawnCollision(boolean reverse, Entity start, Entity end, double v) {
         assert primary.world instanceof ServerWorld;
-        Vec3d startPos = start.getPos().add(start.getLeashOffset());
-        Vec3d endPos = end.getPos().add(end.getLeashOffset());
+        Vec3d startPos = start.getPos().add(start.getLeashOffset(0));
+        Vec3d endPos = end.getPos().add(end.getLeashOffset(0));
 
         Vec3d tmp = endPos;
         if (reverse) {
@@ -175,7 +190,8 @@ public class ChainLink {
             startPos = tmp;
         }
 
-        Vec3f offset = Helper.getChainOffset(startPos, endPos);
+
+        Vec3d offset = Helper.getChainOffset(startPos, endPos);
         startPos = startPos.add(offset.getX(), 0, offset.getZ());
         endPos = endPos.add(-offset.getX(), 0, -offset.getZ());
 
@@ -272,7 +288,7 @@ public class ChainLink {
         if (!world.getGameRules().getBoolean(GameRules.DO_TILE_DROPS)) drop = false;
 
         if (drop) {
-            ItemStack stack = new ItemStack(chainType.item());
+            ItemStack stack = new ItemStack(sourceItem);
             if (secondary instanceof PlayerEntity player) {
                 player.giveItemStack(stack);
             } else {

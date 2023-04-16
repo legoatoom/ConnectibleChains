@@ -1,12 +1,24 @@
+/*
+ * Copyright (C) 2023 legoatoom
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.github.legoatoom.connectiblechains.client;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
-import com.github.legoatoom.connectiblechains.chain.ChainType;
-import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import com.github.legoatoom.connectiblechains.chain.IncompleteChainLink;
-import com.github.legoatoom.connectiblechains.enitity.ChainCollisionEntity;
-import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.entity.ChainCollisionEntity;
+import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import com.github.legoatoom.connectiblechains.util.PacketBufUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -15,8 +27,9 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -80,7 +93,7 @@ public class ChainPacketHandler {
         ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_SPAWN_CHAIN_COLLISION_PACKET,
                 (client, handler, buf, responseSender) -> {
                     int entityTypeID = buf.readVarInt();
-                    EntityType<?> entityType = Registry.ENTITY_TYPE.get(entityTypeID);
+                    EntityType<?> entityType = Registries.ENTITY_TYPE.get(entityTypeID);
                     UUID uuid = buf.readUuid();
                     int entityId = buf.readVarInt();
                     Vec3d pos = PacketBufUtil.readVec3d(buf);
@@ -91,7 +104,7 @@ public class ChainPacketHandler {
                         Entity e = createEntity(client, entityType, uuid, entityId, pos);
                         if (e == null) return;
                         if (e instanceof ChainCollisionEntity collider) {
-                            collider.setChainType(ChainTypesRegistry.REGISTRY.get(typeId));
+                            collider.setSourceItem(Registries.ITEM.get(typeId));
                         }
                         assert client.world != null;
                         client.world.addEntity(entityId, e);
@@ -101,7 +114,7 @@ public class ChainPacketHandler {
         ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_SPAWN_CHAIN_KNOT_PACKET,
                 (client, handler, buf, responseSender) -> {
                     int entityTypeId = buf.readVarInt();
-                    EntityType<?> entityType = Registry.ENTITY_TYPE.get(entityTypeId);
+                    EntityType<?> entityType = Registries.ENTITY_TYPE.get(entityTypeId);
                     UUID uuid = buf.readUuid();
                     int entityId = buf.readVarInt();
                     Vec3d pos = PacketBufUtil.readVec3d(buf);
@@ -112,7 +125,7 @@ public class ChainPacketHandler {
                         Entity e = createEntity(client, entityType, uuid, entityId, pos);
                         if (e == null) return;
                         if (e instanceof ChainKnotEntity knot) {
-                            knot.setChainType(ChainTypesRegistry.REGISTRY.get(typeId));
+                            knot.setChainItemSource(Registries.ITEM.get(typeId));
                             knot.setGraceTicks((byte) 0);
                         }
                         assert client.world != null;
@@ -127,7 +140,7 @@ public class ChainPacketHandler {
             client.execute(() -> {
                 if (client.world == null) return;
                 Entity entity = client.world.getEntityById(knotId);
-                ChainType chainType = ChainTypesRegistry.REGISTRY.get(typeId);
+                Item chainType = Registries.ITEM.get(typeId);
                 if (entity instanceof ChainKnotEntity knot) {
                     knot.updateChainType(chainType);
                 } else {
@@ -151,7 +164,7 @@ public class ChainPacketHandler {
         if (from instanceof ChainKnotEntity knot) {
             for (int i = 0; i < toIds.length; i++) {
                 Entity to = client.world.getEntityById(toIds[i]);
-                ChainType chainType = ChainTypesRegistry.REGISTRY.get(types[i]);
+                Item chainType = Registries.ITEM.get(types[i]);
 
                 if (to == null) {
                     incompleteLinks.add(new IncompleteChainLink(knot, toIds[i], chainType));
@@ -186,6 +199,7 @@ public class ChainPacketHandler {
             ConnectibleChains.LOGGER.error("Tried to spawn entity in a null world!");
             return null;
         }
+
         Entity e = type.create(client.world);
         if (e == null) {
             ConnectibleChains.LOGGER.error("Failed to create instance of entity with type {}.", type);

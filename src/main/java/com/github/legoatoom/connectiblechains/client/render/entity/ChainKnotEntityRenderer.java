@@ -1,16 +1,13 @@
 /*
- * Copyright (C) 2022 legoatoom
- *
+ * Copyright (C) 2023 legoatoom
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
@@ -19,10 +16,9 @@ package com.github.legoatoom.connectiblechains.client.render.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
-import com.github.legoatoom.connectiblechains.chain.ChainType;
 import com.github.legoatoom.connectiblechains.client.ClientInitializer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
-import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -33,12 +29,18 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.LiteralTextContent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.LightType;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.util.List;
 
@@ -90,7 +92,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             matrices.translate(leashOffset.x, leashOffset.y + 6.5 / 16f, leashOffset.z);
             // The model is 6 px wide, but it should be rendered at 5px
             matrices.scale(5 / 6f, 1, 5 / 6f);
-            VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(chainKnotEntity.getChainType().getKnotTexture()));
+            VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(getKnotTexture(chainKnotEntity.getChainItemSource())));
             this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
             matrices.pop();
         }
@@ -119,6 +121,16 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             matrices.pop();
         }
         super.render(chainKnotEntity, yaw, tickDelta, matrices, vertexConsumers, light);
+    }
+
+    private Identifier getKnotTexture(Item item) {
+        Identifier id = Registries.ITEM.getId(item);
+        return new Identifier(id.getNamespace(), "textures/item/" + id.getPath() + ".png");
+    }
+
+    private Identifier getChainTexture(Item item) {
+        Identifier id = Registries.ITEM.getId(item);
+        return new Identifier(id.getNamespace(), "textures/block/" + id.getPath() + ".png");
     }
 
     /**
@@ -152,24 +164,24 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         Vec3d leashOffset = fromEntity.getLeashOffset();
         matrices.translate(leashOffset.x, leashOffset.y, leashOffset.z);
 
-        ChainType chainType = link.chainType;
+        Item sourceItem = link.sourceItem;
         // Some further performance improvements can be made here:
         // Create a rendering layer that:
         // - does not have normals
         // - does not have an overlay
         // - does not have vertex color
         // - uses a tri strip instead of quads
-        VertexConsumer buffer = vertexConsumerProvider.getBuffer(RenderLayer.getEntityCutoutNoCull(chainType.getChainTexture()));
+        VertexConsumer buffer = vertexConsumerProvider.getBuffer(RenderLayer.getEntityCutoutNoCull(getChainTexture(sourceItem)));
         if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
             buffer = vertexConsumerProvider.getBuffer(RenderLayer.getLines());
         }
 
-        Vec3f offset = Helper.getChainOffset(srcPos, dstPos);
+        Vec3d offset = Helper.getChainOffset(srcPos, dstPos);
         matrices.translate(offset.getX(), 0, offset.getZ());
 
         // Now we gather light information for the chain. Since the chain is lighter if there is more light.
-        BlockPos blockPosOfStart = new BlockPos(fromEntity.getCameraPosVec(tickDelta));
-        BlockPos blockPosOfEnd = new BlockPos(toEntity.getCameraPosVec(tickDelta));
+        BlockPos blockPosOfStart = BlockPos.ofFloored(fromEntity.getCameraPosVec(tickDelta));
+        BlockPos blockPosOfEnd = BlockPos.ofFloored(toEntity.getCameraPosVec(tickDelta));
         int blockLightLevelOfStart = fromEntity.world.getLightLevel(LightType.BLOCK, blockPosOfStart);
         int blockLightLevelOfEnd = toEntity.world.getLightLevel(LightType.BLOCK, blockPosOfEnd);
         int skylightLevelOfStart = fromEntity.world.getLightLevel(LightType.SKY, blockPosOfStart);
@@ -177,10 +189,11 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
         Vec3d startPos = srcPos.add(offset.getX(), 0, offset.getZ());
         Vec3d endPos = dstPos.add(-offset.getX(), 0, -offset.getZ());
-        Vec3f chainVec = new Vec3f((float) (endPos.x - startPos.x), (float) (endPos.y - startPos.y), (float) (endPos.z - startPos.z));
+        Vector3f chainVec = new Vector3f((float) (endPos.x - startPos.x), (float) (endPos.y - startPos.y), (float) (endPos.z - startPos.z));
 
-        float angleY = -(float) Math.atan2(chainVec.getZ(), chainVec.getX());
-        matrices.multiply(Quaternion.fromEulerXyz(0, angleY, 0));
+        float angleY = -(float) Math.atan2(chainVec.z(), chainVec.x());
+
+        matrices.multiply(new Quaternionf().rotateXYZ(0, angleY, 0));
 
         if (toEntity instanceof AbstractDecorationEntity) {
             ChainRenderer.BakeKey key = new ChainRenderer.BakeKey(fromEntity.getPos(), toEntity.getPos());
@@ -191,6 +204,8 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
         matrices.pop();
     }
+
+
 
     /**
      * Draws a line fromEntity - toEntity, from green to red.
@@ -210,6 +225,8 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
     @Override
     public Identifier getTexture(ChainKnotEntity entity) {
-        return entity.getChainType().getKnotTexture();
+        return getKnotTexture(entity.getChainItemSource());
     }
+
+
 }

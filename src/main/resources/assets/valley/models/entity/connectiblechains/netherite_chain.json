@@ -1,6 +1,0 @@
-{
-	"textures": {
-		"chain": "valley:textures/block/netherite_chain_block",
-		"knot": "valley:textures/entity/connectiblechains/netherite_chain_block_knot"
-	}
-}

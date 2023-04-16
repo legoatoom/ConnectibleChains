@@ -1,16 +1,13 @@
 /*
- * Copyright (C) 2022 legoatoom
- *
+ * Copyright (C) 2023 legoatoom
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
@@ -18,17 +15,17 @@
 package com.github.legoatoom.connectiblechains.util;
 
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
-import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
-import com.github.legoatoom.connectiblechains.enitity.ChainKnotEntity;
+import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
-import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -46,11 +43,11 @@ public class PacketCreator {
      * @param extraData Extra data supplier
      * @return A S2C packet
      */
-    public static Packet<?> createSpawn(Entity e, Identifier packetID, Function<PacketByteBuf, PacketByteBuf> extraData) {
+    public static Packet<ClientPlayPacketListener> createSpawn(Entity e, Identifier packetID, Function<PacketByteBuf, PacketByteBuf> extraData) {
         if (e.world.isClient)
             throw new IllegalStateException("Called on the logical client!");
         PacketByteBuf byteBuf = new PacketByteBuf(Unpooled.buffer());
-        byteBuf.writeVarInt(Registry.ENTITY_TYPE.getRawId(e.getType()));
+        byteBuf.writeVarInt(Registries.ENTITY_TYPE.getRawId(e.getType()));
         byteBuf.writeUuid(e.getUuid());
         byteBuf.writeVarInt(e.getId());
 
@@ -67,7 +64,7 @@ public class PacketCreator {
      * @return Packet or null if no data is to be sent
      */
     @Nullable
-    public static Packet<?> createMultiAttach(ChainKnotEntity knot) {
+    public static Packet<ClientPlayPacketListener> createMultiAttach(ChainKnotEntity knot) {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         List<ChainLink> links = knot.getLinks();
         IntList ids = new IntArrayList(links.size());
@@ -75,7 +72,7 @@ public class PacketCreator {
         for (ChainLink link : links) {
             if (link.primary == knot) {
                 ids.add(link.secondary.getId());
-                types.add(ChainTypesRegistry.REGISTRY.getRawId(link.chainType));
+                types.add(Registries.ITEM.getRawId(link.sourceItem));
             }
         }
         if (ids.size() > 0) {

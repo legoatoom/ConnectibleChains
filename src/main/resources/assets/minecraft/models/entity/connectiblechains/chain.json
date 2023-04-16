@@ -1,6 +1,0 @@
-{
-	"textures": {
-		"chain": "minecraft:textures/block/chain",
-		"knot": "minecraft:textures/entity/connectiblechains/chain_knot"
-	}
-}

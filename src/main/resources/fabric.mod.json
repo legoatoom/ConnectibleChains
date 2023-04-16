@@ -25,9 +25,6 @@
     "client": [
       "com.github.legoatoom.connectiblechains.client.ClientInitializer"
     ],
-    "server": [
-      "com.github.legoatoom.connectiblechains.server.ServerInitializer"
-    ],
     "modmenu": [
       "com.github.legoatoom.connectiblechains.config.ModMenuIntegration"
     ]
@@ -40,7 +37,7 @@
   "depends": {
     "fabricloader": ">=0.14.9",
     "fabric": "*",
-    "minecraft": ">=1.19.0 <=1.19.2",
+    "minecraft": "1.19.4",
     "cloth-config2": ">=8.2.88"
   },
   "breaks": {

@@ -1,7 +1,20 @@
+/*
+ * Copyright (C) 2023 legoatoom
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.github.legoatoom.connectiblechains.client.render.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.chain.ChainTypesRegistry;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -12,8 +25,6 @@ import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.profiler.Profiler;
 
-import java.io.IOException;
-import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +35,7 @@ import java.util.concurrent.Executor;
  * It looks for models at models/entity/chain/ within the same namespace as the chain type.
  * Inspired by {@link net.minecraft.client.render.model.BakedModelManager} and {@link net.minecraft.client.render.model.ModelLoader}.
  */
+@Deprecated
 public class ChainTextureManager implements SimpleResourceReloadListener<Map<Identifier, ChainTextureManager.JsonModel>> {
     private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final Identifier MISSING_ID = new Identifier(ConnectibleChains.MODID, "textures/entity/missing.png");
@@ -54,15 +66,15 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
      */
     public Map<Identifier, JsonModel> load(ResourceManager manager) {
         Map<Identifier, JsonModel> map = new HashMap<>();
-
-        for (Identifier chainType : ChainTypesRegistry.REGISTRY.getIds()) {
-            try(Reader reader =  manager.openAsReader(getResourceID(chainType))){
-                JsonModel jsonModel = GSON.fromJson(reader, JsonModel.class);
-                map.put(chainType, jsonModel);
-            } catch (IOException e){
-                ConnectibleChains.LOGGER.error("Missing model for {}.", chainType, e);
-            }
-        }
+//
+//        for (RegistryEntry.Reference<Item> itemReference : Registry.ITEM.streamEntries().filter(itemReference -> itemReference.isIn(CommonTags.CHAINS)).toList()) {
+//            try(Reader reader =  manager.openAsReader(getResourceID(chainType))){
+//                JsonModel jsonModel = GSON.fromJson(reader, JsonModel.class);
+//                map.put(chainType, jsonModel);
+//            } catch (IOException e){
+//                ConnectibleChains.LOGGER.error("Missing model for {}.", chainType, e);
+//            }
+//        }
         return map;
     }
 
