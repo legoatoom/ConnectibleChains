@@ -6,8 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
-## [2.1.5] - 
+## [2.2.0] - 12023-04-16
 - Fix Tooltip Config not Working
+- Added new text for the tooltip.
+- Reworked the compatibility to be tag-based.
+  - Using `data/c/tags/items/chains.json` we check if an item can be used to make a catenary.\
+  The code then assumes an `item` and `block`texture for the `knot` and `catenary`. \
+  This implies that you can make anything a compatible chain, as long as you have textures available.
+  For modded players, you need to add a data pack where you  add tags for the chain items you want added.
 
 ## [2.1.4] - 12022-11-18
 - Fix Gold Chain Charm
