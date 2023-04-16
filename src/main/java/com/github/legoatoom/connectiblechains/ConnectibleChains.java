@@ -24,6 +24,7 @@ import com.github.legoatoom.connectiblechains.item.ChainItemInfo;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
+import net.devtech.arrp.api.RuntimeResourcePack;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -35,6 +36,8 @@ import org.apache.logging.log4j.Logger;
  */
 public class ConnectibleChains implements ModInitializer {
 
+
+    public static final RuntimeResourcePack RESOURCE_PACK = RuntimeResourcePack.create("connectiblechains:test");
     /**
      * All mods need to have an ID, that is what tells the game and fabric what each mod is.
      * These need to be unique for all mods, and always stay the same in your mod, so by creating a field
