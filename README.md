@@ -39,7 +39,11 @@ If you have encountered any bugs or have some feedback, go to the GitHub [issues
 #### Versions
 I will not be supporting versions lower than 1.19.4
 
-#### Compatability
+##### Updating from 1.19.2 to 1.19.4
+A lot changed in the code. I do not know what will happen when you update.\
+You can expect funky behaviour. 
+
+#### Compatibility with other mods
 Using `data/c/tags/items/chains.json` we check if an item can be used to make a catenary.\
 The code then assumes an `item` and `block`texture for the `knot` and `catenary`. \
 This implies that you can make anything a compatible chain, as long as you have textures available.
