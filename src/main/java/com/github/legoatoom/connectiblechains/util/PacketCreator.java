@@ -36,22 +36,22 @@ import java.util.function.Function;
  */
 public class PacketCreator {
     /**
-     * Creates a spawn packet for {@code e} with additional data from {@code extraData}.
+     * Creates a spawn packet for {@code entity} with additional data from {@code extraData}.
      *
-     * @param e         The entity to spawn
+     * @param entity    The entity to spawn
      * @param packetID  The spawn packet id
      * @param extraData Extra data supplier
      * @return A S2C packet
      */
-    public static Packet<ClientPlayPacketListener> createSpawn(Entity e, Identifier packetID, Function<PacketByteBuf, PacketByteBuf> extraData) {
-        if (e.world.isClient)
+    public static Packet<ClientPlayPacketListener> createSpawn(Entity entity, Identifier packetID, Function<PacketByteBuf, PacketByteBuf> extraData) {
+        if (entity.getWorld().isClient)
             throw new IllegalStateException("Called on the logical client!");
         PacketByteBuf byteBuf = new PacketByteBuf(Unpooled.buffer());
-        byteBuf.writeVarInt(Registries.ENTITY_TYPE.getRawId(e.getType()));
-        byteBuf.writeUuid(e.getUuid());
-        byteBuf.writeVarInt(e.getId());
+        byteBuf.writeVarInt(Registries.ENTITY_TYPE.getRawId(entity.getType()));
+        byteBuf.writeUuid(entity.getUuid());
+        byteBuf.writeVarInt(entity.getId());
 
-        PacketBufUtil.writeVec3d(byteBuf, e.getPos());
+        PacketBufUtil.writeVec3d(byteBuf, entity.getPos());
         // pitch and yaw don't matter so don't send them
         byteBuf = extraData.apply(byteBuf);
         return ServerPlayNetworking.createS2CPacket(packetID, byteBuf);

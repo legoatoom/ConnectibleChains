@@ -56,7 +56,7 @@ public class IncompleteChainLink {
      */
     public boolean tryCompleteOrRemove() {
         if (isDead()) return true;
-        Entity secondary = primary.world.getEntityById(secondaryId);
+        Entity secondary = primary.getWorld().getEntityById(secondaryId);
         if (secondary == null) return false;
         ChainLink.create(primary, secondary, sourceItem);
         return true;

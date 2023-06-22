@@ -207,7 +207,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
      */
     @Override
     public void tick() {
-        if (world.isClient) return;
+        if (getWorld().isClient()) return;
         // Condition can be met when the knots were removed with commands
         // but the collider still exists
         if (link != null && link.needsBeDestroyed()) link.destroy(true);
