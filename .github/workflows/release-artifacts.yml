@@ -44,7 +44,7 @@ jobs:
         with:
           modrinth-id: ykSfIgTw
           modrinth-token: ${{ secrets.MODRINTH_API_KEY }}
-          
+          modrinth-files-secondary: build/libs/*-@(sources\|javadoc).jar
           curseforge-id: 415681
           curseforge-token: ${{ secrets.CURSEFORGE_API_KEY }}
           
