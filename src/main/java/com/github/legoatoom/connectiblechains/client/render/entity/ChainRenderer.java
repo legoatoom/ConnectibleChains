@@ -58,7 +58,7 @@ public class ChainRenderer {
      */
     public void renderBaked(VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model;
-        if (models.containsKey(key)) {
+        if (models.containsKey(key) && false) {
             model = models.get(key);
         } else {
             model = buildModel(chainVec);
@@ -81,7 +81,7 @@ public class ChainRenderer {
         int initialCapacity = (int) (2f * chainVec.lengthSquared() / desiredSegmentLength);
         ChainModel.Builder builder = ChainModel.builder(initialCapacity);
 
-        if (chainVec.x() == 0 && chainVec.z() == 0) {
+        if (Float.isNaN(chainVec.x()) && Float.isNaN(chainVec.z())) {
             buildFaceVertical(builder, chainVec, 45, UVRect.DEFAULT_SIDE_A);
             buildFaceVertical(builder, chainVec, -45, UVRect.DEFAULT_SIDE_B);
         } else {
@@ -96,6 +96,8 @@ public class ChainRenderer {
      * {@link #buildFace} does not work when {@code v} is pointing straight up or down.
      */
     private void buildFaceVertical(ChainModel.Builder builder, Vector3f v, float angle, UVRect uv) {
+        v.x = 0;
+        v.z = 0;
         float actualSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
         float chainWidth = (uv.x1() - uv.x0()) / 16 * CHAIN_SCALE;
 
@@ -103,9 +105,9 @@ public class ChainRenderer {
         normal.normalize(chainWidth);
 
         Vector3f vert00 = new Vector3f(-normal.x() / 2, 0, -normal.z() / 2), vert01 = new Vector3f(vert00);
-        vert01.add(normal);
+//        vert01.add(normal);
         Vector3f vert10 = new Vector3f(-normal.x() / 2, 0, -normal.z() / 2), vert11 = new Vector3f(vert10);
-        vert11.add(normal);
+//        vert11.add(normal);
 
         float uvv0 = 0, uvv1 = 0;
         boolean lastIter = false;

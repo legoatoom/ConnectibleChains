@@ -584,11 +584,11 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             // Interacted with a valid chain item, create a new link
             onPlace();
             ChainLink.create(this, player, handStack.getItem());
+            // Allow changing the chainType of the knot
+            updateChainType(handStack.getItem());
             if (!player.isCreative()) {
                 player.getStackInHand(hand).decrement(1);
             }
-            // Allow changing the chainType of the knot
-            updateChainType(handStack.getItem());
 
             return ActionResult.CONSUME;
         }
