@@ -17,8 +17,10 @@ package com.github.legoatoom.connectiblechains.mixin.server.network;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
 import net.minecraft.entity.Entity;
+import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.server.network.EntityTrackerEntry;
+import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -35,9 +37,9 @@ abstract class EntityTrackerEntryMixin {
     private Entity entity;
 
     @Inject(method = "sendPackets", at = @At("TAIL"))
-    private void sendPackages(Consumer<Packet<?>> sender, CallbackInfo ci) {
+    private void sendPackages(ServerPlayerEntity player, Consumer<Packet<ClientPlayPacketListener>> sender, CallbackInfo ci) {
         if (this.entity instanceof ChainKnotEntity knot) {
-            Packet<?> packet = PacketCreator.createMultiAttach(knot);
+            Packet<ClientPlayPacketListener> packet = PacketCreator.createMultiAttach(knot);
             if (packet != null) sender.accept(packet);
         }
     }
