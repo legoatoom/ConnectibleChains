@@ -6,6 +6,9 @@
   <a title="Fabric API" href="https://github.com/FabricMC/fabric">
     <img src="https://i.imgur.com/Ol1Tcf8.png" width="151" height="50">
   </a>
+  <a title="Cloth API" href="https://modrinth.com/mod/cloth-config">
+    <img src="https://i.imgur.com/7weZ8uu.png" width="151" height="50">
+  </a>
 </p>
 <br>
 <p align="center">
@@ -38,10 +41,6 @@ If you have encountered any bugs or have some feedback, go to the GitHub [issues
 
 #### Versions
 I will not be supporting versions lower than 1.19.4
-
-##### Updating from 1.19.2 to 1.19.4
-A lot changed in the code. I do not know what will happen when you update.\
-You can expect funky behaviour. 
 
 #### Compatibility with other mods
 Using `data/c/tags/items/chains.json` we check if an item can be used to make a catenary.\
