@@ -44,7 +44,7 @@ jobs:
         with:
           modrinth-id: ykSfIgTw
           modrinth-token: ${{ secrets.MODRINTH_API_KEY }}
-          
+          modrinth-files-secondary: build/libs/*-@(sources\|javadoc).jar
           curseforge-id: 415681
           curseforge-token: ${{ secrets.CURSEFORGE_API_KEY }}
           
@@ -52,5 +52,5 @@ jobs:
           github-files-secondary: build/libs/*-@(dev\|sources\|javadoc).jar
           github-token: ${{ secrets.GITHUB_TOKEN }}
           loaders: fabric
-          game-versions: 1.19.4
+          game-versions: 1.20.1
           java: 17
