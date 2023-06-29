@@ -43,9 +43,6 @@ import java.util.List;
 public class ChainItemInfo {
 
 
-
-
-
     /**
      * Because of how mods work, this function is called always when a player uses right click.
      * But if the right click doesn't involve this mod (No chain/block to connect to) then we ignore immediately.
@@ -64,8 +61,9 @@ public class ChainItemInfo {
         BlockPos blockPos = hitResult.getBlockPos();
         BlockState blockState = world.getBlockState(blockPos);
 
-        if (!ChainKnotEntity.canAttachTo(blockState)) return ActionResult.PASS;
-        else if (world.isClient) {
+        if (!ChainKnotEntity.canAttachTo(blockState)) {
+            return ActionResult.PASS;
+        } else if (world.isClient) {
             ItemStack handItem = player.getStackInHand(hand);
             if (handItem.isIn(CommonTags.CHAINS)) {
                 return ActionResult.SUCCESS;
@@ -84,6 +82,7 @@ public class ChainItemInfo {
 
             return ActionResult.PASS;
         }
+
 
         // 1. Try with existing knot, regardless of hand item
         ChainKnotEntity knot = ChainKnotEntity.getKnotAt(world, blockPos);
@@ -106,8 +105,9 @@ public class ChainItemInfo {
         }
 
         // Held item does not correspond to a type.
-        if (!stack.isIn(CommonTags.CHAINS))
+        if (!stack.isIn(CommonTags.CHAINS)) {
             knotType = attachableChains.get(0).sourceItem;
+        }
 
         // 3. Create new knot if none exists and delegate interaction
         knot = new ChainKnotEntity(world, blockPos, knotType);

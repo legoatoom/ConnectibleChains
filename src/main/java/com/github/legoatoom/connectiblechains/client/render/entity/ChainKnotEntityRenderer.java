@@ -50,9 +50,6 @@ import java.util.List;
  * I tried to make it as easy to understand as possible, mainly for myself, since the MobEntityRenderer has a lot of
  * unclear code and shortcuts made.</p>
  *
- * <p>Following is the formula used. h is the height difference, d is the distance and α is a scaling factor</p>
- *
- * <img src="./doc-files/formula.png">
  *
  * @author legoatoomm, Qendolin
  * @see net.minecraft.client.render.entity.LeashKnotEntityRenderer
@@ -171,7 +168,8 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         // - does not have an overlay
         // - does not have vertex color
         // - uses a tri strip instead of quads
-        VertexConsumer buffer = vertexConsumerProvider.getBuffer(RenderLayer.getEntityCutoutNoCull(getChainTexture(sourceItem)));
+        RenderLayer entityCutout = RenderLayer.getEntityCutoutNoCull(getChainTexture(sourceItem));
+        VertexConsumer buffer = vertexConsumerProvider.getBuffer(entityCutout);
         if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
             buffer = vertexConsumerProvider.getBuffer(RenderLayer.getLines());
         }

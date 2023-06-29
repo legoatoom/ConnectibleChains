@@ -178,7 +178,7 @@ public class ChainPacketHandler {
     }
 
     private void logBadActionTarget(String action, Entity target, int targetId, String expectedTarget) {
-        ConnectibleChains.LOGGER.error(String.format("Tried to %s %s (#%d) which is not %s",
+        ConnectibleChains.LOGGER.warn(String.format("Tried to %s %s (#%d) which is not %s",
                 action, target, targetId, expectedTarget
         ));
     }
