@@ -22,6 +22,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.listener.ClientCommonPacketListener;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.registry.Registries;
@@ -43,7 +44,7 @@ public class PacketCreator {
      * @param extraData Extra data supplier
      * @return A S2C packet
      */
-    public static Packet<ClientPlayPacketListener> createSpawn(Entity entity, Identifier packetID, Function<PacketByteBuf, PacketByteBuf> extraData) {
+    public static Packet<ClientCommonPacketListener> createSpawn(Entity entity, Identifier packetID, Function<PacketByteBuf, PacketByteBuf> extraData) {
         if (entity.getWorld().isClient)
             throw new IllegalStateException("Called on the logical client!");
         PacketByteBuf byteBuf = new PacketByteBuf(Unpooled.buffer());
@@ -54,6 +55,7 @@ public class PacketCreator {
         PacketBufUtil.writeVec3d(byteBuf, entity.getPos());
         // pitch and yaw don't matter so don't send them
         byteBuf = extraData.apply(byteBuf);
+
         return ServerPlayNetworking.createS2CPacket(packetID, byteBuf);
     }
 
@@ -79,6 +81,7 @@ public class PacketCreator {
             buf.writeInt(knot.getId());
             buf.writeIntList(ids);
             buf.writeIntList(types);
+
             return ServerPlayNetworking.createS2CPacket(NetworkingPackets.S2C_MULTI_CHAIN_ATTACH_PACKET_ID, buf);
         }
         return null;

@@ -31,8 +31,6 @@ import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
-import net.minecraft.text.LiteralTextContent;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -107,10 +105,11 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
             matrices.push();
             // F stands for "from", T for "to"
-            Text holdingCount = MutableText.of(new LiteralTextContent("F: " + chainKnotEntity.getLinks().stream()
-                    .filter(l -> l.primary == chainKnotEntity).count()));
-            Text heldCount = MutableText.of(new LiteralTextContent("T: " + chainKnotEntity.getLinks().stream()
-                    .filter(l -> l.secondary == chainKnotEntity).count()));
+
+            Text holdingCount = Text.literal("F: " + chainKnotEntity.getLinks().stream()
+                    .filter(l -> l.primary == chainKnotEntity).count());
+            Text heldCount = Text.literal("T: " + chainKnotEntity.getLinks().stream()
+                    .filter(l -> l.secondary == chainKnotEntity).count());
             matrices.translate(0, 0.25, 0);
             this.renderLabelIfPresent(chainKnotEntity, holdingCount, matrices, vertexConsumers, light);
             matrices.translate(0, 0.25, 0);

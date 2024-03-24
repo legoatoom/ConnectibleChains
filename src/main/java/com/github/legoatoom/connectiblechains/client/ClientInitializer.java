@@ -114,6 +114,7 @@ public class ClientInitializer implements ClientModInitializer {
             ConnectibleChains.runtimeConfig.copyFrom(ConnectibleChains.fileConfig);
             getChainKnotEntityRenderer().ifPresent(r -> r.getChainRenderer().purge());
         });
+        ClientPlayNetworking.registerGlobalReceiver()
 
         ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_CONFIG_SYNC_PACKET,
                 (client, handler, packetByteBuf, responseSender) -> {
