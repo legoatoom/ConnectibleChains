@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.3.0] - 12024-03-30
+- Reworked Networking to conform with new standard.
+- Removed all mixins, as they were no longer needed (I hope).
+- Added `c:bars` tags and allowed chains to be connected to iron bars.
+- Minecraft version 1.20.4
+
 ## [2.2.1] - 12023-06-29
 - Fixed texture bug when having one chain in hand.
 
