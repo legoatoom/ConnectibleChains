@@ -42,10 +42,5 @@
   },
   "breaks": {
     "chains": "*"
-  },
-  "custom": {
-    "cardinal-components": [
-      "connectiblechains:chainnet"
-    ]
   }
 }
