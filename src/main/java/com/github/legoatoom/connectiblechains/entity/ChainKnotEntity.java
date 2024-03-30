@@ -712,7 +712,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     }
 
     /**
-     * Writes all client side relevant information into a {@link NetworkingPackets#S2C_SPAWN_CHAIN_KNOT_PACKET} packet and sends it.
+     * Writes all client side relevant information into a {@link EntitySpawnS2CPacket} packet and sends it.
      *
      * @see PacketCreator
      */
