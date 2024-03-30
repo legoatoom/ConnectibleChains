@@ -14,6 +14,7 @@
 
 package com.github.legoatoom.connectiblechains.tag;
 
+import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -29,6 +30,7 @@ public class CommonTags {
 
     public static final TagKey<Item> SHEARS = makeCommonItemTag("shears");
     public static final TagKey<Item> CHAINS = makeCommonItemTag("chains");
+    public static final TagKey<Block> BARS = makeCommonBlockTag("bars");
 
     /**
      * Get or create {@link Item} {@link TagKey}.
@@ -40,6 +42,20 @@ public class CommonTags {
     public static TagKey<Item> makeCommonItemTag(String name) {
         return makeTag(Registries.ITEM, new Identifier("c", name));
     }
+
+
+    /**
+     * Get or create {@link Block} {@link TagKey}.
+     *
+     * @param name The tag name / path.
+     * @return An existing or new {@link TagKey}.
+     * @see <a href="https://fabricmc.net/wiki/tutorial:tags">Fabric Wiki (Tags)</a>
+     */
+    public static TagKey<Block> makeCommonBlockTag(String name) {
+        return makeTag(Registries.BLOCK, new Identifier("c", name));
+    }
+
+
 
     /**
      * Get or create {@link TagKey}.

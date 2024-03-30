@@ -71,9 +71,9 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
     public boolean shouldRender(ChainKnotEntity entity, Frustum frustum, double x, double y, double z) {
         if (entity.ignoreCameraFrustum) return true;
         for (ChainLink link : entity.getLinks()) {
-            if (link.primary != entity) continue;
-            if (link.secondary instanceof PlayerEntity) return true;
-            else if (link.secondary.shouldRender(x, y, z)) return true;
+            if (link.getPrimary() != entity) continue;
+            if (link.getSecondary() instanceof PlayerEntity) return true;
+            else if (link.getSecondary().shouldRender(x, y, z)) return true;
         }
         return super.shouldRender(entity, frustum, x, y, z);
     }
@@ -95,10 +95,10 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         // Render the links
         List<ChainLink> links = chainKnotEntity.getLinks();
         for (ChainLink link : links) {
-            if (link.primary != chainKnotEntity || link.isDead()) continue;
+            if (link.getPrimary() != chainKnotEntity || link.isDead()) continue;
             this.renderChainLink(link, tickDelta, matrices, vertexConsumers);
             if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
-                this.drawDebugVector(matrices, chainKnotEntity, link.secondary, vertexConsumers.getBuffer(RenderLayer.LINES));
+                this.drawDebugVector(matrices, chainKnotEntity, link.getSecondary(), vertexConsumers.getBuffer(RenderLayer.LINES));
             }
         }
 
@@ -107,9 +107,9 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             // F stands for "from", T for "to"
 
             Text holdingCount = Text.literal("F: " + chainKnotEntity.getLinks().stream()
-                    .filter(l -> l.primary == chainKnotEntity).count());
+                    .filter(l -> l.getPrimary() == chainKnotEntity).count());
             Text heldCount = Text.literal("T: " + chainKnotEntity.getLinks().stream()
-                    .filter(l -> l.secondary == chainKnotEntity).count());
+                    .filter(l -> l.getSecondary() == chainKnotEntity).count());
             matrices.translate(0, 0.25, 0);
             this.renderLabelIfPresent(chainKnotEntity, holdingCount, matrices, vertexConsumers, light);
             matrices.translate(0, 0.25, 0);
@@ -140,8 +140,8 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
      * @param vertexConsumerProvider The VertexConsumerProvider, whatever it does.
      */
     private void renderChainLink(ChainLink link, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumerProvider) {
-        ChainKnotEntity fromEntity = link.primary;
-        Entity toEntity = link.secondary;
+        ChainKnotEntity fromEntity = link.getPrimary();
+        Entity toEntity = link.getSecondary();
         matrices.push();
 
         // Don't have to lerp knot position as it can't move
@@ -160,7 +160,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         Vec3d leashOffset = fromEntity.getLeashOffset();
         matrices.translate(leashOffset.x, leashOffset.y, leashOffset.z);
 
-        Item sourceItem = link.sourceItem;
+        Item sourceItem = link.getSourceItem();
         // Some further performance improvements can be made here:
         // Create a rendering layer that:
         // - does not have normals

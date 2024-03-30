@@ -1,0 +1,60 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+assignees:
+  - legoatoom
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report. I want to know a few things to help me understand the problem you are having.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      options:
+        - label: I am having issues with the Fabric version.
+          required: true
+        - label: I am using the latest version of Connectible Chains.
+          required: true
+        - label: I have looked for similar issues.
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        For the following fields, I would like some general information about the game you are using.
+
+  - type: input
+    id: version
+    attributes:
+      label: MC Version
+      placeholder: "x.xx.x"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Fabric Loader Version
+      placeholder: ""
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What is the problem?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy a link to relevant logs or, if they are small enough place them here.
+      render: shell

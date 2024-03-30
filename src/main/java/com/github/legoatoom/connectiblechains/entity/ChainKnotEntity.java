@@ -16,6 +16,8 @@ package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
+import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachPacket;
+import com.github.legoatoom.connectiblechains.networking.packet.MultiChainAttachPacket;
 import com.github.legoatoom.connectiblechains.tag.CommonTags;
 import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
@@ -43,6 +45,7 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -58,7 +61,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Function;
 
 /**
  * The ChainKnotEntity is the main entity of this mod.
@@ -208,7 +210,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
 
             if (!isAlive()) {
                 link.destroy(true);
-            } else if (link.primary == this && link.getSquaredDistance() > squaredMaxRange) {
+            } else if (link.getPrimary() == this && link.getSquaredDistance() > squaredMaxRange) {
                 // no need to check the distance on both ends
                 link.destroy(true);
             }
@@ -371,7 +373,21 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * @return true if is allowed.
      */
     public static boolean canAttachTo(BlockState blockState) {
-        return blockState != null && (blockState.isIn(BlockTags.WALLS) || blockState.isIn(BlockTags.FENCES));
+        if (blockState != null) {
+            return blockState.isIn(BlockTags.WALLS) || blockState.isIn(BlockTags.FENCES) || blockState.isIn(CommonTags.BARS);
+        }
+        return false;
+    }
+
+    @Override
+    public void onStartedTrackingBy(ServerPlayerEntity player) {
+        ServerPlayNetworking.send(player,
+                new MultiChainAttachPacket(
+                        this.getLinks()
+                                .stream()
+                                .filter(chainLink -> chainLink.getPrimary().getId() == this.getId())
+                                .map(chainLink -> new ChainAttachPacket(chainLink, true))
+                                .toList()));
     }
 
     /**
@@ -440,17 +456,16 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     @Override
     public void writeCustomDataToNbt(NbtCompound root) {
-//        ChainKnotFixer.INSTANCE.addVersionTag(root);
         root.putString(SOURCE_ITEM_KEY, Registries.ITEM.getId(chainItemSource).toString());
         NbtList linksTag = new NbtList();
 
         // Write complete links
         for (ChainLink link : links) {
             if (link.isDead()) continue;
-            if (link.primary != this) continue;
-            Entity secondary = link.secondary;
+            if (link.getPrimary() != this) continue;
+            Entity secondary = link.getSecondary();
             NbtCompound compoundTag = new NbtCompound();
-            compoundTag.putString(SOURCE_ITEM_KEY, Registries.ITEM.getId(link.sourceItem).toString());
+            compoundTag.putString(SOURCE_ITEM_KEY, Registries.ITEM.getId(link.getSourceItem()).toString());
             if (secondary instanceof PlayerEntity) {
                 UUID uuid = secondary.getUuid();
                 compoundTag.putUuid("UUID", uuid);
@@ -570,7 +585,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         // 2. Try to cancel chain links (when clicking same knot twice)
         boolean broke = false;
         for (ChainLink link : links) {
-            if (link.secondary == player) {
+            if (link.getSecondary() == player) {
                 broke = true;
                 link.destroy(true);
             }
@@ -614,10 +629,10 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         List<ChainLink> attachableLinks = getHeldChainsInRange(player, getDecorationBlockPos());
         for (ChainLink link : attachableLinks) {
             // Prevent connections with self
-            if (link.primary == this) continue;
+            if (link.getPrimary() == this) continue;
 
             // Move that link to this knot
-            ChainLink newLink = ChainLink.create(link.primary, this, link.sourceItem);
+            ChainLink newLink = ChainLink.create(link.getPrimary(), this, link.getSourceItem());
 
             // Check if the link does not already exist
             if (newLink != null) {
@@ -670,7 +685,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
 
         for (ChainKnotEntity source : otherKnots) {
             for (ChainLink link : source.getLinks()) {
-                if (link.secondary != player) continue;
+                if (link.getSecondary() != player) continue;
                 // We found a knot that is connected to the player.
                 attachableLinks.add(link);
             }
@@ -703,11 +718,15 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     @Override
     public Packet<ClientPlayPacketListener> createSpawnPacket() {
-        Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf -> {
-            packetByteBuf.writeVarInt(Registries.ITEM.getRawId(chainItemSource));
-            return packetByteBuf;
-        };
-        return PacketCreator.createSpawn(this, NetworkingPackets.S2C_SPAWN_CHAIN_KNOT_PACKET, extraData);
+        int id = Registries.ITEM.getRawId(chainItemSource);
+        return new EntitySpawnS2CPacket(this, id, this.getDecorationBlockPos());
+    }
+
+    @Override
+    public void onSpawnPacket(EntitySpawnS2CPacket packet) {
+        super.onSpawnPacket(packet);
+        int rawChainItemSourceId = packet.getEntityData();
+        chainItemSource = Registries.ITEM.get(rawChainItemSourceId);
     }
 
     /**

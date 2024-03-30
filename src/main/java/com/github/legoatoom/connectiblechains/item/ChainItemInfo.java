@@ -70,7 +70,7 @@ public class ChainItemInfo {
             }
 
             // Check if any held chains can be attached. This can be done without holding a chain item
-            if (ChainKnotEntity.getHeldChainsInRange(player, blockPos).size() > 0) {
+            if (!ChainKnotEntity.getHeldChainsInRange(player, blockPos).isEmpty()) {
                 return ActionResult.SUCCESS;
             }
 
@@ -100,20 +100,19 @@ public class ChainItemInfo {
         Item knotType = stack.getItem();
 
         // Allow default interaction behaviour.
-        if (attachableChains.size() == 0 && !stack.isIn(CommonTags.CHAINS)) {
+        if (attachableChains.isEmpty() && !stack.isIn(CommonTags.CHAINS)) {
             return ActionResult.PASS;
         }
 
         // Held item does not correspond to a type.
         if (!stack.isIn(CommonTags.CHAINS)) {
-            knotType = attachableChains.get(0).sourceItem;
+            knotType = attachableChains.get(0).getSourceItem();
         }
 
         // 3. Create new knot if none exists and delegate interaction
         knot = new ChainKnotEntity(world, blockPos, knotType);
         knot.setGraceTicks((byte) 0);
         world.spawnEntity(knot);
-//        knot.onPlace();
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {

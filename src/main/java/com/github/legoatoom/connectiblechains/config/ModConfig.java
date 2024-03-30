@@ -73,7 +73,7 @@ public class ModConfig implements ConfigData {
     }
 
     public boolean doDebugDraw() {
-        return IS_DEBUG_ENV && MinecraftClient.getInstance().options.debugEnabled;
+        return IS_DEBUG_ENV && MinecraftClient.getInstance().getDebugHud().shouldShowDebugHud();
     }
 
     public void syncToClients(MinecraftServer server) {
@@ -89,11 +89,13 @@ public class ModConfig implements ConfigData {
     public PacketByteBuf writePacket() {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         buf.writeFloat(chainHangAmount);
+        buf.writeInt(maxChainRange);
         return buf;
     }
 
     public void readPacket(PacketByteBuf buf) {
         this.chainHangAmount = buf.readFloat();
+        this.maxChainRange = buf.readInt();
     }
 
     public ModConfig copyFrom(ModConfig config) {

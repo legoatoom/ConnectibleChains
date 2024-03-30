@@ -4,8 +4,6 @@
   "package": "com.github.legoatoom.connectiblechains.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "server.network.EntityTrackerEntryMixin",
-    "server.world.ThreadedAnvilChunkStorageMixin"
   ],
   "injectors": {
     "defaultRequire": 1

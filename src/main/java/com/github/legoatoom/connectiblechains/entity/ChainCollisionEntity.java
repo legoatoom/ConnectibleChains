@@ -16,8 +16,6 @@ package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.tag.CommonTags;
-import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
-import com.github.legoatoom.connectiblechains.util.PacketCreator;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -26,21 +24,13 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.registry.Registries;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Function;
 
 /**
  * ChainCollisionEntity is an Entity that is invisible but has a collision.
@@ -56,12 +46,6 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Nullable
     private ChainLink link;
 
-    /**
-     * On the client only the chainType information is present, for the pick item action mostly
-     */
-    @Environment(EnvType.CLIENT)
-    private Item sourceItem;
-
     public ChainCollisionEntity(World world, double x, double y, double z, @NotNull ChainLink link) {
         this(ModEntityTypes.CHAIN_COLLISION, world);
         this.link = link;
@@ -75,16 +59,6 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @SuppressWarnings("unused")
     public @Nullable ChainLink getLink() {
         return link;
-    }
-
-    @Environment(EnvType.CLIENT)
-    public Item getSourceItem() {
-        return sourceItem;
-    }
-
-    @Environment(EnvType.CLIENT)
-    public void setSourceItem(Item sourceItem) {
-        this.sourceItem = sourceItem;
     }
 
     @Override
@@ -189,17 +163,6 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
             return ActionResult.SUCCESS;
         }
         return ActionResult.PASS;
-    }
-
-    /**
-     * The client only needs to know type info for the pick item action.
-     * Links are handled server-side.
-     */
-    @Override
-    public Packet<ClientPlayPacketListener> createSpawnPacket() {
-        Function<PacketByteBuf, PacketByteBuf> extraData = packetByteBuf
-                -> packetByteBuf.writeVarInt(Registries.ITEM.getRawId(link == null ? Items.CHAIN : link.sourceItem));
-        return PacketCreator.createSpawn(this, NetworkingPackets.S2C_SPAWN_CHAIN_COLLISION_PACKET, extraData);
     }
 
     /**

@@ -18,9 +18,8 @@ import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.entity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
+import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachPacket;
 import com.github.legoatoom.connectiblechains.util.Helper;
-import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
-import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
@@ -30,8 +29,6 @@ import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.MathHelper;
@@ -62,12 +59,12 @@ public class ChainLink {
      * The de facto owner of this link. It is responsive for managing the link and keeping track of it across saves.
      */
     @NotNull
-    public final ChainKnotEntity primary;
+    private final ChainKnotEntity primary;
     /**
      * The de facto target of this link. Mostly used to calculate positions.
      */
     @NotNull
-    public final Entity secondary;
+    private final Entity secondary;
     /**
      * The type of the link
      */
@@ -99,8 +96,8 @@ public class ChainLink {
      * adds it to their lists. Also spawns {@link ChainCollisionEntity collision entities}
      * when the link is created between two knots.
      *
-     * @param primary   The source knot
-     * @param secondary A different chain knot or player
+     * @param primary    The source knot
+     * @param secondary  A different chain knot or player
      * @param sourceItem The type of the link
      * @return A new chain link or null if it already exists
      */
@@ -129,9 +126,9 @@ public class ChainLink {
      */
     private void createCollision() {
         if (!collisionStorage.isEmpty()) return;
-        if (primary.getWorld().isClient) return;
+        if (getPrimary().getWorld().isClient) return;
 
-        double distance = primary.distanceTo(secondary);
+        double distance = getPrimary().distanceTo(getSecondary());
         // step = spacing * √(width^2 + width^2) / distance
         double step = COLLIDER_SPACING * Math.sqrt(Math.pow(ModEntityTypes.CHAIN_COLLISION.getWidth(), 2) * 2) / distance;
         double v = step;
@@ -139,15 +136,15 @@ public class ChainLink {
         double centerHoldout = ModEntityTypes.CHAIN_COLLISION.getWidth() / distance;
 
         while (v < 0.5 - centerHoldout) {
-            Entity collider1 = spawnCollision(false, primary, secondary, v);
+            Entity collider1 = spawnCollision(false, getPrimary(), getSecondary(), v);
             if (collider1 != null) collisionStorage.add(collider1.getId());
-            Entity collider2 = spawnCollision(true, primary, secondary, v);
+            Entity collider2 = spawnCollision(true, getPrimary(), getSecondary(), v);
             if (collider2 != null) collisionStorage.add(collider2.getId());
 
             v += step;
         }
 
-        Entity centerCollider = spawnCollision(false, primary, secondary, 0.5);
+        Entity centerCollider = spawnCollision(false, getPrimary(), getSecondary(), 0.5);
         if (centerCollider != null) collisionStorage.add(centerCollider.getId());
     }
 
@@ -158,14 +155,8 @@ public class ChainLink {
         assert world instanceof ServerWorld;
 
         Set<ServerPlayerEntity> trackingPlayers = getTrackingPlayers(world);
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-
-        buf.writeVarInt(primary.getId());
-        buf.writeVarInt(secondary.getId());
-        buf.writeVarInt(Registries.ITEM.getRawId(sourceItem));
-
         for (ServerPlayerEntity player : trackingPlayers) {
-            ServerPlayNetworking.send(player, NetworkingPackets.S2C_CHAIN_ATTACH_PACKET_ID, buf);
+            ServerPlayNetworking.send(player, new ChainAttachPacket(this, true));
         }
     }
 
@@ -180,7 +171,7 @@ public class ChainLink {
      */
     @Nullable
     private Entity spawnCollision(boolean reverse, Entity start, Entity end, double v) {
-        assert primary.getWorld() instanceof ServerWorld;
+        assert getPrimary().getWorld() instanceof ServerWorld;
         Vec3d startPos = start.getPos().add(start.getLeashOffset(0));
         Vec3d endPos = end.getPos().add(end.getLeashOffset(0));
 
@@ -203,8 +194,8 @@ public class ChainLink {
 
         y += -ModEntityTypes.CHAIN_COLLISION.getHeight() + 2 / 16f;
 
-        ChainCollisionEntity c = new ChainCollisionEntity(primary.getWorld(), x, y, z, this);
-        if (primary.getWorld().spawnEntity(c)) {
+        ChainCollisionEntity c = new ChainCollisionEntity(getPrimary().getWorld(), x, y, z, this);
+        if (getPrimary().getWorld().spawnEntity(c)) {
             return c;
         } else {
             ConnectibleChains.LOGGER.warn("Tried to summon collision entity for a chain, failed to do so");
@@ -221,9 +212,9 @@ public class ChainLink {
     private Set<ServerPlayerEntity> getTrackingPlayers(World world) {
         assert world instanceof ServerWorld;
         Set<ServerPlayerEntity> trackingPlayers = new HashSet<>(
-                PlayerLookup.around((ServerWorld) world, primary.getBlockPos(), ChainKnotEntity.VISIBLE_RANGE));
+                PlayerLookup.around((ServerWorld) world, getPrimary().getBlockPos(), ChainKnotEntity.VISIBLE_RANGE));
         trackingPlayers.addAll(
-                PlayerLookup.around((ServerWorld) world, secondary.getBlockPos(), ChainKnotEntity.VISIBLE_RANGE));
+                PlayerLookup.around((ServerWorld) world, getSecondary().getBlockPos(), ChainKnotEntity.VISIBLE_RANGE));
         return trackingPlayers;
     }
 
@@ -235,7 +226,7 @@ public class ChainLink {
      * Returns the squared distance between the primary and secondary.
      */
     public double getSquaredDistance() {
-        return this.primary.squaredDistanceTo(secondary);
+        return this.getPrimary().squaredDistanceTo(getSecondary());
     }
 
     /**
@@ -248,14 +239,14 @@ public class ChainLink {
         if (o == null || getClass() != o.getClass()) return false;
         ChainLink link = (ChainLink) o;
 
-        boolean partnersEqual = primary.equals(link.primary) && secondary.equals(link.secondary) ||
-                primary.equals(link.secondary) && secondary.equals(link.primary);
+        boolean partnersEqual = getPrimary().equals(link.getPrimary()) && getSecondary().equals(link.getSecondary()) ||
+                getPrimary().equals(link.getSecondary()) && getSecondary().equals(link.getPrimary());
         return alive == link.alive && partnersEqual;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(primary, secondary, alive);
+        return Objects.hash(getPrimary(), getSecondary(), alive);
     }
 
     /**
@@ -265,7 +256,7 @@ public class ChainLink {
      * @return true when {@link #destroy(boolean)} needs to be called
      */
     public boolean needsBeDestroyed() {
-        return primary.isRemoved() || secondary.isRemoved();
+        return getPrimary().isRemoved() || getSecondary().isRemoved();
     }
 
     /**
@@ -278,21 +269,23 @@ public class ChainLink {
         if (!alive) return;
 
         boolean drop = mayDrop;
-        World world = primary.getWorld();
+        World world = getPrimary().getWorld();
         this.alive = false;
 
-        if (world.isClient) return;
+        if (world.isClient) {
+            return;
+        }
 
-        if (secondary instanceof PlayerEntity player && player.isCreative()) drop = false;
+        if (getSecondary() instanceof PlayerEntity player && player.isCreative()) drop = false;
         // I think DO_TILE_DROPS makes more sense than DO_ENTITY_DROPS in this case
         if (!world.getGameRules().getBoolean(GameRules.DO_TILE_DROPS)) drop = false;
 
         if (drop) {
-            ItemStack stack = new ItemStack(sourceItem);
-            if (secondary instanceof PlayerEntity player) {
+            ItemStack stack = new ItemStack(getSourceItem());
+            if (getSecondary() instanceof PlayerEntity player) {
                 player.giveItemStack(stack);
             } else {
-                Vec3d middle = Helper.middleOf(primary.getPos(), secondary.getPos());
+                Vec3d middle = Helper.middleOf(getPrimary().getPos(), getSecondary().getPos());
                 ItemEntity itemEntity = new ItemEntity(world, middle.x, middle.y, middle.z, stack);
                 itemEntity.setToDefaultPickupDelay();
                 world.spawnEntity(itemEntity);
@@ -300,8 +293,9 @@ public class ChainLink {
         }
 
         destroyCollision();
-        if (!primary.isRemoved() && !secondary.isRemoved())
+        if (!primary.isRemoved() && !secondary.isRemoved()) {
             sendDetachChainPacket(world);
+        }
     }
 
     /**
@@ -309,7 +303,7 @@ public class ChainLink {
      */
     private void destroyCollision() {
         for (Integer entityId : collisionStorage) {
-            Entity e = primary.getWorld().getEntityById(entityId);
+            Entity e = getPrimary().getWorld().getEntityById(entityId);
             if (e instanceof ChainCollisionEntity) {
                 e.remove(Entity.RemovalReason.DISCARDED);
             } else {
@@ -326,14 +320,33 @@ public class ChainLink {
         assert world instanceof ServerWorld;
 
         Set<ServerPlayerEntity> trackingPlayers = getTrackingPlayers(world);
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-
-        // Write both ids so that the client can identify the link
-        buf.writeVarInt(primary.getId());
-        buf.writeVarInt(secondary.getId());
 
         for (ServerPlayerEntity player : trackingPlayers) {
-            ServerPlayNetworking.send(player, NetworkingPackets.S2C_CHAIN_DETACH_PACKET_ID, buf);
+            ServerPlayNetworking.send(player, new ChainAttachPacket(this, false));
         }
+    }
+
+    /**
+     * The de facto owner of this link. It is responsive for managing the link and keeping track of it across saves.
+     */
+    @NotNull
+    public ChainKnotEntity getPrimary() {
+        return primary;
+    }
+
+    /**
+     * The de facto target of this link. Mostly used to calculate positions.
+     */
+    @NotNull
+    public Entity getSecondary() {
+        return secondary;
+    }
+
+    /**
+     * The type of the link
+     */
+    @NotNull
+    public Item getSourceItem() {
+        return sourceItem;
     }
 }

@@ -15,6 +15,7 @@
 package com.github.legoatoom.connectiblechains.client;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
@@ -28,6 +29,8 @@ import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -39,6 +42,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.EntityHitResult;
@@ -52,11 +56,12 @@ import java.util.Optional;
  *
  * @author legoatoom
  */
+@Environment(EnvType.CLIENT)
 public class ClientInitializer implements ClientModInitializer {
 
     public static final EntityModelLayer CHAIN_KNOT = new EntityModelLayer(Helper.identifier("chain_knot"), "main");
     private static ClientInitializer instance;
-//    public final ChainTextureManager textureManager = new ChainTextureManager();
+    //    public final ChainTextureManager textureManager = new ChainTextureManager();
     private ChainKnotEntityRenderer chainKnotEntityRenderer;
     private ChainPacketHandler chainPacketHandler;
 
@@ -114,7 +119,7 @@ public class ClientInitializer implements ClientModInitializer {
             ConnectibleChains.runtimeConfig.copyFrom(ConnectibleChains.fileConfig);
             getChainKnotEntityRenderer().ifPresent(r -> r.getChainRenderer().purge());
         });
-        ClientPlayNetworking.registerGlobalReceiver()
+
 
         ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_CONFIG_SYNC_PACKET,
                 (client, handler, packetByteBuf, responseSender) -> {
@@ -139,7 +144,11 @@ public class ClientInitializer implements ClientModInitializer {
                 if (entity instanceof ChainKnotEntity knot) {
                     return new ItemStack(knot.getChainItemSource());
                 } else if (entity instanceof ChainCollisionEntity collision) {
-                    return new ItemStack(collision.getSourceItem());
+                    ChainLink link = collision.getLink();
+                    if (link == null) {
+                        return new ItemStack(Items.CHAIN);
+                    }
+                    return new ItemStack(link.getSourceItem());
                 }
             }
             return ItemStack.EMPTY;

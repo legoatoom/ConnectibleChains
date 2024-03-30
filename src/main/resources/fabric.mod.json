@@ -37,10 +37,15 @@
   "depends": {
     "fabricloader": ">=0.14.9",
     "fabric": "*",
-    "minecraft": "1.20.1",
-    "cloth-config2": ">=8.2.88"
+    "minecraft": "1.20.4",
+    "cloth-config2": ">=13.0.121"
   },
   "breaks": {
     "chains": "*"
+  },
+  "custom": {
+    "cardinal-components": [
+      "connectiblechains:chainnet"
+    ]
   }
 }

@@ -30,6 +30,13 @@ repositories{
 			includeGroup "maven.modrinth"
 		}
 	}
+	repositories {
+		maven {
+			name = "Ladysnake Mods"
+			url = 'https://maven.ladysnake.org/releases'
+		}
+	}
+
 }
 
 dependencies {
@@ -40,17 +47,15 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 
-//	modImplementation "maven.modrinth:architects-palette-fabric:2.2.1"
+//	modImplementation "maven.modrinth:sodium:mc1.20.1-0.5.3"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 //	modImplementation("net.devtech:arrp:0.6.7")
-	modApi("maven.modrinth:cloth-config:${project.cloth_version}") {
-		exclude(group: "net.fabricmc.fabric-api")
-	}
+	modApi "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_version}"
 
-	modImplementation "maven.modrinth:modmenu:${project.mod_menu_version}"
+	modApi "com.terraformersmc:modmenu:${project.mod_menu_version}"
 }
 
 loom {
