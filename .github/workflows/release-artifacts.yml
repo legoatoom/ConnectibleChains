@@ -52,5 +52,5 @@ jobs:
           github-files-secondary: build/libs/*-@(dev\|sources\|javadoc).jar
           github-token: ${{ secrets.GITHUB_TOKEN }}
           loaders: fabric
-          game-versions: 1.20.1
+          game-versions: 1.20.4
           java: 17
