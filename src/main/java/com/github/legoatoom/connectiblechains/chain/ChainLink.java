@@ -113,8 +113,8 @@ public class ChainLink {
             secondaryKnot.addLink(link);
             link.createCollision();
         }
-        if (!primary.getWorld().isClient()) {
-            link.sendAttachChainPacket(primary.getWorld());
+        if (!primary.method_48926().isClient()) {
+            link.sendAttachChainPacket(primary.method_48926());
         }
         return link;
     }
@@ -126,7 +126,7 @@ public class ChainLink {
      */
     private void createCollision() {
         if (!collisionStorage.isEmpty()) return;
-        if (getPrimary().getWorld().isClient) return;
+        if (getPrimary().method_48926().isClient) return;
 
         double distance = getPrimary().distanceTo(getSecondary());
         // step = spacing * √(width^2 + width^2) / distance
@@ -171,7 +171,7 @@ public class ChainLink {
      */
     @Nullable
     private Entity spawnCollision(boolean reverse, Entity start, Entity end, double v) {
-        assert getPrimary().getWorld() instanceof ServerWorld;
+        assert getPrimary().method_48926() instanceof ServerWorld;
         Vec3d startPos = start.getPos().add(start.getLeashOffset(0));
         Vec3d endPos = end.getPos().add(end.getLeashOffset(0));
 
@@ -194,8 +194,8 @@ public class ChainLink {
 
         y += -ModEntityTypes.CHAIN_COLLISION.getHeight() + 2 / 16f;
 
-        ChainCollisionEntity c = new ChainCollisionEntity(getPrimary().getWorld(), x, y, z, this);
-        if (getPrimary().getWorld().spawnEntity(c)) {
+        ChainCollisionEntity c = new ChainCollisionEntity(getPrimary().method_48926(), x, y, z, this);
+        if (getPrimary().method_48926().spawnEntity(c)) {
             return c;
         } else {
             ConnectibleChains.LOGGER.warn("Tried to summon collision entity for a chain, failed to do so");
@@ -269,7 +269,7 @@ public class ChainLink {
         if (!alive) return;
 
         boolean drop = mayDrop;
-        World world = getPrimary().getWorld();
+        World world = getPrimary().method_48926();
         this.alive = false;
 
         if (world.isClient) {
@@ -303,7 +303,7 @@ public class ChainLink {
      */
     private void destroyCollision() {
         for (Integer entityId : collisionStorage) {
-            Entity e = getPrimary().getWorld().getEntityById(entityId);
+            Entity e = getPrimary().method_48926().getEntityById(entityId);
             if (e instanceof ChainCollisionEntity) {
                 e.remove(Entity.RemovalReason.DISCARDED);
             } else {

@@ -179,10 +179,10 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         // Now we gather light information for the chain. Since the chain is lighter if there is more light.
         BlockPos blockPosOfStart = BlockPos.ofFloored(fromEntity.getCameraPosVec(tickDelta));
         BlockPos blockPosOfEnd = BlockPos.ofFloored(toEntity.getCameraPosVec(tickDelta));
-        int blockLightLevelOfStart = fromEntity.getWorld().getLightLevel(LightType.BLOCK, blockPosOfStart);
-        int blockLightLevelOfEnd = toEntity.getWorld().getLightLevel(LightType.BLOCK, blockPosOfEnd);
-        int skylightLevelOfStart = fromEntity.getWorld().getLightLevel(LightType.SKY, blockPosOfStart);
-        int skylightLevelOfEnd = fromEntity.getWorld().getLightLevel(LightType.SKY, blockPosOfEnd);
+        int blockLightLevelOfStart = fromEntity.method_48926().getLightLevel(LightType.BLOCK, blockPosOfStart);
+        int blockLightLevelOfEnd = toEntity.method_48926().getLightLevel(LightType.BLOCK, blockPosOfEnd);
+        int skylightLevelOfStart = fromEntity.method_48926().getLightLevel(LightType.SKY, blockPosOfStart);
+        int skylightLevelOfEnd = fromEntity.method_48926().getLightLevel(LightType.SKY, blockPosOfEnd);
 
         Vec3d startPos = srcPos.add(offset.getX(), 0, offset.getZ());
         Vec3d endPos = dstPos.add(-offset.getX(), 0, -offset.getZ());

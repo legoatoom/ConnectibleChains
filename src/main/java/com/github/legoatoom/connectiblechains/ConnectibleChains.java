@@ -55,7 +55,6 @@ public class ConnectibleChains implements ModInitializer {
     @Override
     public void onInitialize() {
         ModEntityTypes.init();
-
         AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
         ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
         fileConfig = configHolder.getConfig();

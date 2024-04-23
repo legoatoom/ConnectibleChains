@@ -168,10 +168,10 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     @Override
     public void tick() {
-        if (getWorld().isClient()) {
+        if (method_48926().isClient()) {
             // All other logic in handled on the server. The client only knows enough to render the entity.
             links.removeIf(ChainLink::isDead);
-            attachTarget = getWorld().getBlockState(attachmentPos);
+            attachTarget = method_48926().getBlockState(attachmentPos);
             return;
         }
         attemptTickInVoid();
@@ -255,7 +255,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * @see #updateLinks()
      */
     private boolean deserializeChainTag(NbtElement element) {
-        if (element == null || getWorld().isClient()) {
+        if (element == null || method_48926().isClient()) {
             return true;
         }
 
@@ -266,7 +266,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
 
         if (tag.contains("UUID")) {
             UUID uuid = tag.getUuid("UUID");
-            Entity entity = ((ServerWorld) getWorld()).getEntity(uuid);
+            Entity entity = ((ServerWorld) method_48926()).getEntity(uuid);
             if (entity != null) {
                 ChainLink.create(this, entity, source);
                 return true;
@@ -275,7 +275,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             BlockPos blockPos = new BlockPos(tag.getInt("RelX"), tag.getInt("RelY"), tag.getInt("RelZ"));
             // Adjust position to be relative to our facing direction
             blockPos = getBlockPosAsFacingRelative(blockPos, Direction.fromRotation(this.getYaw()));
-            ChainKnotEntity entity = ChainKnotEntity.getKnotAt(getWorld(), blockPos.add(attachmentPos));
+            ChainKnotEntity entity = ChainKnotEntity.getKnotAt(method_48926(), blockPos.add(attachmentPos));
             if (entity != null) {
                 ChainLink.create(this, entity, source);
                 return true;
@@ -310,7 +310,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * @return true if it can stay attached.
      */
     public boolean canStayAttached() {
-        BlockState blockState = getWorld().getBlockState(attachmentPos);
+        BlockState blockState = method_48926().getBlockState(attachmentPos);
         return canAttachTo(blockState);
     }
 
@@ -563,7 +563,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
         ItemStack handStack = player.getStackInHand(hand);
-        if (getWorld().isClient()) {
+        if (method_48926().isClient()) {
             if (handStack.isIn(CommonTags.CHAINS)) {
                 return ActionResult.SUCCESS;
             }
@@ -657,8 +657,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     public void updateChainType(Item sourceItem) {
         this.chainItemSource = sourceItem;
 
-        if (!getWorld().isClient()) {
-            Collection<ServerPlayerEntity> trackingPlayers = PlayerLookup.around((ServerWorld) getWorld(), getBlockPos(), ChainKnotEntity.VISIBLE_RANGE);
+        if (!method_48926().isClient()) {
+            Collection<ServerPlayerEntity> trackingPlayers = PlayerLookup.around((ServerWorld) method_48926(), getBlockPos(), ChainKnotEntity.VISIBLE_RANGE);
             PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
             buf.writeVarInt(getId());
             buf.writeVarInt(Registries.ITEM.getRawId(sourceItem));
@@ -679,7 +679,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     public static List<ChainLink> getHeldChainsInRange(PlayerEntity player, BlockPos target) {
         Box searchBox = Box.of(Vec3d.of(target), getMaxRange() * 2, getMaxRange() * 2, getMaxRange() * 2);
-        List<ChainKnotEntity> otherKnots = player.getWorld().getNonSpectatingEntities(ChainKnotEntity.class, searchBox);
+        List<ChainKnotEntity> otherKnots = player.method_48926().getNonSpectatingEntities(ChainKnotEntity.class, searchBox);
 
         List<ChainLink> attachableLinks = new ArrayList<>();
 

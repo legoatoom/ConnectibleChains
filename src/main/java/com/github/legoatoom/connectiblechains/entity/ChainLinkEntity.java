@@ -46,7 +46,7 @@ public interface ChainLinkEntity {
         if (self.isInvulnerableTo(source)) {
             return ActionResult.FAIL;
         }
-        if (self.getWorld().isClient) {
+        if (self.method_48926().isClient) {
             return ActionResult.PASS;
         }
 

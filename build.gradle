@@ -1,17 +1,27 @@
 plugins {
-	id 'fabric-loom' version '1.5-SNAPSHOT'
+	id 'fabric-loom' version '1.6-SNAPSHOT'
 	id 'maven-publish'
 	id 'java'
 	id 'java-library'
 	id 'idea'
 }
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
-
 archivesBaseName = project.archives_base_name
 version = "%s+%s".formatted(project.mod_version, project.minecraft_version)
 group = project.maven_group
+
+
+loom {
+	accessWidenerPath = file("src/main/resources/connectiblechains.accesswidener")
+
+	splitEnvironmentSourceSets()
+	mods {
+		"connectiblechains" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
 
 repositories{
 	maven {
@@ -30,13 +40,6 @@ repositories{
 			includeGroup "maven.modrinth"
 		}
 	}
-	repositories {
-		maven {
-			name = "Ladysnake Mods"
-			url = 'https://maven.ladysnake.org/releases'
-		}
-	}
-
 }
 
 dependencies {
@@ -46,21 +49,15 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-
-//	modImplementation "maven.modrinth:sodium:mc1.20.1-0.5.3"
-
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-//	modImplementation("net.devtech:arrp:0.6.7")
 	modApi "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_version}"
 
 	modApi "com.terraformersmc:modmenu:${project.mod_menu_version}"
 }
 
-loom {
-	accessWidenerPath = file("src/main/resources/connectiblechains.accesswidener")
-}
+
 
 processResources {
 	inputs.property "version", project.version
@@ -77,19 +74,12 @@ sourceSets {
         }
     }
 }
-// ensure that the encoding is set to UTF-8, no matter what the system default is
-// this fixes some edge cases with special characters not displaying correctly
-// see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
-tasks.withType(JavaCompile).configureEach {
-	// ensure that the encoding is set to UTF-8, no matter what the system default is
-	// this fixes some edge cases with special characters not displaying correctly
-	// see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
-	// If Javadoc is generated, this must be specified in that task too.
-	it.options.encoding = "UTF-8"
 
-	// Minecraft 1.18 (1.18-pre2) upwards uses Java 17.
-	//noinspection ALL
-	it.options.release = 17
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
 }
 
 java {
@@ -98,6 +88,6 @@ java {
 
 jar {
 	from ("LICENSE") {
-		rename {"${it}_${project.archivesBaseName}"}
+		rename {"${it}_${project.archives_base_name}"}
 	}
 }
