@@ -23,6 +23,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.sound.SoundEvents;
@@ -59,10 +60,6 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @SuppressWarnings("unused")
     public @Nullable ChainLink getLink() {
         return link;
-    }
-
-    @Override
-    protected void initDataTracker() {
     }
 
     @Override
@@ -165,12 +162,17 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
         return ActionResult.PASS;
     }
 
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+
+    }
+
     /**
      * Destroys broken links and removes itself when there is no alive link.
      */
     @Override
     public void tick() {
-        if (method_48926().isClient()) return;
+        if (getWorld().isClient()) return;
         // Condition can be met when the knots were removed with commands
         // but the collider still exists
         if (link != null && link.needsBeDestroyed()) link.destroy(true);

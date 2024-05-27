@@ -77,8 +77,6 @@ public class ClientInitializer implements ClientModInitializer {
 
         // Tooltip for chains.
         ItemTooltipCallback.EVENT.register(ChainItemInfo::infoToolTip);
-
-
     }
 
     private static void registerConfigSync() {

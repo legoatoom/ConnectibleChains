@@ -23,7 +23,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.item.TooltipContext;
+import net.minecraft.client.item.TooltipType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -76,7 +76,7 @@ public class ChainItemInfo {
 
             // Check if a knot exists and can be destroyed
             // Would work without this check but no swing animation would be played
-            if (ChainKnotEntity.getKnotAt(player.method_48926(), blockPos) != null && ChainLinkEntity.canDestroyWith(stack)) {
+            if (ChainKnotEntity.getKnotAt(player.getWorld(), blockPos) != null && ChainLinkEntity.canDestroyWith(stack)) {
                 return ActionResult.SUCCESS;
             }
 
@@ -106,7 +106,7 @@ public class ChainItemInfo {
 
         // Held item does not correspond to a type.
         if (!stack.isIn(CommonTags.CHAINS)) {
-            knotType = attachableChains.get(0).getSourceItem();
+            knotType = attachableChains.getFirst().getSourceItem();
         }
 
         // 3. Create new knot if none exists and delegate interaction
@@ -122,17 +122,15 @@ public class ChainItemInfo {
     }
 
     @Environment(EnvType.CLIENT)
-    public static void infoToolTip(ItemStack stack, TooltipContext ignoredContext, List<Text> lines) {
+    public static void infoToolTip(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipType tooltipType, List<Text> texts) {
         if (ConnectibleChains.runtimeConfig.doShowToolTip()) {
-
-            if (stack.isIn(CommonTags.CHAINS)) {
+            if (itemStack.isIn(CommonTags.CHAINS)) {
                 if (Screen.hasShiftDown()) {
-                    lines.add(1, Text.translatable("message.connectiblechains.connectible_chain_detailed").formatted(Formatting.AQUA));
+                    texts.add(1, Text.translatable("message.connectiblechains.connectible_chain_detailed").formatted(Formatting.AQUA));
                 } else {
-                    lines.add(1, Text.translatable("message.connectiblechains.connectible_chain").formatted(Formatting.YELLOW));
+                    texts.add(1, Text.translatable("message.connectiblechains.connectible_chain").formatted(Formatting.YELLOW));
                 }
             }
-
         }
     }
 }

@@ -58,14 +58,10 @@ public class ChainRenderer {
      */
     public void renderBaked(VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model;
-        if (models.containsKey(key) && false) {
-            model = models.get(key);
-        } else {
-            model = buildModel(chainVec);
-            models.put(key, model);
-            if (FabricLoader.getInstance().isDevelopmentEnvironment() && models.size() > 10000) {
-                ConnectibleChains.LOGGER.error("Chain model leak found!");
-            }
+        model = buildModel(chainVec);
+        models.put(key, model);
+        if (FabricLoader.getInstance().isDevelopmentEnvironment() && models.size() > 10000) {
+            ConnectibleChains.LOGGER.error("Chain model leak found!");
         }
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
     }

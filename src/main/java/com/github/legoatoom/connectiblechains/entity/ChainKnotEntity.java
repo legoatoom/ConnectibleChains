@@ -30,8 +30,6 @@ import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
@@ -168,10 +166,10 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     @Override
     public void tick() {
-        if (method_48926().isClient()) {
+        if (getWorld().isClient()) {
             // All other logic in handled on the server. The client only knows enough to render the entity.
             links.removeIf(ChainLink::isDead);
-            attachTarget = method_48926().getBlockState(attachmentPos);
+            attachTarget = getWorld().getBlockState(attachmentPos);
             return;
         }
         attemptTickInVoid();
@@ -255,7 +253,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * @see #updateLinks()
      */
     private boolean deserializeChainTag(NbtElement element) {
-        if (element == null || method_48926().isClient()) {
+        if (element == null || getWorld().isClient()) {
             return true;
         }
 
@@ -266,7 +264,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
 
         if (tag.contains("UUID")) {
             UUID uuid = tag.getUuid("UUID");
-            Entity entity = ((ServerWorld) method_48926()).getEntity(uuid);
+            Entity entity = ((ServerWorld) getWorld()).getEntity(uuid);
             if (entity != null) {
                 ChainLink.create(this, entity, source);
                 return true;
@@ -275,7 +273,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             BlockPos blockPos = new BlockPos(tag.getInt("RelX"), tag.getInt("RelY"), tag.getInt("RelZ"));
             // Adjust position to be relative to our facing direction
             blockPos = getBlockPosAsFacingRelative(blockPos, Direction.fromRotation(this.getYaw()));
-            ChainKnotEntity entity = ChainKnotEntity.getKnotAt(method_48926(), blockPos.add(attachmentPos));
+            ChainKnotEntity entity = ChainKnotEntity.getKnotAt(getWorld(), blockPos.add(attachmentPos));
             if (entity != null) {
                 ChainLink.create(this, entity, source);
                 return true;
@@ -310,7 +308,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * @return true if it can stay attached.
      */
     public boolean canStayAttached() {
-        BlockState blockState = method_48926().getBlockState(attachmentPos);
+        BlockState blockState = getWorld().getBlockState(attachmentPos);
         return canAttachTo(blockState);
     }
 
@@ -540,10 +538,10 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         return getLerpedPos(f).add(0, 4.5 / 16, 0);
     }
 
-    @Override
-    protected float getEyeHeight(EntityPose pose, EntityDimensions dimensions) {
-        return 4.5f / 16f;
-    }
+//    @Override
+//    protected float getEyeHeight(EntityPose pose, EntityDimensions dimensions) {
+//        return 4.5f / 16f;
+//    }
 
     /**
      * Interaction (attack or use) of a player and this entity.
@@ -563,7 +561,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
         ItemStack handStack = player.getStackInHand(hand);
-        if (method_48926().isClient()) {
+        if (getWorld().isClient()) {
             if (handStack.isIn(CommonTags.CHAINS)) {
                 return ActionResult.SUCCESS;
             }
@@ -657,8 +655,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     public void updateChainType(Item sourceItem) {
         this.chainItemSource = sourceItem;
 
-        if (!method_48926().isClient()) {
-            Collection<ServerPlayerEntity> trackingPlayers = PlayerLookup.around((ServerWorld) method_48926(), getBlockPos(), ChainKnotEntity.VISIBLE_RANGE);
+        if (!getWorld().isClient()) {
+            Collection<ServerPlayerEntity> trackingPlayers = PlayerLookup.around((ServerWorld) getWorld(), getBlockPos(), ChainKnotEntity.VISIBLE_RANGE);
             PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
             buf.writeVarInt(getId());
             buf.writeVarInt(Registries.ITEM.getRawId(sourceItem));
@@ -679,7 +677,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     public static List<ChainLink> getHeldChainsInRange(PlayerEntity player, BlockPos target) {
         Box searchBox = Box.of(Vec3d.of(target), getMaxRange() * 2, getMaxRange() * 2, getMaxRange() * 2);
-        List<ChainKnotEntity> otherKnots = player.method_48926().getNonSpectatingEntities(ChainKnotEntity.class, searchBox);
+        List<ChainKnotEntity> otherKnots = player.getWorld().getNonSpectatingEntities(ChainKnotEntity.class, searchBox);
 
         List<ChainLink> attachableLinks = new ArrayList<>();
 
