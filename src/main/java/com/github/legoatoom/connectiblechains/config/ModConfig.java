@@ -15,7 +15,7 @@
 package com.github.legoatoom.connectiblechains.config;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
+import com.github.legoatoom.connectiblechains.networking.packet.ConfigSyncPayload;
 import io.netty.buffer.Unpooled;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
@@ -38,7 +38,7 @@ public class ModConfig implements ConfigData {
     private float chainHangAmount = 7.0F;
     @ConfigEntry.BoundedDiscrete(max = 32)
     @ConfigEntry.Gui.Tooltip(count = 2)
-    private int maxChainRange = 7;
+    private int maxChainRange = 8;
     @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
     @ConfigEntry.Gui.Tooltip()
     private int quality = 4;
@@ -83,7 +83,7 @@ public class ModConfig implements ConfigData {
     }
 
     public void syncToClient(ServerPlayerEntity player) {
-        ServerPlayNetworking.send(player, NetworkingPackets.S2C_CONFIG_SYNC_PACKET, this.writePacket());
+        ServerPlayNetworking.send(player, new ConfigSyncPayload(chainHangAmount, maxChainRange));
     }
 
     public PacketByteBuf writePacket() {

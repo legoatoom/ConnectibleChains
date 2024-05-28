@@ -18,6 +18,7 @@ package com.github.legoatoom.connectiblechains;
 import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
 import com.github.legoatoom.connectiblechains.item.ChainItemInfo;
+import com.github.legoatoom.connectiblechains.networking.packet.Payloads;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
@@ -54,6 +55,7 @@ public class ConnectibleChains implements ModInitializer {
      */
     @Override
     public void onInitialize() {
+
         ModEntityTypes.init();
         AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
         ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
@@ -65,6 +67,7 @@ public class ConnectibleChains implements ModInitializer {
 
         // Need this event on dedicated and internal server because of 'open to lan'.
         ServerPlayConnectionEvents.INIT.register((handler, server) -> fileConfig.syncToClient(handler.getPlayer()));
+        Payloads.init();
 
     }
 

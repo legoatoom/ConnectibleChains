@@ -14,17 +14,12 @@
 
 package com.github.legoatoom.connectiblechains.client;
 
-import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.IncompleteChainLink;
-import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
-import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachPacket;
-import com.github.legoatoom.connectiblechains.networking.packet.MultiChainAttachPacket;
-import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
+import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachPayload;
+import com.github.legoatoom.connectiblechains.networking.packet.KnotChangePayload;
+import com.github.legoatoom.connectiblechains.networking.packet.MultiChainAttachPayload;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
 
 import static net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver;
 
@@ -36,29 +31,9 @@ public class ChainPacketHandler {
     }
 
     private void register() {
-        registerGlobalReceiver(ChainAttachPacket.TYPE, ChainAttachPacket::apply);
-        registerGlobalReceiver(MultiChainAttachPacket.TYPE, MultiChainAttachPacket::apply);
-        registerGlobalReceiver(NetworkingPackets.S2C_KNOT_CHANGE_TYPE_PACKET, (client, handler, buf, responseSender) -> {
-            int knotId = buf.readVarInt();
-            int typeId = buf.readVarInt();
-
-            client.execute(() -> {
-                if (client.world == null) return;
-                Entity entity = client.world.getEntityById(knotId);
-                Item chainType = Registries.ITEM.get(typeId);
-                if (entity instanceof ChainKnotEntity knot) {
-                    knot.updateChainType(chainType);
-                } else {
-                    logBadActionTarget("change type of", entity, knotId, "chain knot");
-                }
-            });
-        });
-    }
-
-    private void logBadActionTarget(String action, Entity target, int targetId, String expectedTarget) {
-        ConnectibleChains.LOGGER.warn(String.format("Tried to %s %s (#%d) which is not %s",
-                action, target, targetId, expectedTarget
-        ));
+        registerGlobalReceiver(ChainAttachPayload.PAYLOAD_ID, ChainAttachPayload::apply);
+        registerGlobalReceiver(MultiChainAttachPayload.PAYLOAD_ID, MultiChainAttachPayload::apply);
+        registerGlobalReceiver(KnotChangePayload.PAYLOAD_ID, KnotChangePayload::apply);
     }
 
     /**
@@ -67,6 +42,6 @@ public class ChainPacketHandler {
      * Completed links or links that are no longer valid because the primary is dead are removed.
      */
     public void tick() {
-        ChainAttachPacket.incompleteLinks.removeIf(IncompleteChainLink::tryCompleteOrRemove);
+        ChainAttachPayload.incompleteLinks.removeIf(IncompleteChainLink::tryCompleteOrRemove);
     }
 }

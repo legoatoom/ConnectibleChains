@@ -18,7 +18,6 @@ import net.minecraft.util.Identifier;
 
 public class NetworkingPackets {
 
-    public static final Identifier S2C_KNOT_CHANGE_TYPE_PACKET = Helper.identifier("s2c_knot_change_type_packet_id");
     public static final Identifier S2C_CONFIG_SYNC_PACKET = Helper.identifier("s2c_config_sync_packet_id");
 
 }

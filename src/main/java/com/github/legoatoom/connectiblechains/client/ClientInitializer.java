@@ -24,8 +24,8 @@ import com.github.legoatoom.connectiblechains.entity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
 import com.github.legoatoom.connectiblechains.item.ChainItemInfo;
+import com.github.legoatoom.connectiblechains.networking.packet.ConfigSyncPayload;
 import com.github.legoatoom.connectiblechains.util.Helper;
-import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import net.fabricmc.api.ClientModInitializer;
@@ -103,8 +103,7 @@ public class ClientInitializer implements ClientModInitializer {
             chainKnotEntityRenderer = new ChainKnotEntityRenderer(ctx);
             return chainKnotEntityRenderer;
         });
-        EntityRendererRegistry.register(ModEntityTypes.CHAIN_COLLISION,
-                ChainCollisionEntityRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.CHAIN_COLLISION, ChainCollisionEntityRenderer::new);
 
         EntityModelLayerRegistry.registerModelLayer(CHAIN_KNOT, ChainKnotEntityModel::getTexturedModelData);
     }
@@ -118,21 +117,7 @@ public class ClientInitializer implements ClientModInitializer {
             getChainKnotEntityRenderer().ifPresent(r -> r.getChainRenderer().purge());
         });
 
-
-        ClientPlayNetworking.registerGlobalReceiver(NetworkingPackets.S2C_CONFIG_SYNC_PACKET,
-                (client, handler, packetByteBuf, responseSender) -> {
-                    // Apply server config
-                    if (client.isInSingleplayer()) {
-                        return;
-                    }
-                    try {
-                        ConnectibleChains.LOGGER.info("Received {} config from server", ConnectibleChains.MODID);
-                        ConnectibleChains.runtimeConfig.readPacket(packetByteBuf);
-                    } catch (Exception e) {
-                        ConnectibleChains.LOGGER.error("Could not deserialize config: ", e);
-                    }
-                    getChainKnotEntityRenderer().ifPresent(renderer -> renderer.getChainRenderer().purge());
-                });
+        ClientPlayNetworking.registerGlobalReceiver(ConfigSyncPayload.PAYLOAD_ID, ConfigSyncPayload::apply);
     }
 
     private void registerClientEventHandlers() {
@@ -161,7 +146,7 @@ public class ClientInitializer implements ClientModInitializer {
         return instance;
     }
 
-    private Optional<ChainKnotEntityRenderer> getChainKnotEntityRenderer() {
+    public Optional<ChainKnotEntityRenderer> getChainKnotEntityRenderer() {
         return Optional.ofNullable(chainKnotEntityRenderer);
     }
 }

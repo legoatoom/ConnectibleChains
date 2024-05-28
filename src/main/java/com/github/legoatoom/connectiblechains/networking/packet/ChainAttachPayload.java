@@ -22,23 +22,31 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.networking.v1.FabricPacket;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
-import net.fabricmc.fabric.api.networking.v1.PacketType;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.registry.Registries;
 
 import static com.github.legoatoom.connectiblechains.ConnectibleChains.LOGGER;
 
-public record ChainAttachPacket(int primaryEntityId, int secondaryEntityId, int chainTypeId,
-                                boolean attach) implements FabricPacket {
-    public static final PacketType<ChainAttachPacket> TYPE = PacketType.create(
-            Helper.identifier("s2c_chain_attach_packet_id"), ChainAttachPacket::new
-    );
+public record ChainAttachPayload(int primaryEntityId, int secondaryEntityId, int chainTypeId,
+                                 boolean attach) implements CustomPayload {
+    public static final CustomPayload.Id<ChainAttachPayload> PAYLOAD_ID = new CustomPayload.Id<>(Helper.identifier("s2c_chain_attach_packet_id"));
+    public static final PacketCodec<RegistryByteBuf, ChainAttachPayload> PACKET_CODEC =
+            PacketCodec.tuple(
+                    PacketCodecs.INTEGER, ChainAttachPayload::primaryEntityId,
+                    PacketCodecs.INTEGER, ChainAttachPayload::secondaryEntityId,
+                    PacketCodecs.INTEGER, ChainAttachPayload::chainTypeId,
+                    PacketCodecs.BOOL, ChainAttachPayload::attach,
+                    ChainAttachPayload::new);
 
     /**
      * Links where this is the primary and the secondary doesn't yet exist / hasn't yet loaded.
@@ -48,35 +56,17 @@ public record ChainAttachPacket(int primaryEntityId, int secondaryEntityId, int 
     public static final ObjectList<IncompleteChainLink> incompleteLinks = new ObjectArrayList<>(256);
 
 
-    public ChainAttachPacket(PacketByteBuf buf) {
-        this(buf.readInt(), buf.readInt(), buf.readInt(), buf.readBoolean());
-    }
-
-    public ChainAttachPacket(ChainLink link, boolean attach) {
+    public ChainAttachPayload(ChainLink link, boolean attach) {
         this(link.getPrimary().getId(), link.getSecondary().getId(), Registries.ITEM.getRawId(link.getSourceItem()), attach);
     }
 
-    @Override
-    public void write(PacketByteBuf buf) {
-        buf.writeInt(primaryEntityId);
-        buf.writeInt(secondaryEntityId);
-        buf.writeInt(chainTypeId);
-        buf.writeBoolean(attach);
+    public static void encode(PacketByteBuf buf1, ChainAttachPayload packet) {
+        buf1.writeInt(packet.primaryEntityId());
+        buf1.writeInt(packet.secondaryEntityId());
+        buf1.writeInt(packet.chainTypeId());
+        buf1.writeBoolean(packet.attach());
     }
 
-    @Override
-    public PacketType<?> getType() {
-        return TYPE;
-    }
-
-    @Environment(EnvType.CLIENT)
-    public void apply(ClientPlayerEntity clientPlayerEntity, PacketSender packetSender) {
-        if (attach) {
-            applyAttach(clientPlayerEntity, packetSender);
-            return;
-        }
-        applyDetach(clientPlayerEntity, packetSender);
-    }
 
     private void applyDetach(ClientPlayerEntity clientPlayerEntity, PacketSender packetSender) {
         ClientWorld world = clientPlayerEntity.clientWorld;
@@ -127,5 +117,19 @@ public record ChainAttachPacket(int primaryEntityId, int secondaryEntityId, int 
         } else {
             ChainLink.create(primaryKnot, secondary, chainType);
         }
+    }
+
+    @Override
+    public Id<ChainAttachPayload> getId() {
+        return PAYLOAD_ID;
+    }
+
+    @Environment(EnvType.CLIENT)
+    public void apply(ClientPlayNetworking.Context context) {
+        if (attach){
+            applyAttach(context.player(), context.responseSender());
+            return;
+        }
+        applyDetach(context.player(), context.responseSender());
     }
 }

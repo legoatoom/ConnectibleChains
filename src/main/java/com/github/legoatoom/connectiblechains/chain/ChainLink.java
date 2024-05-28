@@ -18,7 +18,7 @@ import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.entity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
-import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachPacket;
+import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachPayload;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -113,8 +113,8 @@ public class ChainLink {
             secondaryKnot.addLink(link);
             link.createCollision();
         }
-        if (!primary.method_48926().isClient()) {
-            link.sendAttachChainPacket(primary.method_48926());
+        if (!primary.getWorld().isClient()) {
+            link.sendAttachChainPacket(primary.getWorld());
         }
         return link;
     }
@@ -126,7 +126,7 @@ public class ChainLink {
      */
     private void createCollision() {
         if (!collisionStorage.isEmpty()) return;
-        if (getPrimary().method_48926().isClient) return;
+        if (getPrimary().getWorld().isClient) return;
 
         double distance = getPrimary().distanceTo(getSecondary());
         // step = spacing * √(width^2 + width^2) / distance
@@ -156,7 +156,7 @@ public class ChainLink {
 
         Set<ServerPlayerEntity> trackingPlayers = getTrackingPlayers(world);
         for (ServerPlayerEntity player : trackingPlayers) {
-            ServerPlayNetworking.send(player, new ChainAttachPacket(this, true));
+            ServerPlayNetworking.send(player, new ChainAttachPayload(this, true));
         }
     }
 
@@ -171,7 +171,7 @@ public class ChainLink {
      */
     @Nullable
     private Entity spawnCollision(boolean reverse, Entity start, Entity end, double v) {
-        assert getPrimary().method_48926() instanceof ServerWorld;
+        assert getPrimary().getWorld() instanceof ServerWorld;
         Vec3d startPos = start.getPos().add(start.getLeashOffset(0));
         Vec3d endPos = end.getPos().add(end.getLeashOffset(0));
 
@@ -194,8 +194,8 @@ public class ChainLink {
 
         y += -ModEntityTypes.CHAIN_COLLISION.getHeight() + 2 / 16f;
 
-        ChainCollisionEntity c = new ChainCollisionEntity(getPrimary().method_48926(), x, y, z, this);
-        if (getPrimary().method_48926().spawnEntity(c)) {
+        ChainCollisionEntity c = new ChainCollisionEntity(getPrimary().getWorld(), x, y, z, this);
+        if (getPrimary().getWorld().spawnEntity(c)) {
             return c;
         } else {
             ConnectibleChains.LOGGER.warn("Tried to summon collision entity for a chain, failed to do so");
@@ -269,7 +269,7 @@ public class ChainLink {
         if (!alive) return;
 
         boolean drop = mayDrop;
-        World world = getPrimary().method_48926();
+        World world = getPrimary().getWorld();
         this.alive = false;
 
         if (world.isClient) {
@@ -303,7 +303,7 @@ public class ChainLink {
      */
     private void destroyCollision() {
         for (Integer entityId : collisionStorage) {
-            Entity e = getPrimary().method_48926().getEntityById(entityId);
+            Entity e = getPrimary().getWorld().getEntityById(entityId);
             if (e instanceof ChainCollisionEntity) {
                 e.remove(Entity.RemovalReason.DISCARDED);
             } else {
@@ -322,7 +322,7 @@ public class ChainLink {
         Set<ServerPlayerEntity> trackingPlayers = getTrackingPlayers(world);
 
         for (ServerPlayerEntity player : trackingPlayers) {
-            ServerPlayNetworking.send(player, new ChainAttachPacket(this, false));
+            ServerPlayNetworking.send(player, new ChainAttachPayload(this, false));
         }
     }
 

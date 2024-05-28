@@ -14,13 +14,13 @@ group = project.maven_group
 loom {
 	accessWidenerPath = file("src/main/resources/connectiblechains.accesswidener")
 
-	splitEnvironmentSourceSets()
-	mods {
-		"connectiblechains" {
-			sourceSet sourceSets.main
-			sourceSet sourceSets.client
-		}
-	}
+//	splitEnvironmentSourceSets()
+//	mods {
+//		"connectiblechains" {
+//			sourceSet sourceSets.main
+//			sourceSet sourceSets.client
+//		}
+//	}
 }
 
 repositories{
@@ -86,8 +86,9 @@ java {
 	withSourcesJar()
 }
 
+
 jar {
-	from ("LICENSE") {
-		rename {"${it}_${project.archives_base_name}"}
+	from("LICENSE") {
+		rename { "${it}_${project.base.archivesName.get()}"}
 	}
 }

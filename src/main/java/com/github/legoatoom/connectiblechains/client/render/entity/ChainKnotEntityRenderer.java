@@ -111,9 +111,9 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             Text heldCount = Text.literal("T: " + chainKnotEntity.getLinks().stream()
                     .filter(l -> l.getSecondary() == chainKnotEntity).count());
             matrices.translate(0, 0.25, 0);
-            this.renderLabelIfPresent(chainKnotEntity, holdingCount, matrices, vertexConsumers, light);
+            this.renderLabelIfPresent(chainKnotEntity, holdingCount, matrices, vertexConsumers, light, tickDelta);
             matrices.translate(0, 0.25, 0);
-            this.renderLabelIfPresent(chainKnotEntity, heldCount, matrices, vertexConsumers, light);
+            this.renderLabelIfPresent(chainKnotEntity, heldCount, matrices, vertexConsumers, light, tickDelta);
             matrices.pop();
         }
         super.render(chainKnotEntity, yaw, tickDelta, matrices, vertexConsumers, light);

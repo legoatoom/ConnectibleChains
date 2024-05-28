@@ -16,12 +16,11 @@ package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
-import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachPacket;
-import com.github.legoatoom.connectiblechains.networking.packet.MultiChainAttachPacket;
+import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachPayload;
+import com.github.legoatoom.connectiblechains.networking.packet.KnotChangePayload;
+import com.github.legoatoom.connectiblechains.networking.packet.MultiChainAttachPayload;
 import com.github.legoatoom.connectiblechains.tag.CommonTags;
-import com.github.legoatoom.connectiblechains.util.NetworkingPackets;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
-import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.api.EnvType;
@@ -40,7 +39,6 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
@@ -380,11 +378,11 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     @Override
     public void onStartedTrackingBy(ServerPlayerEntity player) {
         ServerPlayNetworking.send(player,
-                new MultiChainAttachPacket(
+                new MultiChainAttachPayload(
                         this.getLinks()
                                 .stream()
                                 .filter(chainLink -> chainLink.getPrimary().getId() == this.getId())
-                                .map(chainLink -> new ChainAttachPacket(chainLink, true))
+                                .map(chainLink -> new ChainAttachPayload(chainLink, true))
                                 .toList()));
     }
 
@@ -657,13 +655,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
 
         if (!getWorld().isClient()) {
             Collection<ServerPlayerEntity> trackingPlayers = PlayerLookup.around((ServerWorld) getWorld(), getBlockPos(), ChainKnotEntity.VISIBLE_RANGE);
-            PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-            buf.writeVarInt(getId());
-            buf.writeVarInt(Registries.ITEM.getRawId(sourceItem));
-
-            for (ServerPlayerEntity player : trackingPlayers) {
-                ServerPlayNetworking.send(player, NetworkingPackets.S2C_KNOT_CHANGE_TYPE_PACKET, buf);
-            }
+            KnotChangePayload payload = new KnotChangePayload(getId(), sourceItem);
+            trackingPlayers.forEach(player -> ServerPlayNetworking.send(player, payload));
         }
     }
 

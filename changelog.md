@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.4.0] - WIP
+- Reworking Networking again since it changed again...
+- Default max range increased from 7 to 8.
+
 ## [2.3.0] - 12024-03-30
 - Reworked Networking to conform with new standard.
 - Removed all mixins, as they were no longer needed (I hope).
