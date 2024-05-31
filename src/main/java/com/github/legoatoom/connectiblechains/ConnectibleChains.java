@@ -57,6 +57,7 @@ public class ConnectibleChains implements ModInitializer {
     public void onInitialize() {
 
         ModEntityTypes.init();
+        Payloads.init();
         AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
         ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
         fileConfig = configHolder.getConfig();
@@ -67,7 +68,6 @@ public class ConnectibleChains implements ModInitializer {
 
         // Need this event on dedicated and internal server because of 'open to lan'.
         ServerPlayConnectionEvents.INIT.register((handler, server) -> fileConfig.syncToClient(handler.getPlayer()));
-        Payloads.init();
 
     }
 

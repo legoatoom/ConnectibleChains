@@ -39,18 +39,17 @@ public record ConfigSyncPayload(float chainHangAmount, int maxChainRange) implem
     }
 
     public void apply(ClientPlayNetworking.Context context) {
-        try(MinecraftClient client = context.client()) {
-            if (client.isInSingleplayer()) {
-                return;
-            }
-            try {
-                ConnectibleChains.LOGGER.info("Received {} config from server", ConnectibleChains.MODID);
-                ConnectibleChains.runtimeConfig.setChainHangAmount(this.chainHangAmount);
-                ConnectibleChains.runtimeConfig.setMaxChainRange(this.maxChainRange);
-            } catch (Exception e) {
-                ConnectibleChains.LOGGER.error("Could not deserialize config: ", e);
-            }
-            ClientInitializer.getInstance().getChainKnotEntityRenderer().ifPresent(r -> r.getChainRenderer().purge());
+        MinecraftClient client = context.client();
+        if (client.isInSingleplayer()) {
+            return;
         }
+        try {
+            ConnectibleChains.LOGGER.info("Received {} config from server", ConnectibleChains.MODID);
+            ConnectibleChains.runtimeConfig.setChainHangAmount(this.chainHangAmount);
+            ConnectibleChains.runtimeConfig.setMaxChainRange(this.maxChainRange);
+        } catch (Exception e) {
+            ConnectibleChains.LOGGER.error("Could not deserialize config: ", e);
+        }
+        ClientInitializer.getInstance().getChainKnotEntityRenderer().ifPresent(r -> r.getChainRenderer().purge());
     }
 }

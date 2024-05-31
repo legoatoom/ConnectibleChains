@@ -40,17 +40,16 @@ public record KnotChangePayload(int knotId, Item sourceItem) implements CustomPa
     }
 
     public void apply(ClientPlayNetworking.Context context) {
-        try (MinecraftClient client = context.client()) {
-            client.execute(() -> {
-                if (client.world == null) return;
-                Entity entity = client.world.getEntityById(knotId);
-                if (entity instanceof ChainKnotEntity knot) {
-                    knot.updateChainType(sourceItem);
-                } else {
-                    logBadActionTarget(entity, knotId);
-                }
-            });
-        }
+        MinecraftClient client = context.client();
+        client.execute(() -> {
+            if (client.world == null) return;
+            Entity entity = client.world.getEntityById(knotId);
+            if (entity instanceof ChainKnotEntity knot) {
+                knot.updateChainType(sourceItem);
+            } else {
+                logBadActionTarget(entity, knotId);
+            }
+        });
     }
 
     private static void logBadActionTarget(Entity target, int targetId) {
