@@ -6,9 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
-## [2.4.0] - WIP
-- Reworking Networking again since it changed again...
-- Default max range increased from 7 to 8.
+## [2.4.0] - 12024-06-06
+- Reworking Networking again since it changed again.
+- Increased visibility range, equal to other entities, like chests.
+- Default max range increased from 7 to 16.
+- Reworked Tag system to use the `fabric-convention-tags-v2`.
+- Reworked how the mod grabs textures for the `knot` and `chain` texture.
+  - For every item in the `chains` convention tag, we check if JSON files is located at
+  `<mod-id>/models/entity/connectiblechains/<item_id>.json`, see the `chain.json` file on GitHub for an example.
+  - If this file is missing, the default locations (what currently happens) are used.
+  - Note: Animated textures do **not** work.
+  
 
 ## [2.3.0] - 12024-03-30
 - Reworked Networking to conform with new standard.
