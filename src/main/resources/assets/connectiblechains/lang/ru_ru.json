@@ -1,0 +1,19 @@
+{
+  "entity.connectiblechains.chain_knot" : "Узел Цепи",
+  "message.connectiblechains.connectible_chain" : "Возможно протянуть как цепь [Шифт]",
+  "message.connectiblechains.connectible_chain_detailed" : "Нажмите на забор/стену, чтобы протянуть цепь!",
+  "entity.connectiblechains.chain_collision" : "Коллизия Цепей",
+  "text.autoconfig.connectiblechains.option.chainHangAmount" : "Свисание Цепи",
+  "text.autoconfig.connectiblechains.option.maxChainRange" : "Максимальная Длина Цепи",
+  "text.autoconfig.connectiblechains.option.quality" : "Качество Цепи",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[0]" : "Влияет на то, насколько сильно свисает цепь.",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[1]" : "Чем меньше число, тем больше изгиб.",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[2]" : "Коллизия будет обновляться при протягивании новых цепей или при загрузке мира.",
+  "text.autoconfig.connectiblechains.option.showToolTip" : "Показывать подсказку о возможности протянуть как цепь.",
+  "text.autoconfig.connectiblechains.option.showToolTip.@Tooltip" : "Нужно ли показывать подсказку над цепными предметами, совместимыми с этим модом?",
+
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[0]" : "Влияет на то, насколько длинной может быть цепь.",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[1]" : "§nВнимание§r: Слишком длинные цепи иногда становятся невидимыми!",
+  "text.autoconfig.connectiblechains.option.quality.@Tooltip" : "Влияет на визуальное качество цепи.",
+  "text.autoconfig.connectiblechains.title": "Конфигурация Connectible Chains"
+}
