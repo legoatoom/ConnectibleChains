@@ -33,10 +33,10 @@ public class ModConfig implements ConfigData {
     private static final transient boolean IS_DEBUG_ENV = FabricLoader.getInstance().isDevelopmentEnvironment();
 
     @ConfigEntry.Gui.Tooltip(count = 3)
-    private float chainHangAmount = 7.0F;
+    private float chainHangAmount = 8.0F;
     @ConfigEntry.BoundedDiscrete(max = 32)
     @ConfigEntry.Gui.Tooltip(count = 2)
-    private int maxChainRange = 8;
+    private int maxChainRange = 16;
     @ConfigEntry.BoundedDiscrete(min = 1, max = 8)
     @ConfigEntry.Gui.Tooltip()
     private int quality = 4;
