@@ -155,7 +155,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         Vec3d dstPos;
 
         if (toEntity instanceof AbstractDecorationEntity) {
-            dstPos = toEntity.getPos().add(toEntity.getLeashOffset());
+            dstPos = toEntity.getPos().add(toEntity.getLeashOffset(tickDelta));
         } else {
             dstPos = toEntity.getLeashPos(tickDelta);
         }

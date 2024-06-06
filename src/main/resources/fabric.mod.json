@@ -29,15 +29,11 @@
       "com.github.legoatoom.connectiblechains.config.ModMenuIntegration"
     ]
   },
-  "mixins": [
-    "connectiblechains.mixins.json"
-  ],
-  "accessWidener" : "connectiblechains.accesswidener",
 
   "depends": {
     "fabricloader": ">=0.15.7",
     "fabric": "*",
     "minecraft": "1.20.6",
-    "cloth-config2": ">=13.0.121"
+    "cloth-config2": ">=14.0.126"
   }
 }

@@ -1,2 +1,0 @@
-accessWidener v1 named
-accessible    method   net/minecraft/entity/Entity getLeashOffset ()Lnet/minecraft/util/math/Vec3d;

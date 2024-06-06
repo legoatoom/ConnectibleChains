@@ -12,15 +12,6 @@ group = project.maven_group
 
 
 loom {
-	accessWidenerPath = file("src/main/resources/connectiblechains.accesswidener")
-
-//	splitEnvironmentSourceSets()
-//	mods {
-//		"connectiblechains" {
-//			sourceSet sourceSets.main
-//			sourceSet sourceSets.client
-//		}
-//	}
 }
 
 repositories{
