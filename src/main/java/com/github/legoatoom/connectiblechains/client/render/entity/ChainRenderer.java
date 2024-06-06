@@ -40,7 +40,6 @@ public class ChainRenderer {
      * The geometry of a chain only depends on the vector from the source to the destination.
      * The rotation/direction and translation of the chain do not matter as they are accounted for during rendering.
      */
-    @Deprecated
     private final Object2ObjectOpenHashMap<BakeKey, ChainModel> models = new Object2ObjectOpenHashMap<>(256);
 
     /**
@@ -58,8 +57,12 @@ public class ChainRenderer {
      */
     public void renderBaked(VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model;
-        model = buildModel(chainVec);
-        models.put(key, model);
+        if (models.containsKey(key)) {
+            model = models.get(key);
+        } else {
+            model = buildModel(chainVec);
+            models.put(key, model);
+        }
         if (FabricLoader.getInstance().isDevelopmentEnvironment() && models.size() > 10000) {
             ConnectibleChains.LOGGER.error("Chain model leak found!");
         }

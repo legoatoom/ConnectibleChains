@@ -14,10 +14,8 @@
 
 package com.github.legoatoom.connectiblechains.tag;
 
+import com.github.legoatoom.connectiblechains.util.Helper;
 import net.minecraft.block.Block;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.registry.DefaultedRegistry;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.TagKey;
@@ -26,36 +24,8 @@ import net.minecraft.util.Identifier;
 /**
  * @see <a href="https://github.com/paulevsGitch/BCLib/blob/1.18.2/src/main/java/ru/bclib/api/tag/TagAPI.java">github.com/paulevsGitch/BCLib</>
  */
-public class CommonTags {
-
-    public static final TagKey<Item> SHEARS = makeCommonItemTag("shears");
-    public static final TagKey<Item> CHAINS = makeCommonItemTag("chains");
-    public static final TagKey<Block> BARS = makeCommonBlockTag("bars");
-
-    /**
-     * Get or create {@link Item} {@link TagKey}.
-     *
-     * @param name The tag name / path.
-     * @return An existing or new {@link TagKey}.
-     * @see <a href="https://fabricmc.net/wiki/tutorial:tags">Fabric Wiki (Tags)</a>
-     */
-    public static TagKey<Item> makeCommonItemTag(String name) {
-        return makeTag(Registries.ITEM, new Identifier("c", name));
-    }
-
-
-    /**
-     * Get or create {@link Block} {@link TagKey}.
-     *
-     * @param name The tag name / path.
-     * @return An existing or new {@link TagKey}.
-     * @see <a href="https://fabricmc.net/wiki/tutorial:tags">Fabric Wiki (Tags)</a>
-     */
-    public static TagKey<Block> makeCommonBlockTag(String name) {
-        return makeTag(Registries.BLOCK, new Identifier("c", name));
-    }
-
-
+public class ModTagRegistry {
+    public static final TagKey<Block> CHAIN_CONNECTIBLE = makeTag(Registries.BLOCK, Helper.identifier("chain_connectible"));
 
     /**
      * Get or create {@link TagKey}.
@@ -70,14 +40,6 @@ public class CommonTags {
                 .filter(tagKey -> tagKey.id().equals(id))
                 .findAny()
                 .orElse(TagKey.of(registry.getKey(), id));
-    }
-
-    public static boolean isShear(ItemStack tool) {
-        return tool.isOf(Items.SHEARS) | tool.isIn(SHEARS);
-    }
-
-    public static boolean isChain(ItemStack itemStack) {
-        return itemStack.isIn(CHAINS);
     }
 
 

@@ -14,7 +14,7 @@
 
 package com.github.legoatoom.connectiblechains.entity;
 
-import com.github.legoatoom.connectiblechains.tag.CommonTags;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
@@ -74,7 +74,7 @@ public interface ChainLinkEntity {
      * @return true if a chain link entity can be destroyed with the item
      */
     static boolean canDestroyWith(ItemStack item) {
-        return CommonTags.isShear(item);
+        return item.isIn(ConventionalItemTags.SHEARS_TOOLS);
     }
 
     /**

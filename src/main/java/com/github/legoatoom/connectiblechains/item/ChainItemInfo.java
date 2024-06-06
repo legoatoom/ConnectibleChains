@@ -18,9 +18,9 @@ import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.ChainLinkEntity;
-import com.github.legoatoom.connectiblechains.tag.CommonTags;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipType;
@@ -65,7 +65,7 @@ public class ChainItemInfo {
             return ActionResult.PASS;
         } else if (world.isClient) {
             ItemStack handItem = player.getStackInHand(hand);
-            if (handItem.isIn(CommonTags.CHAINS)) {
+            if (handItem.isIn(ConventionalItemTags.CHAINS)) {
                 return ActionResult.SUCCESS;
             }
 
@@ -100,12 +100,12 @@ public class ChainItemInfo {
         Item knotType = stack.getItem();
 
         // Allow default interaction behaviour.
-        if (attachableChains.isEmpty() && !stack.isIn(CommonTags.CHAINS)) {
+        if (attachableChains.isEmpty() && !stack.isIn(ConventionalItemTags.CHAINS)) {
             return ActionResult.PASS;
         }
 
         // Held item does not correspond to a type.
-        if (!stack.isIn(CommonTags.CHAINS)) {
+        if (!stack.isIn(ConventionalItemTags.CHAINS)) {
             knotType = attachableChains.getFirst().getSourceItem();
         }
 
@@ -124,7 +124,7 @@ public class ChainItemInfo {
     @Environment(EnvType.CLIENT)
     public static void infoToolTip(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipType tooltipType, List<Text> texts) {
         if (ConnectibleChains.runtimeConfig.doShowToolTip()) {
-            if (itemStack.isIn(CommonTags.CHAINS)) {
+            if (itemStack.isIn(ConventionalItemTags.CHAINS)) {
                 if (Screen.hasShiftDown()) {
                     texts.add(1, Text.translatable("message.connectiblechains.connectible_chain_detailed").formatted(Formatting.AQUA));
                 } else {

@@ -15,9 +15,9 @@
 package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
-import com.github.legoatoom.connectiblechains.tag.CommonTags;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
@@ -88,7 +88,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Override
     public boolean shouldRender(double distance) {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player != null && player.isHolding(CommonTags::isShear)) {
+        if (player != null && player.isHolding(itemStack -> itemStack.isIn(ConventionalItemTags.SHEARS_TOOLS))) {
             return super.shouldRender(distance);
         } else {
             return false;

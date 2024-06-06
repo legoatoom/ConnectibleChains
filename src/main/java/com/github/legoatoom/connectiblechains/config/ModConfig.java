@@ -16,7 +16,6 @@ package com.github.legoatoom.connectiblechains.config;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.networking.packet.ConfigSyncPayload;
-import io.netty.buffer.Unpooled;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
@@ -24,7 +23,6 @@ import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -84,18 +82,6 @@ public class ModConfig implements ConfigData {
 
     public void syncToClient(ServerPlayerEntity player) {
         ServerPlayNetworking.send(player, new ConfigSyncPayload(chainHangAmount, maxChainRange));
-    }
-
-    public PacketByteBuf writePacket() {
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-        buf.writeFloat(chainHangAmount);
-        buf.writeInt(maxChainRange);
-        return buf;
-    }
-
-    public void readPacket(PacketByteBuf buf) {
-        this.chainHangAmount = buf.readFloat();
-        this.maxChainRange = buf.readInt();
     }
 
     public ModConfig copyFrom(ModConfig config) {

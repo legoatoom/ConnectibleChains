@@ -19,7 +19,7 @@ import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachPayload;
 import com.github.legoatoom.connectiblechains.networking.packet.KnotChangePayload;
 import com.github.legoatoom.connectiblechains.networking.packet.MultiChainAttachPayload;
-import com.github.legoatoom.connectiblechains.tag.CommonTags;
+import com.github.legoatoom.connectiblechains.tag.ModTagRegistry;
 import com.github.legoatoom.connectiblechains.util.PacketCreator;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -27,6 +27,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -370,7 +371,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     public static boolean canAttachTo(BlockState blockState) {
         if (blockState != null) {
-            return blockState.isIn(BlockTags.WALLS) || blockState.isIn(BlockTags.FENCES) || blockState.isIn(CommonTags.BARS);
+            return blockState.isIn(ModTagRegistry.CHAIN_CONNECTIBLE);
         }
         return false;
     }
@@ -519,7 +520,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     @Environment(EnvType.CLIENT)
     @Override
     public boolean shouldRender(double distance) {
-        return distance < 2048;
+        return true;
     }
 
     @Override
@@ -560,7 +561,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     public ActionResult interact(PlayerEntity player, Hand hand) {
         ItemStack handStack = player.getStackInHand(hand);
         if (getWorld().isClient()) {
-            if (handStack.isIn(CommonTags.CHAINS)) {
+            if (handStack.isIn(ConventionalItemTags.CHAINS)) {
                 return ActionResult.SUCCESS;
             }
 
@@ -591,7 +592,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         }
 
         // 3. Try to create a new connection
-        if (handStack.isIn(CommonTags.CHAINS)) {
+        if (handStack.isIn(ConventionalItemTags.CHAINS)) {
             // Interacted with a valid chain item, create a new link
             onPlace();
             ChainLink.create(this, player, handStack.getItem());

@@ -18,6 +18,7 @@ import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.client.ClientInitializer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
+import com.github.legoatoom.connectiblechains.client.render.entity.texture.ChainTextureManager;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import net.fabricmc.api.EnvType;
@@ -118,15 +119,18 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         }
         super.render(chainKnotEntity, yaw, tickDelta, matrices, vertexConsumers, light);
     }
+    private ChainTextureManager getTextureManager() {
+        return ClientInitializer.getInstance().getChainTextureManager();
+    }
 
     private Identifier getKnotTexture(Item item) {
         Identifier id = Registries.ITEM.getId(item);
-        return new Identifier(id.getNamespace(), "textures/item/" + id.getPath() + ".png");
+        return getTextureManager().getKnotTexture(id);
     }
 
     private Identifier getChainTexture(Item item) {
         Identifier id = Registries.ITEM.getId(item);
-        return new Identifier(id.getNamespace(), "textures/block/" + id.getPath() + ".png");
+        return getTextureManager().getChainTexture(id);
     }
 
     /**
@@ -168,6 +172,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         // - does not have vertex color
         // - uses a tri strip instead of quads
         RenderLayer entityCutout = RenderLayer.getEntityCutoutNoCull(getChainTexture(sourceItem));
+
         VertexConsumer buffer = vertexConsumerProvider.getBuffer(entityCutout);
         if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
             buffer = vertexConsumerProvider.getBuffer(RenderLayer.getLines());

@@ -55,9 +55,12 @@ public record ChainAttachPayload(int primaryEntityId, int secondaryEntityId, int
      */
     public static final ObjectList<IncompleteChainLink> incompleteLinks = new ObjectArrayList<>(256);
 
-
     public ChainAttachPayload(ChainLink link, boolean attach) {
         this(link.getPrimary().getId(), link.getSecondary().getId(), Registries.ITEM.getRawId(link.getSourceItem()), attach);
+    }
+
+    public ChainAttachPayload(PacketByteBuf buf) {
+        this(buf.readInt(), buf.readInt(), buf.readInt(), buf.readBoolean());
     }
 
     public static void encode(PacketByteBuf buf1, ChainAttachPayload packet) {

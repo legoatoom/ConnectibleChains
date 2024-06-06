@@ -29,7 +29,7 @@ public record MultiChainAttachPayload(List<ChainAttachPayload> packets) implemen
     public static final PacketCodec<RegistryByteBuf, MultiChainAttachPayload> PACKET_CODEC = PacketCodec.of(MultiChainAttachPayload::encode, MultiChainAttachPayload::decode);
 
     private static MultiChainAttachPayload decode(RegistryByteBuf buf) {
-        return new MultiChainAttachPayload(buf.readList(buf1 -> new ChainAttachPayload(buf.readInt(), buf.readInt(), buf.readInt(), buf.readBoolean())));
+        return new MultiChainAttachPayload(buf.readList(ChainAttachPayload::new));
     }
 
     private static void encode(MultiChainAttachPayload packet, RegistryByteBuf buf) {
