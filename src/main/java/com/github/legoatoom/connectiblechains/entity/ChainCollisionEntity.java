@@ -88,7 +88,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Override
     public boolean shouldRender(double distance) {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player != null && player.isHolding(itemStack -> itemStack.isIn(ConventionalItemTags.SHEARS_TOOLS))) {
+        if (player != null && player.isHolding(itemStack -> itemStack.isIn(ConventionalItemTags.SHEAR_TOOLS))) {
             return super.shouldRender(distance);
         } else {
             return false;

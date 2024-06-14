@@ -89,7 +89,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             // The model is 6 px wide, but it should be rendered at 5px
             matrices.scale(5 / 6f, 1, 5 / 6f);
             VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(getKnotTexture(chainKnotEntity.getChainItemSource())));
-            this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
+            this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV);
             matrices.pop();
         }
 
@@ -219,10 +219,10 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         Vec3d normal = vec.normalize();
         buffer.vertex(modelMat, 0, 0, 0)
                 .color(0, 255, 0, 255)
-                .normal((float) normal.x, (float) normal.y, (float) normal.z).next();
+                .normal((float) normal.x, (float) normal.y, (float) normal.z);
         buffer.vertex(modelMat, (float) vec.x, (float) vec.y, (float) vec.z)
                 .color(255, 0, 0, 255)
-                .normal((float) normal.x, (float) normal.y, (float) normal.z).next();
+                .normal((float) normal.x, (float) normal.y, (float) normal.z);
     }
 
     @Override

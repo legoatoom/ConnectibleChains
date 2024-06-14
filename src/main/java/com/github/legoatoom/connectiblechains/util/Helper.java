@@ -22,7 +22,7 @@ import org.joml.Vector3f;
 public class Helper {
 
     public static Identifier identifier(String name) {
-        return new Identifier(ConnectibleChains.MODID, name);
+        return Identifier.of(ConnectibleChains.MODID, name);
     }
 
     @Deprecated

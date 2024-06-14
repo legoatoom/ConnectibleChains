@@ -31,7 +31,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.decoration.AbstractDecorationEntity;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.decoration.BlockAttachedEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -44,6 +45,7 @@ import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.server.network.EntityTrackerEntry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
@@ -66,7 +68,7 @@ import java.util.UUID;
  *
  * @author legoatoom, Qendolin
  */
-public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLinkEntity {
+public class ChainKnotEntity extends BlockAttachedEntity implements ChainLinkEntity {
 
     /**
      * The distance when it is visible.
@@ -116,8 +118,12 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         this.chainItemSource = source;
     }
 
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+    }
+
     /**
-     * Set the {@link #attachmentPos}.
+     * Set the {@link #attachedBlockPos}.
      *
      * @see #updateAttachmentPosition()
      */
@@ -138,17 +144,12 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         this.graceTicks = graceTicks;
     }
 
-    @Override
-    public void setFacing(Direction facing) {
-        // AbstractDecorationEntity.facing should not be used
-    }
-
     /**
      * Update the position of this chain to the position of the block this is attached to.
      * Also updates the bounding box.
      */
     protected void updateAttachmentPosition() {
-        setPos(attachmentPos.getX() + 0.5D, attachmentPos.getY() + 0.5D, attachmentPos.getZ() + 0.5D);
+        setPos(attachedBlockPos.getX() + 0.5D, attachedBlockPos.getY() + 0.5D, attachedBlockPos.getZ() + 0.5D);
         double w = getType().getWidth() / 2.0;
         double h = getType().getHeight();
         setBoundingBox(new Box(getX() - w, getY(), getZ() - w, getX() + w, getY() + h, getZ() + w));
@@ -168,7 +169,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         if (getWorld().isClient()) {
             // All other logic in handled on the server. The client only knows enough to render the entity.
             links.removeIf(ChainLink::isDead);
-            attachTarget = getWorld().getBlockState(attachmentPos);
+            attachTarget = getWorld().getBlockState(attachedBlockPos);
             return;
         }
         attemptTickInVoid();
@@ -272,7 +273,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             BlockPos blockPos = new BlockPos(tag.getInt("RelX"), tag.getInt("RelY"), tag.getInt("RelZ"));
             // Adjust position to be relative to our facing direction
             blockPos = getBlockPosAsFacingRelative(blockPos, Direction.fromRotation(this.getYaw()));
-            ChainKnotEntity entity = ChainKnotEntity.getKnotAt(getWorld(), blockPos.add(attachmentPos));
+            ChainKnotEntity entity = ChainKnotEntity.getKnotAt(getWorld(), blockPos.add(attachedBlockPos));
             if (entity != null) {
                 ChainLink.create(this, entity, source);
                 return true;
@@ -307,7 +308,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * @return true if it can stay attached.
      */
     public boolean canStayAttached() {
-        BlockState blockState = getWorld().getBlockState(attachmentPos);
+        BlockState blockState = getWorld().getBlockState(attachedBlockPos);
         return canAttachTo(blockState);
     }
 
@@ -355,7 +356,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
                 Box.of(Vec3d.of(pos), 2, 2, 2));
 
         for (ChainKnotEntity current : results) {
-            if (current.getDecorationBlockPos().equals(pos)) {
+            if (current.getAttachedBlockPos().equals(pos)) {
                 return current;
             }
         }
@@ -466,9 +467,9 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
             if (secondary instanceof PlayerEntity) {
                 UUID uuid = secondary.getUuid();
                 compoundTag.putUuid("UUID", uuid);
-            } else if (secondary instanceof AbstractDecorationEntity) {
-                BlockPos srcPos = this.attachmentPos;
-                BlockPos dstPos = ((AbstractDecorationEntity) secondary).getDecorationBlockPos();
+            } else if (secondary instanceof BlockAttachedEntity) {
+                BlockPos srcPos = this.attachedBlockPos;
+                BlockPos dstPos = ((BlockAttachedEntity) secondary).getAttachedBlockPos();
                 BlockPos relPos = dstPos.subtract(srcPos);
                 // Inverse rotation to store the position as 'facing' agnostic
                 Direction inverseFacing = Direction.fromRotation(Direction.SOUTH.asRotation() - getYaw());
@@ -501,16 +502,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         chainItemSource = Registries.ITEM.get(Identifier.tryParse(root.getString(SOURCE_ITEM_KEY)));
     }
 
-    @Override
-    public int getWidthPixels() {
-        return 9;
-    }
-
-    @Override
-    public int getHeightPixels() {
-        return 9;
-    }
-
     /**
      * Checks if the {@code distance} is within the {@link #VISIBLE_RANGE visible range}.
      *
@@ -536,11 +527,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     public Vec3d getLeashPos(float f) {
         return getLerpedPos(f).add(0, 4.5 / 16, 0);
     }
-
-//    @Override
-//    protected float getEyeHeight(EntityPose pose, EntityDimensions dimensions) {
-//        return 4.5f / 16f;
-//    }
 
     /**
      * Interaction (attack or use) of a player and this entity.
@@ -623,7 +609,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      */
     public boolean tryAttachHeldChains(PlayerEntity player) {
         boolean hasMadeConnection = false;
-        List<ChainLink> attachableLinks = getHeldChainsInRange(player, getDecorationBlockPos());
+        List<ChainLink> attachableLinks = getHeldChainsInRange(player, getAttachedBlockPos());
         for (ChainLink link : attachableLinks) {
             // Prevent connections with self
             if (link.getPrimary() == this) continue;
@@ -641,7 +627,6 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         return hasMadeConnection;
     }
 
-    @Override
     public void onPlace() {
         playSound(getSoundGroup().getPlaceSound(), 1.0F, 1.0F);
     }
@@ -713,9 +698,9 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
      * @see PacketCreator
      */
     @Override
-    public Packet<ClientPlayPacketListener> createSpawnPacket() {
+    public Packet<ClientPlayPacketListener> createSpawnPacket(EntityTrackerEntry entityTrackerEntry) {
         int id = Registries.ITEM.getRawId(chainItemSource);
-        return new EntitySpawnS2CPacket(this, id, this.getDecorationBlockPos());
+        return new EntitySpawnS2CPacket(this, id, this.getAttachedBlockPos());
     }
 
     @Override

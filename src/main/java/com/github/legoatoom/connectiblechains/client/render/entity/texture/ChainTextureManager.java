@@ -117,10 +117,10 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
 
 
     private static @NotNull Identifier defaultChainTextureId(Identifier itemId) {
-        return new Identifier(itemId.getNamespace(), "textures/block/%s.png".formatted(itemId.getPath()));
+        return Identifier.of(itemId.getNamespace(), "textures/block/%s.png".formatted(itemId.getPath()));
     }
     private static @NotNull Identifier defaultKnotTextureId(Identifier itemId) {
-        return new Identifier(itemId.getNamespace(), "textures/item/%s.png".formatted(itemId.getPath()));
+        return Identifier.of(itemId.getNamespace(), "textures/item/%s.png".formatted(itemId.getPath()));
     }
 
     public Identifier getChainTexture(Identifier sourceItemId) {

@@ -64,8 +64,7 @@ public record ChainModel(float[] vertices, float[] uvs) {
                     .overlay(OverlayTexture.DEFAULT_UV)
                     .light(light)
                     // trial and error magic values that change the overall brightness of the chain
-                    .normal(1, 0.35f, 0)
-                    .next();
+                    .normal(1, 0.35f, 0);
         }
     }
 

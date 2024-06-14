@@ -75,7 +75,7 @@ public interface ChainLinkEntity {
      * @return true if a chain link entity can be destroyed with the item
      */
     static boolean canDestroyWith(ItemStack item) {
-        return item.isIn(ConventionalItemTags.SHEARS_TOOLS);
+        return item.isIn(ConventionalItemTags.SHEAR_TOOLS);
     }
 
     /**
