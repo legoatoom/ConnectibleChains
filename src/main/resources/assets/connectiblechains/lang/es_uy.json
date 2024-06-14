@@ -1,0 +1,19 @@
+{
+  "entity.connectiblechains.chain_knot" : "Nudo de Cadena",
+  "message.connectiblechains.connectible_chain" : "Compatible con Catenaria [Mayús]",
+  "message.connectiblechains.connectible_chain_detailed" : "Haz clic en cercas/paredes para crear una catenaria!",
+  "entity.connectiblechains.chain_collision" : "Colisión de Cadenas",
+  "text.autoconfig.connectiblechains.option.chainHangAmount" : "Curveo de Cadena",
+  "text.autoconfig.connectiblechains.option.maxChainRange" : "Distancia Máxima de Cadena",
+  "text.autoconfig.connectiblechains.option.quality" : "Calidad de Cadena",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[0]" : "Afecta cuánto se cuelga la cadena.",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[1]" : "Números más bajos dan una curva más pronunciada.",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[2]" : "La colisión se actualizará en nuevas cadenas o al cargar el mundo.",
+  "text.autoconfig.connectiblechains.option.showToolTip" : "Mostrar Información sobre Compatibilidad de Catenaria",
+  "text.autoconfig.connectiblechains.option.showToolTip.@Tooltip" : "Mostrar información sobre elementos de cadena compatibles con este mod.",
+
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[0]" : "Afecta cuánto puede ser de larga una cadena.",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[1]" : "§nAdvertencia§r: ¡Las cadenas largas a veces pueden volverse invisibles!",
+  "text.autoconfig.connectiblechains.option.quality.@Tooltip" : "Afecta la calidad visual de la cadena.",
+  "text.autoconfig.connectiblechains.title": "Configuraciones de Connectible Chains"
+}

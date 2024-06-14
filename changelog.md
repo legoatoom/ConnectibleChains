@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.4.1] - WIP
+- Added `es_mx` translation by courtesy of [TheLegendofSaram](https://github.com/TheLegendofSaram)
+  - Copied language to `es_ar`,`es_cl`,`es_ec`, `es_es`, `es_uy`, and `es_ve`.
+  - If you noticed any mistake due to regional differences in the Spanish language, make an issue or pull request.
+- Added `ru_ru` translation by courtesy of [Alexander317](https://github.com/Alexander317)
+
 ## [2.4.0] - 12024-06-06
 - Reworking Networking again since it changed again.
 - Increased visibility range, equal to other entities, like chests.
