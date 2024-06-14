@@ -45,7 +45,7 @@ jobs:
           files: |
             build/libs/!(*-@(dev|sources)).jar
           loaders: fabric
-          game-versions: 1.20.6
+          game-versions: 1.21
           java: 21
 
           modrinth-id: ykSfIgTw
