@@ -43,7 +43,6 @@ import java.util.concurrent.Executor;
  */
 public class ChainTextureManager implements SimpleResourceReloadListener<Map<Identifier, JsonElement>> {
     private static final Gson GSON = new GsonBuilder().setLenient().create();
-    private static final Identifier MISSING_ID = new Identifier(ConnectibleChains.MODID, "textures/entity/missing.png");
     private static final String MODEL_FILE_LOCATION = "models/entity/" + ConnectibleChains.MODID;
     /**
      * How many different chain items do we expect?
@@ -138,26 +137,5 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
             ConnectibleChains.LOGGER.warn("Did not find a model file for the chain '%s', assuming default path.".formatted(sourceItemId));
             return defaultKnotTextureId(id);
         });
-    }
-
-
-    /**
-     * This class represents the json structure of the model file
-     */
-    protected static final class JsonModel {
-        public Textures textures;
-
-        protected static final class Textures {
-            public String chain;
-            public String knot;
-
-            public Identifier chainTextureId() {
-                return new Identifier(chain + ".png");
-            }
-
-            public Identifier knotTextureId() {
-                return new Identifier(knot + ".png");
-            }
-        }
     }
 }
