@@ -15,5 +15,6 @@
   "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[0]" : "Effects how long a chain can be.",
   "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[1]" : "§nWarning§r: Long chains can sometimes become invisible!",
   "text.autoconfig.connectiblechains.option.quality.@Tooltip" : "Effects the visual quality the chain.",
-  "text.autoconfig.connectiblechains.title": "Connectible Chains Configs"
+  "text.autoconfig.connectiblechains.title": "Connectible Chains Configs",
+  "tag.item.connectiblechains.catenary_items": "Catenary items"
 }
