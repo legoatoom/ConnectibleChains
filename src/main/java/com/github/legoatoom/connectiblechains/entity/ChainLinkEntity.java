@@ -20,7 +20,7 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.tag.DamageTypeTags;
-import net.minecraft.sound.SoundEvents;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.ActionResult;
 
 /**
@@ -42,7 +42,7 @@ public interface ChainLinkEntity {
      * @return {@link ActionResult#SUCCESS} when the link should be destroyed,
      * {@link ActionResult#CONSUME} when the link should be destroyed but not drop.
      */
-    static ActionResult onDamageFrom(Entity self, DamageSource source) {
+    static ActionResult onDamageFrom(Entity self, DamageSource source, SoundEvent hitSound) {
         if (self.isInvulnerableTo(source)) {
             return ActionResult.FAIL;
         }
@@ -64,7 +64,8 @@ public interface ChainLinkEntity {
             // Projectiles such as arrows (actually probably just arrows) can get "stuck"
             // on entities they cannot damage, such as players while blocking with shields or these chains.
             // That would cause some serious sound spam, and we want to avoid that.
-            self.playSound(SoundEvents.BLOCK_CHAIN_HIT, 0.5F, 1.0F);
+
+            self.playSound(hitSound, 0.5F, 1.0F);
         }
         return ActionResult.FAIL;
     }

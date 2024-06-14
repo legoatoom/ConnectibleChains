@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "minecraft:iron_bars"
+    "#c:chains",
+    "minecraft:lead"
   ]
 }

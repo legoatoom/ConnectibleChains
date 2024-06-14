@@ -16,6 +16,7 @@ package com.github.legoatoom.connectiblechains.tag;
 
 import com.github.legoatoom.connectiblechains.util.Helper;
 import net.minecraft.block.Block;
+import net.minecraft.item.Item;
 import net.minecraft.registry.DefaultedRegistry;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.TagKey;
@@ -26,6 +27,7 @@ import net.minecraft.util.Identifier;
  */
 public class ModTagRegistry {
     public static final TagKey<Block> CHAIN_CONNECTIBLE = makeTag(Registries.BLOCK, Helper.identifier("chain_connectible"));
+    public static final TagKey<Item> CATENARY_ITEMS = makeTag(Registries.ITEM, Helper.identifier("catenary_items"));
 
     /**
      * Get or create {@link TagKey}.

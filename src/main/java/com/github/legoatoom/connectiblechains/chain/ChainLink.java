@@ -27,10 +27,14 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.LeadItem;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameRules;
@@ -324,6 +328,26 @@ public class ChainLink {
         for (ServerPlayerEntity player : trackingPlayers) {
             ServerPlayNetworking.send(player, new ChainAttachPayload(this, false));
         }
+    }
+
+    /**
+     * Get the sound used for the source item, this way the sound is consistent.
+     */
+    public static BlockSoundGroup getSoundGroup(@Nullable Item sourceItem) {
+        if (sourceItem instanceof BlockItem blockItem) {
+            return blockItem.getBlock().getDefaultState().getSoundGroup();
+        }
+        if (sourceItem instanceof LeadItem) {
+            return new BlockSoundGroup(1.0f,
+                    1.0f,
+                    SoundEvents.ENTITY_LEASH_KNOT_BREAK,
+                    BlockSoundGroup.WOOL.getStepSound(),
+                    SoundEvents.ENTITY_LEASH_KNOT_PLACE,
+                    BlockSoundGroup.WOOL.getHitSound(),
+                    BlockSoundGroup.WOOL.getFallSound()
+            );
+        }
+        return BlockSoundGroup.CHAIN;
     }
 
     /**

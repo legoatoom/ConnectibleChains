@@ -27,7 +27,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -47,8 +46,9 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.*;
 import net.minecraft.util.math.*;
 import net.minecraft.world.World;
@@ -326,7 +326,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
 
     @Override
     public void onBreak(@Nullable Entity entity) {
-        playSound(SoundEvents.BLOCK_CHAIN_BREAK, 1.0F, 1.0F);
+        playSound(getSoundGroup().getBreakSound(), 1.0F, 1.0F);
     }
 
     /**
@@ -425,18 +425,18 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         if (attacker instanceof PlayerEntity playerEntity) {
             damage(this.getDamageSources().playerAttack(playerEntity), 0.0F);
         } else {
-            playSound(SoundEvents.BLOCK_CHAIN_HIT, 0.5F, 1.0F);
+            playSound(getSoundGroup().getHitSound(), 0.5F, 1.0F);
         }
         return true;
     }
 
     /**
      * @return true when damage was effective
-     * @see ChainKnotEntity#onDamageFrom(Entity, DamageSource)
+     * @see ChainKnotEntity#onDamageFrom(Entity, DamageSource, SoundEvent)
      */
     @Override
     public boolean damage(DamageSource source, float amount) {
-        ActionResult result = ChainLinkEntity.onDamageFrom(this, source);
+        ActionResult result = ChainLinkEntity.onDamageFrom(this, source, getSoundGroup().getHitSound());
 
         if (result.isAccepted()) {
             destroyLinks(result == ActionResult.SUCCESS);
@@ -561,7 +561,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
     public ActionResult interact(PlayerEntity player, Hand hand) {
         ItemStack handStack = player.getStackInHand(hand);
         if (getWorld().isClient()) {
-            if (handStack.isIn(ConventionalItemTags.CHAINS)) {
+            if (handStack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
                 return ActionResult.SUCCESS;
             }
 
@@ -592,7 +592,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
         }
 
         // 3. Try to create a new connection
-        if (handStack.isIn(ConventionalItemTags.CHAINS)) {
+        if (handStack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
             // Interacted with a valid chain item, create a new link
             onPlace();
             ChainLink.create(this, player, handStack.getItem());
@@ -643,7 +643,11 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements ChainLi
 
     @Override
     public void onPlace() {
-        playSound(SoundEvents.BLOCK_CHAIN_PLACE, 1.0F, 1.0F);
+        playSound(getSoundGroup().getPlaceSound(), 1.0F, 1.0F);
+    }
+
+    private BlockSoundGroup getSoundGroup() {
+        return ChainLink.getSoundGroup(chainItemSource);
     }
 
     /**

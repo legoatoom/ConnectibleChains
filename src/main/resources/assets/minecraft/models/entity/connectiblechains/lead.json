@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "connectiblechains:textures/entity/lead_rope",
+    "knot": "connectiblechains:textures/entity/lead_knot"
+  }
+}

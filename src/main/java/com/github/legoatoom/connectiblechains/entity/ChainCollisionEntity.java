@@ -26,7 +26,7 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.sound.SoundEvents;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
@@ -96,6 +96,11 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     }
 
     @Override
+    public boolean isFireImmune() {
+        return super.isFireImmune();
+    }
+
+    @Override
     protected void readCustomDataFromNbt(NbtCompound tag) {
     }
 
@@ -121,17 +126,18 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
         if (attacker instanceof PlayerEntity playerEntity) {
             this.damage(this.getDamageSources().playerAttack(playerEntity), 0.0F);
         } else {
-            playSound(SoundEvents.BLOCK_CHAIN_HIT, 0.5F, 1.0F);
+            playSound(getHitSound(), 0.5F, 1.0F);
         }
         return true;
     }
+
 
     /**
      * @see ChainKnotEntity#damage(DamageSource, float)
      */
     @Override
     public boolean damage(DamageSource source, float amount) {
-        ActionResult result = ChainLinkEntity.onDamageFrom(this, source);
+        ActionResult result = ChainLinkEntity.onDamageFrom(this, source, getHitSound());
 
         if (result.isAccepted()) {
             destroyLinks(result == ActionResult.SUCCESS);
@@ -143,6 +149,14 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Override
     public void destroyLinks(boolean mayDrop) {
         if (link != null) link.destroy(mayDrop);
+    }
+
+    private SoundEvent getHitSound() {
+        if (link != null) {
+            return ChainLink.getSoundGroup(link.sourceItem).getHitSound();
+        } else {
+            return ChainLink.getSoundGroup(null).getHitSound();
+        }
     }
 
     /**
