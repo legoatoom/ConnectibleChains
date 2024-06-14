@@ -35,6 +35,9 @@
     "fabricloader": ">=0.15.7",
     "fabric": "*",
     "minecraft": "1.20.6",
-    "cloth-config2": ">=14.0.126"
+    "cloth-config": ">=14.0.126"
+  },
+  "suggests": {
+    "modmenu" : ">=10.0.0"
   }
 }

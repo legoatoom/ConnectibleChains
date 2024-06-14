@@ -25,7 +25,7 @@ jobs:
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v3.4.1
         with:
           distribution: zulu
@@ -42,15 +42,18 @@ jobs:
         # You may pin to the exact commit or the version.   
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          modrinth-id: ykSfIgTw
-          modrinth-token: ${{ secrets.MODRINTH_API_KEY }}
-          modrinth-files-secondary: build/libs/*-@(sources\|javadoc).jar
-          curseforge-id: 415681
-          curseforge-token: ${{ secrets.CURSEFORGE_API_KEY }}
-          
-          files: build/libs/!(*-@(dev|sources)).jar
-          github-files-secondary: build/libs/*-@(dev\|sources\|javadoc).jar
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            build/libs/!(*-@(dev|sources)).jar
           loaders: fabric
           game-versions: 1.20.6
           java: 21
+
+          modrinth-id: ykSfIgTw
+          modrinth-token: ${{ secrets.MODRINTH_API_KEY }}
+          curseforge-id: 415681
+          curseforge-token: ${{ secrets.CURSEFORGE_API_KEY }}
+
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-files:
+            build/libs/!(*-@(dev|sources|javadoc)).jar
+            build/libs/*-@(dev|sources|javadoc).jar
