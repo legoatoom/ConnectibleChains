@@ -4,13 +4,11 @@
 <p align="center">Connect your fences and walls with a decorative chain!</p>
 <p align="center">
   <a title="Fabric API" href="https://github.com/FabricMC/fabric">
-    <img src="https://i.imgur.com/Ol1Tcf8.png" width="151" height="50">
-  </a>
+    <img src="https://i.imgur.com/Ol1Tcf8.png" width="151" height="50"></a>
   <a title="Cloth API" href="https://modrinth.com/mod/cloth-config">
     <img src="https://i.imgur.com/7weZ8uu.png" width="151" height="50">
   </a>
 </p>
-<br>
 <p align="center">
       <a href="https://www.gnu.org/licenses/lgpl-3.0.en.html"><img src="https://img.shields.io/github/license/legoatoom/ConnectibleChains?style=for-the-badge"></a>
         <a href="https://github.com/legoatoom/ConnectibleChains/releases"><img src="https://img.shields.io/github/v/release/legoatoom/ConnectibleChains?style=for-the-badge"></a>
@@ -26,7 +24,7 @@
 ## Description
 Connect your fences/walls with a decorative chain!
 
-Use the normal vanilla chain item on fences or walls, and you can create a chain for up to 7 blocks long (Configurable to 32 with config, however I do not support this and rendering issues may occur).
+Use the normal vanilla chain item on fences or walls.
 
 These chains have collision and can be broken when attacking it with a shear. \
 Sneak on fences if you want to place them normally.
@@ -40,24 +38,10 @@ Sneak on fences if you want to place them normally.
 If you have encountered any bugs or have some feedback, go to the GitHub [issues](https://github.com/legoatoom/ConnectibleChains/issues) page.
 
 #### Version Support
-I will not be supporting versions lower than 1.20.4
+I will not be supporting versions lower than 1.20.6
 
 #### Compatibility with other mods
-Using `data/c/tags/items/chains.json` we check if an item can be used to make a catenary.\
-The code then assumes an `item` and `block`texture for the `knot` and `catenary`. \
-This implies that you can make anything a compatible chain, as long as you have textures available.
-For modded players, you need to add a data pack where you  add tags for the modded chain items you want added.
-
-See the example below to add `blockus:golden_chain`.
-```json
-{
-  "replace": false,
-  "values": [
-    "minecraft:chain",
-    "blockus:golden_chain"
-  ]
-}
-```
+See the wiki.
 
 #### Forge?
 There is a forge port however I do not maintain it. \
