@@ -19,26 +19,29 @@ import com.github.legoatoom.connectiblechains.client.ClientInitializer;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
-import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.resource.Resource;
+import net.fabricmc.fabric.api.resource.SimpleResourceReloadListener;
+import net.minecraft.resource.JsonDataLoader;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Pair;
+import net.minecraft.util.profiler.Profiler;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 /**
  * The manager loads the chain models that contain the texture information for all chain types.
  * It looks for models at models/entity/chain/ within the same namespace as the chain type.
  * Inspired by {@link net.minecraft.client.render.model.BakedModelManager} and {@link net.minecraft.client.render.model.ModelLoader}.
  */
-public class ChainTextureManager implements SimpleSynchronousResourceReloadListener {
+public class ChainTextureManager implements SimpleResourceReloadListener<Map<Identifier, JsonElement>> {
     private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final Identifier MISSING_ID = new Identifier(ConnectibleChains.MODID, "textures/entity/missing.png");
     private static final String MODEL_FILE_LOCATION = "models/entity/" + ConnectibleChains.MODID;
@@ -60,35 +63,48 @@ public class ChainTextureManager implements SimpleSynchronousResourceReloadListe
         return Helper.identifier("chain_models");
     }
 
+
     @Override
-    public void reload(ResourceManager manager) {
-        clearCache();
+    public CompletableFuture<Map<Identifier, JsonElement>> load(ResourceManager manager, Profiler profiler, Executor executor) {
+        return CompletableFuture.supplyAsync(() -> {
+            HashMap<Identifier, JsonElement> map = new HashMap<>();
+            JsonDataLoader.load(manager, MODEL_FILE_LOCATION, GSON, map);
+            return map;
+        });
+    }
 
-        for (Item item : Registries.ITEM) {
-            if (!Registries.ITEM.getEntry(item).isIn(ConventionalItemTags.CHAINS)) {
-                continue;
-            }
+    @Override
+    public CompletableFuture<Void> apply(Map<Identifier, JsonElement> data, ResourceManager manager, Profiler profiler, Executor executor) {
+        return CompletableFuture.supplyAsync(() -> {
+            clearCache();
+            data.forEach((identifier, jsonElement) -> {
+                Pair<Identifier, Identifier> textures = extractChainTextures(identifier, jsonElement);
+                chainTextures.put(identifier, textures.getLeft());
+                knotTextures.put(identifier, textures.getRight());
+            });
 
-            Identifier itemId = Registries.ITEM.getId(item);
-            Optional<Resource> optionalResource = manager.getResource(new Identifier(itemId.getNamespace(), "%s/%s.json".formatted(MODEL_FILE_LOCATION, itemId.getPath())));
-            // default texture locations.
-            Identifier chainTextureId = new Identifier(itemId.getNamespace(), "textures/block/%s.png".formatted(itemId.getPath()));
-            Identifier knotTextureId = new Identifier(itemId.getNamespace(), "textures/item/%s.png".formatted(itemId.getPath()));
-            if (optionalResource.isEmpty()) {
-                ConnectibleChains.LOGGER.warn("Unable to find model file for {}, will assume default", itemId);
-            } else {
-                Resource resource = optionalResource.get();
-                try (Reader reader = resource.getReader()) {
-                    JsonModel model = GSON.fromJson(reader, JsonModel.class);
-                    chainTextureId = model.textures.chainTextureId();
-                    knotTextureId = model.textures.knotTextureId();
-                } catch (IOException e) {
-                    ConnectibleChains.LOGGER.warn("Error opening model file for {}, will assume default", itemId);
-                }
+            return null;
+        });
+    }
+
+    private static Pair<Identifier, Identifier> extractChainTextures(Identifier itemId, JsonElement jsonElement) {
+        //Default
+        Identifier chainTextureId = defaultChainTextureId(itemId);
+        Identifier knotTextureId = defaultKnotTextureId(itemId);
+
+        if (jsonElement.isJsonObject()) {
+            JsonObject jsonObject = jsonElement.getAsJsonObject();
+            JsonObject texturesObject = jsonObject.getAsJsonObject("textures");
+
+            if (texturesObject.has("chain") && texturesObject.get("chain").isJsonPrimitive()) {
+                chainTextureId = Identifier.tryParse(texturesObject.get("chain").getAsString()+ ".png");
             }
-            chainTextures.put(itemId, chainTextureId);
-            knotTextures.put(itemId, knotTextureId);
+            if (texturesObject.has("knot") && texturesObject.get("knot").isJsonPrimitive()) {
+                knotTextureId = Identifier.tryParse(texturesObject.get("knot").getAsString()+ ".png");
+            }
         }
+
+        return new Pair<>(chainTextureId, knotTextureId);
     }
 
     public void clearCache() {
@@ -100,11 +116,19 @@ public class ChainTextureManager implements SimpleSynchronousResourceReloadListe
 
     }
 
+
+    private static @NotNull Identifier defaultChainTextureId(Identifier itemId) {
+        return new Identifier(itemId.getNamespace(), "textures/block/%s.png".formatted(itemId.getPath()));
+    }
+    private static @NotNull Identifier defaultKnotTextureId(Identifier itemId) {
+        return new Identifier(itemId.getNamespace(), "textures/item/%s.png".formatted(itemId.getPath()));
+    }
+
     public Identifier getChainTexture(Identifier sourceItemId) {
         return chainTextures.computeIfAbsent(sourceItemId, (Identifier id) -> {
             // Default location.
             ConnectibleChains.LOGGER.warn("Did not find a model file for the chain '%s', assuming default path.".formatted(sourceItemId));
-            return new Identifier(id.getNamespace(), "textures/block/%s.png".formatted(id.getPath()));
+            return defaultChainTextureId(id);
         });
     }
 
@@ -112,9 +136,10 @@ public class ChainTextureManager implements SimpleSynchronousResourceReloadListe
         return knotTextures.computeIfAbsent(sourceItemId, (Identifier id) -> {
             // Default location.
             ConnectibleChains.LOGGER.warn("Did not find a model file for the chain '%s', assuming default path.".formatted(sourceItemId));
-            return new Identifier(id.getNamespace(), "textures/item/%s.png".formatted(id.getPath()));
+            return defaultKnotTextureId(id);
         });
     }
+
 
     /**
      * This class represents the json structure of the model file
