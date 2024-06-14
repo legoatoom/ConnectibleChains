@@ -49,6 +49,7 @@ public class Helper {
      */
     public static double drip2(double x, double d, double h) {
         double a = ConnectibleChains.runtimeConfig.getChainHangAmount();
+        a = a + (d * 0.3);
         double p1 = a * asinh((h / (2D * a)) * (1D / Math.sinh(d / (2D * a))));
         double p2 = -a * Math.cosh((2D * p1 - d) / (2D * a));
         return p2 + a * Math.cosh((((2D * x) + (2D * p1)) - d) / (2D * a));
