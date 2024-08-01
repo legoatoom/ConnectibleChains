@@ -34,19 +34,16 @@ body:
     validations:
       required: true
 
-  - type: input
-    id: version
+  - type: markdown
     attributes:
-      label: Fabric Loader Version
-      placeholder: ""
-    validations:
-      required: true
+      value: |
+        Now for the actual problem.
 
   - type: textarea
     id: what-happened
     attributes:
       label: What is the problem?
-      description: Also tell us, what did you expect to happen?
+      description: Also tell, what did you expect to happen? Does it crash the game or is just a bug? Tell everything.
       placeholder: Tell us what you see!
       value: "A bug happened!"
     validations:
