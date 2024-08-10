@@ -3,21 +3,19 @@
 <h3 align="center">Connectible Chains</h3>
 <p align="center">Connect your fences and walls with a decorative chain!</p>
 <p align="center">
+
   <a title="Fabric API" href="https://github.com/FabricMC/fabric">
-    <img src="https://i.imgur.com/Ol1Tcf8.png" width="151" height="50"></a>
-  <a title="Cloth API" href="https://modrinth.com/mod/cloth-config">
-    <img src="https://i.imgur.com/7weZ8uu.png" width="151" height="50">
-  </a>
-</p>
-<p align="center">
-      <a href="https://www.gnu.org/licenses/lgpl-3.0.en.html"><img src="https://img.shields.io/github/license/legoatoom/ConnectibleChains?style=for-the-badge"></a>
-        <a href="https://github.com/legoatoom/ConnectibleChains/releases"><img src="https://img.shields.io/github/v/release/legoatoom/ConnectibleChains?style=for-the-badge"></a>
-        <a href="https://github.com/legoatoom/ConnectibleChains/issues"><img src="https://img.shields.io/github/issues-raw/legoatoom/ConnectibleChains?style=for-the-badge"></a>
-        <br>
-        <a href="https://www.curseforge.com/minecraft/mc-mods/connectible-chains"><img src="https://img.shields.io/badge/dynamic/json?color=f16436&logo=curseforge&query=downloads.total&url=https://api.cfwidget.com/415681&label=fabric&cacheSeconds=86400&style=for-the-badge"></a>
-  <a href="https://www.curseforge.com/minecraft/mc-mods/connectible-chains-forge"><img src="https://img.shields.io/badge/dynamic/json?color=f16436&logo=curseforge&query=downloads.total&url=https://api.cfwidget.com/418514&label=forge&cacheSeconds=86400&style=for-the-badge"></a>
-        <a href="https://modrinth.com/mod/connectible_chains"><img src="https://img.shields.io/modrinth/dt/ykSfIgTw?logo=modrinth&logoColor=white&style=for-the-badge"></a>
-        <a href="https://github.com/legoatoom/ConnectibleChains"><img src="https://img.shields.io/github/downloads/legoatoom/ConnectibleChains/total?logo=GitHub&style=for-the-badge"></a>
+    <img src="https://i.imgur.com/Ol1Tcf8.png" width="151" height="50"></a><a title="Cloth API" href="https://modrinth.com/mod/cloth-config"><img src="https://i.imgur.com/7weZ8uu.png" width="151" height="50"></a>
+
+<br>
+
+<a href="https://www.curseforge.com/minecraft/mc-mods/connectiblechains" rel="nofollow">
+<img src="https://img.shields.io/badge/dynamic/json?color=f16436&logo=curseforge&query=downloads.total&url=https://api.cfwidget.com/415681&label=fabric&cacheSeconds=86400&style=for-the-badge"></a><a href="https://www.curseforge.com/minecraft/mc-mods/connectible-chains-forge" rel="nofollow">
+<img src="https://img.shields.io/badge/dynamic/json?color=f16436&logo=curseforge&query=downloads.total&url=https://api.cfwidget.com/418514&label=forge&cacheSeconds=86400&style=for-the-badge"></a><a href="https://modrinth.com/mod/connectiblechains" rel="nofollow">
+<img src="https://img.shields.io/modrinth/dt/ykSfIgTw?logo=modrinth&logoColor=white&style=for-the-badge">
+</a><a href="https://github.com/legoatoom/ConnectibleChains" rel="nofollow">
+<img src="https://img.shields.io/github/downloads/legoatoom/ConnectibleChains/total?logo=GitHub&style=for-the-badge">
+</a>
 </p>
 
 
