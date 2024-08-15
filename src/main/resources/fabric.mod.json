@@ -34,10 +34,10 @@
   "depends": {
     "fabricloader": ">=0.15.7",
     "fabric": "*",
-    "minecraft": "1.21.0",
-    "cloth-config": ">=15.0.127"
+    "minecraft": ">=1.21.0 <=1.21.1",
+    "cloth-config": ">=15.0.130"
   },
   "suggests": {
-    "modmenu" : ">=11.0.0"
+    "modmenu": ">=11.0.1"
   }
 }
