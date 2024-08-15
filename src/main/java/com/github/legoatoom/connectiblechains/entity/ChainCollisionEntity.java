@@ -25,7 +25,13 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
+import net.minecraft.registry.Registries;
+import net.minecraft.server.network.EntityTrackerEntry;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -47,10 +53,15 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Nullable
     private ChainLink link;
 
+    @NotNull
+    private Item linkSourceItem;
+
+
     public ChainCollisionEntity(World world, double x, double y, double z, @NotNull ChainLink link) {
         this(ModEntityTypes.CHAIN_COLLISION, world);
         this.link = link;
         this.setPosition(x, y, z);
+        this.linkSourceItem = link.sourceItem;
     }
 
     public ChainCollisionEntity(EntityType<? extends ChainCollisionEntity> entityType, World world) {
@@ -59,7 +70,13 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
 
     @SuppressWarnings("unused")
     public @Nullable ChainLink getLink() {
+        // Only available in the server. In the client, it is null.
         return link;
+    }
+
+    public @NotNull Item getLinkSourceItem() {
+        // Always available.
+        return linkSourceItem;
     }
 
     @Override
@@ -179,6 +196,19 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Override
     protected void initDataTracker(DataTracker.Builder builder) {
 
+    }
+
+    @Override
+    public Packet<ClientPlayPacketListener> createSpawnPacket(EntityTrackerEntry entityTrackerEntry) {
+        int id = Registries.ITEM.getRawId(linkSourceItem);
+        return new EntitySpawnS2CPacket(this, entityTrackerEntry, id);
+    }
+
+    @Override
+    public void onSpawnPacket(EntitySpawnS2CPacket packet) {
+        super.onSpawnPacket(packet);
+        int rawChainItemSourceId = packet.getEntityData();
+        linkSourceItem = Registries.ITEM.get(rawChainItemSourceId);
     }
 
     /**

@@ -15,7 +15,6 @@
 package com.github.legoatoom.connectiblechains.client;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
@@ -43,8 +42,8 @@ import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ActionResult;
@@ -131,11 +130,9 @@ public class ClientInitializer implements ClientModInitializer {
                 if (entity instanceof ChainKnotEntity knot) {
                     return new ItemStack(knot.getChainItemSource());
                 } else if (entity instanceof ChainCollisionEntity collision) {
-                    ChainLink link = collision.getLink();
-                    if (link == null) {
-                        return new ItemStack(Items.CHAIN);
-                    }
-                    return new ItemStack(link.getSourceItem());
+                    Item sourceItem = collision.getLinkSourceItem();
+
+                    return new ItemStack(sourceItem);
                 }
             }
             return ItemStack.EMPTY;

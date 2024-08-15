@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.4.2] - 12024-08-15
+
+- Fixed pick block bug where you would always get a vanilla chain.
+-
+
 ## [2.4.1] - 12024-06-14
 - The mod now uses `connectiblechains:catenary_items` tag for allowed items to be used that are not chains.
 - Leads are now also available to use as catenary.
