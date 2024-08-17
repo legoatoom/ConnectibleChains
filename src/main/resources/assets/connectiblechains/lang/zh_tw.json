@@ -1,0 +1,20 @@
+{
+  "entity.connectiblechains.chain_knot" : "鎖鏈結",
+  "message.connectiblechains.connectible_chain" : "懸鏈線相容 [Shift]",
+  "message.connectiblechains.connectible_chain_detailed" : "點選柵欄／牆壁以建立懸鏈線！",
+  "entity.connectiblechains.chain_collision" : "鎖鏈碰撞",
+  "text.autoconfig.connectiblechains.option.chainHangAmount" : "鎖鏈垂度",
+  "text.autoconfig.connectiblechains.option.maxChainRange" : "最大鎖鏈距離",
+  "text.autoconfig.connectiblechains.option.quality" : "鎖鏈品質",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[0]" : "影響鎖鏈的垂度。",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[1]" : "數字越小，曲線越大。",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[2]" : "碰撞將在新鎖鏈或世界載入時更新。",
+  "text.autoconfig.connectiblechains.option.showToolTip" : "顯示懸鏈線相容性提示",
+  "text.autoconfig.connectiblechains.option.showToolTip.@Tooltip" : "顯示與此模組相容的鎖鏈物品的提示。",
+
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[0]" : "影響鎖鏈的長度。",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[1]" : "§n警告§r：長鎖鏈有時會變得不可見！",
+  "text.autoconfig.connectiblechains.option.quality.@Tooltip" : "影響鎖鏈的視覺品質。",
+  "text.autoconfig.connectiblechains.title": "可連接鎖鏈設定",
+  "tag.item.connectiblechains.catenary_items": "懸鏈線物品"
+}
