@@ -46,8 +46,13 @@ public class Helper {
      * @param d length of the chain
      * @param h height at x=d
      * @return y
+     * @see <a href="https://www.desmos.com/calculator/vfepcsyshu">Desmos Graph</a>
      */
     public static double drip2(double x, double d, double h) {
+        if (x == 0) {
+            // Since this is always true, make it speed up the calculation by specifying it.
+            return 0;
+        }
         double a = ConnectibleChains.runtimeConfig.getChainHangAmount();
         a = a + (d * 0.3);
         double p1 = a * asinh((h / (2D * a)) * (1D / Math.sinh(d / (2D * a))));
@@ -71,6 +76,7 @@ public class Helper {
      */
     public static double drip2prime(double x, double d, double h) {
         double a = ConnectibleChains.runtimeConfig.getChainHangAmount();
+        a = a + (d * 0.3);
         double p1 = a * asinh((h / (2D * a)) * (1D / Math.sinh(d / (2D * a))));
         return Math.sinh((2 * x + 2 * p1 - d) / (2 * a));
     }
@@ -92,7 +98,9 @@ public class Helper {
     public static Vec3d getChainOffset(Vec3d start, Vec3d end) {
         Vector3f offset = end.subtract(start).toVector3f();
         offset.set(offset.x(), 0, offset.z());
-        offset.normalize();
+        if (offset.equals(0, 0, 0)) {
+            return new Vec3d(offset);
+        }
         offset.normalize(2 / 16f);
         return new Vec3d(offset);
     }

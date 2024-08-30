@@ -20,7 +20,6 @@ import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -49,7 +48,6 @@ public record ChainModel(float[] vertices, float[] uvs) {
      */
     public void render(VertexConsumer buffer, MatrixStack matrices, int bLight0, int bLight1, int sLight0, int sLight1) {
         Matrix4f modelMatrix = matrices.peek().getPositionMatrix();
-        Matrix3f normalMatrix = matrices.peek().getNormalMatrix();
         int count = vertices.length / 3;
         for (int i = 0; i < count; i++) {
             // divide by 2 because chain has 2 face sets
@@ -64,7 +62,7 @@ public record ChainModel(float[] vertices, float[] uvs) {
                     .overlay(OverlayTexture.DEFAULT_UV)
                     .light(light)
                     // trial and error magic values that change the overall brightness of the chain
-                    .normal(1, 0.35f, 0);
+                    .normal(1, 1f, 1);
         }
     }
 
