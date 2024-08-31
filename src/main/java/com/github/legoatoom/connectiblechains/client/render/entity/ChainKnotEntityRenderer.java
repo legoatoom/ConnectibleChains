@@ -179,7 +179,6 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         }
 
         Vec3d offset = Helper.getChainOffset(srcPos, dstPos);
-        matrices.translate(offset.getX(), 0, offset.getZ());
 
         // Now we gather light information for the chain. Since the chain is lighter if there is more light.
         BlockPos blockPosOfStart = BlockPos.ofFloored(fromEntity.getCameraPosVec(tickDelta));
@@ -195,9 +194,11 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
         float angleY = -(float) Math.atan2(chainVec.z(), chainVec.x());
 
-        matrices.multiply(new Quaternionf().rotateXYZ(0, angleY, 0));
+        if (angleY != 0.0) {
+            matrices.multiply(new Quaternionf().rotateXYZ(0, angleY, 0));
+        }
 
-        if (toEntity instanceof AbstractDecorationEntity) {
+        if (toEntity instanceof ChainKnotEntity) {
             ChainRenderer.BakeKey key = new ChainRenderer.BakeKey(fromEntity.getPos(), toEntity.getPos());
             chainRenderer.renderBaked(buffer, matrices, key, chainVec, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd);
         } else {
