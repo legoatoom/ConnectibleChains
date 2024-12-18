@@ -32,6 +32,7 @@ import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.network.EntityTrackerEntry;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -140,9 +141,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
      */
     @Override
     public boolean handleAttack(Entity attacker) {
-        if (attacker instanceof PlayerEntity playerEntity) {
-            this.damage(this.getDamageSources().playerAttack(playerEntity), 0.0F);
-        } else {
+        if (!super.handleAttack(attacker)) {
             playSound(getHitSound(), 0.5F, 1.0F);
         }
         return true;
@@ -150,10 +149,10 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
 
 
     /**
-     * @see ChainKnotEntity#damage(DamageSource, float)
+     * @see ChainKnotEntity#damage(ServerWorld, DamageSource, float)
      */
     @Override
-    public boolean damage(DamageSource source, float amount) {
+    public boolean damage(ServerWorld world, DamageSource source, float amount) {
         ActionResult result = ChainLinkEntity.onDamageFrom(this, source, getHitSound());
 
         if (result.isAccepted()) {

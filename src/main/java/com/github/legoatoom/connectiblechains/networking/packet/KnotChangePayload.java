@@ -53,8 +53,6 @@ public record KnotChangePayload(int knotId, Item sourceItem) implements CustomPa
     }
 
     private static void logBadActionTarget(Entity target, int targetId) {
-        ConnectibleChains.LOGGER.warn(String.format("Tried to %s %s (#%d) which is not %s",
-                "change type of", target, targetId, "chain knot"
-        ));
+        ConnectibleChains.LOGGER.warn("Tried to {} {} (#{}) which is not {}", "change type of", target, targetId, "chain knot");
     }
 }

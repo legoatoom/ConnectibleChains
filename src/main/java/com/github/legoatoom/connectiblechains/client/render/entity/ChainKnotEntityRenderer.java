@@ -26,6 +26,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
+import net.minecraft.client.render.entity.state.EntityRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
@@ -77,6 +78,11 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             else if (link.getSecondary().shouldRender(x, y, z)) return true;
         }
         return super.shouldRender(entity, frustum, x, y, z);
+    }
+
+    @Override
+    public EntityRenderState createRenderState() {
+        return null;
     }
 
     @Override

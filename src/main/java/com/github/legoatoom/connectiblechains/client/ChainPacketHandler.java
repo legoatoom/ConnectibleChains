@@ -15,7 +15,7 @@
 package com.github.legoatoom.connectiblechains.client;
 
 import com.github.legoatoom.connectiblechains.chain.IncompleteChainLink;
-import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachPayload;
+import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
 import com.github.legoatoom.connectiblechains.networking.packet.KnotChangePayload;
 import com.github.legoatoom.connectiblechains.networking.packet.MultiChainAttachPayload;
 import net.fabricmc.api.EnvType;
@@ -31,7 +31,7 @@ public class ChainPacketHandler {
     }
 
     private void register() {
-        registerGlobalReceiver(ChainAttachPayload.PAYLOAD_ID, ChainAttachPayload::apply);
+        registerGlobalReceiver(ChainAttachS2CPacket.PAYLOAD_ID, ChainAttachS2CPacket::apply);
         registerGlobalReceiver(MultiChainAttachPayload.PAYLOAD_ID, MultiChainAttachPayload::apply);
         registerGlobalReceiver(KnotChangePayload.PAYLOAD_ID, KnotChangePayload::apply);
     }
@@ -42,6 +42,6 @@ public class ChainPacketHandler {
      * Completed links or links that are no longer valid because the primary is dead are removed.
      */
     public void tick() {
-        ChainAttachPayload.incompleteLinks.removeIf(IncompleteChainLink::tryCompleteOrRemove);
+        ChainAttachS2CPacket.incompleteLinks.removeIf(IncompleteChainLink::tryCompleteOrRemove);
     }
 }

@@ -43,7 +43,7 @@ public interface ChainLinkEntity {
      * {@link ActionResult#CONSUME} when the link should be destroyed but not drop.
      */
     static ActionResult onDamageFrom(Entity self, DamageSource source, SoundEvent hitSound) {
-        if (self.isInvulnerableTo(source)) {
+        if (self.isInvulnerable()) {
             return ActionResult.FAIL;
         }
         if (self.getWorld().isClient) {

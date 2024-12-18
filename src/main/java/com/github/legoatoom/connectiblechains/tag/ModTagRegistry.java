@@ -40,6 +40,4 @@ public class ModTagRegistry {
     public static <T> TagKey<T> makeTag(RegistryKey<Registry<T>> registry, Identifier id) {
         return TagKey.of(registry, id);
     }
-
-
 }

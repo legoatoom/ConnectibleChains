@@ -18,7 +18,7 @@ import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.entity.ChainCollisionEntity;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
-import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachPayload;
+import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -160,7 +160,7 @@ public class ChainLink {
 
         Set<ServerPlayerEntity> trackingPlayers = getTrackingPlayers(world);
         for (ServerPlayerEntity player : trackingPlayers) {
-            ServerPlayNetworking.send(player, new ChainAttachPayload(this, true));
+            ServerPlayNetworking.send(player, new ChainAttachS2CPacket(this, true));
         }
     }
 
@@ -326,7 +326,7 @@ public class ChainLink {
         Set<ServerPlayerEntity> trackingPlayers = getTrackingPlayers(world);
 
         for (ServerPlayerEntity player : trackingPlayers) {
-            ServerPlayNetworking.send(player, new ChainAttachPayload(this, false));
+            ServerPlayNetworking.send(player, new ChainAttachS2CPacket(this, false));
         }
     }
 

@@ -18,11 +18,13 @@ import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.ChainLinkEntity;
+import com.github.legoatoom.connectiblechains.entity.Chainable;
 import com.github.legoatoom.connectiblechains.tag.ModTagRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -33,9 +35,12 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
+import net.minecraft.world.event.GameEvent;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Some static settings and functions for the chainItem.
@@ -120,6 +125,35 @@ public class ChainItemInfo {
         }
         return knot.interact(player, hand);
     }
+
+    public static ActionResult attachHeldChainsToBlock(PlayerEntity player, World world, BlockPos pos, Item sourceItem) {
+        ChainKnotEntity chainKnotEntity = null;
+        List<Chainable> list = collectChainablesAround(world, pos, entity -> entity.getChainData(player) != null);
+
+        for (Chainable chainable : list) {
+            if (chainKnotEntity == null) {
+                chainKnotEntity = ChainKnotEntity.getOrCreate(world, pos, sourceItem);
+                chainKnotEntity.onPlace();
+            }
+
+            chainable.attachChain(new Chainable.ChainData(chainKnotEntity, sourceItem), player, true);
+        }
+
+        if (!list.isEmpty()) {
+            world.emitGameEvent(GameEvent.BLOCK_ATTACH, pos, GameEvent.Emitter.of(player));
+            return ActionResult.SUCCESS_SERVER;
+        } else {
+            return ActionResult.PASS;
+        }
+    }
+
+    public static List<Chainable> collectChainablesAround(World world, BlockPos pos, Predicate<Chainable> predicate) {
+        double distance = 7.0;
+
+        Box box = new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ()).expand(distance);
+        return world.getEntitiesByClass(Entity.class, box, entity -> entity instanceof Chainable chainable && predicate.test(chainable)).stream().map(Chainable.class::cast).toList();
+    }
+
 
     @Environment(EnvType.CLIENT)
     public static void infoToolTip(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipType tooltipType, List<Text> texts) {
