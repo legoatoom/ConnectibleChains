@@ -15,32 +15,36 @@
 package com.github.legoatoom.connectiblechains.item;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
-import com.github.legoatoom.connectiblechains.entity.ChainLinkEntity;
+import com.github.legoatoom.connectiblechains.entity.Chainable;
 import com.github.legoatoom.connectiblechains.tag.ModTagRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
+import net.minecraft.world.event.GameEvent;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Some static settings and functions for the chainItem.
  */
-public class ChainItemInfo {
+public class ChainItemCallbacks {
 
 
     /**
@@ -57,69 +61,62 @@ public class ChainItemInfo {
      */
     public static ActionResult chainUseEvent(PlayerEntity player, World world, Hand hand, BlockHitResult hitResult) {
         if (player == null || player.isSneaking()) return ActionResult.PASS;
+
         ItemStack stack = player.getStackInHand(hand);
         BlockPos blockPos = hitResult.getBlockPos();
         BlockState blockState = world.getBlockState(blockPos);
 
-        if (!ChainKnotEntity.canAttachTo(blockState)) {
-            return ActionResult.PASS;
-        } else if (world.isClient) {
-            ItemStack handItem = player.getStackInHand(hand);
-            if (handItem.isIn(ModTagRegistry.CATENARY_ITEMS)) {
+        if (blockState.isIn(ModTagRegistry.CHAIN_CONNECTIBLE)) {
+            if (stack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
+                if (world instanceof ServerWorld serverWorld) {
+                    ChainKnotEntity knot = ChainKnotEntity.getOrCreate(serverWorld, blockPos, stack.getItem());
+
+                    return knot.interact(player, hand);
+                }
                 return ActionResult.SUCCESS;
             }
-
-            // Check if any held chains can be attached. This can be done without holding a chain item
-            if (!ChainKnotEntity.getHeldChainsInRange(player, blockPos).isEmpty()) {
+            if (world instanceof ServerWorld serverWorld) {
+                // SERVER-SIDE //
+                return attachHeldChainsToBlock(player, serverWorld, blockPos);
+            }
+            // CLIENT-SIDE //
+            if (!collectChainablesAround(world, blockPos, entity -> entity.getChainData(player) != null).isEmpty()) {
                 return ActionResult.SUCCESS;
+            } else {
+                return ActionResult.PASS;
             }
-
-            // Check if a knot exists and can be destroyed
-            // Would work without this check but no swing animation would be played
-            if (ChainKnotEntity.getKnotAt(player.getWorld(), blockPos) != null && ChainLinkEntity.canDestroyWith(stack)) {
-                return ActionResult.SUCCESS;
-            }
-
-            return ActionResult.PASS;
         }
-
-
-        // 1. Try with existing knot, regardless of hand item
-        ChainKnotEntity knot = ChainKnotEntity.getKnotAt(world, blockPos);
-        if (knot != null) {
-            if (knot.interact(player, hand) == ActionResult.CONSUME) {
-                return ActionResult.CONSUME;
-            }
-            return ActionResult.PASS;
-        }
-
-        // 2. Check if any held chains can be attached.
-        List<ChainLink> attachableChains = ChainKnotEntity.getHeldChainsInRange(player, blockPos);
-
-        // Use the held item as the new knot type
-        Item knotType = stack.getItem();
-
-        // Allow default interaction behaviour.
-        if (attachableChains.isEmpty() && !stack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
-            return ActionResult.PASS;
-        }
-
-        // Held item does not correspond to a type.
-        if (!stack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
-            knotType = attachableChains.getFirst().getSourceItem();
-        }
-
-        // 3. Create new knot if none exists and delegate interaction
-        knot = new ChainKnotEntity(world, blockPos, knotType);
-        knot.setGraceTicks((byte) 0);
-        world.spawnEntity(knot);
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        return knot.interact(player, hand);
+        return ActionResult.PASS;
     }
+
+    public static ActionResult attachHeldChainsToBlock(PlayerEntity player, ServerWorld world, BlockPos pos) {
+        List<Chainable> list = collectChainablesAround(world, pos, entity -> entity.getChainData(player) != null);
+
+        ChainKnotEntity chainKnotEntity = null;
+        for (Chainable chainable : list) {
+            if (chainKnotEntity == null) {
+                chainKnotEntity = ChainKnotEntity.getOrCreate(world, pos, chainable.getSourceItem());
+                chainKnotEntity.onPlace();
+            }
+
+            chainable.attachChain(new Chainable.ChainData(chainKnotEntity, chainable.getSourceItem()), player, true);
+        }
+
+        if (!list.isEmpty()) {
+            world.emitGameEvent(GameEvent.BLOCK_ATTACH, pos, GameEvent.Emitter.of(player));
+            return ActionResult.SUCCESS_SERVER;
+        } else {
+            return ActionResult.PASS;
+        }
+    }
+
+    public static List<Chainable> collectChainablesAround(World world, BlockPos pos, Predicate<Chainable> predicate) {
+        double distance = 7.0;
+
+        Box box = new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ()).expand(distance);
+        return world.getEntitiesByClass(Entity.class, box, entity -> entity instanceof Chainable chainable && predicate.test(chainable)).stream().map(Chainable.class::cast).toList();
+    }
+
 
     @Environment(EnvType.CLIENT)
     public static void infoToolTip(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipType tooltipType, List<Text> texts) {

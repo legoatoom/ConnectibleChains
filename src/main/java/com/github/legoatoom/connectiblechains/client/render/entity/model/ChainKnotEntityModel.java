@@ -14,11 +14,11 @@
 
 package com.github.legoatoom.connectiblechains.client.render.entity.model;
 
+import com.github.legoatoom.connectiblechains.client.render.entity.state.ChainKnotEntityRenderState;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.model.*;
-import net.minecraft.client.render.entity.model.SinglePartEntityModel;
-import net.minecraft.entity.Entity;
+import net.minecraft.client.render.entity.model.EntityModel;
 
 /**
  * Model for the {@link com.github.legoatoom.connectiblechains.entity.ChainKnotEntity}.
@@ -30,11 +30,10 @@ import net.minecraft.entity.Entity;
  * @see net.minecraft.client.render.entity.LeashKnotEntityRenderer
  */
 @Environment(EnvType.CLIENT)
-public class ChainKnotEntityModel<T extends Entity> extends SinglePartEntityModel<T> {
-    private final ModelPart chainKnot;
+public class ChainKnotEntityModel extends EntityModel<ChainKnotEntityRenderState> {
 
     public ChainKnotEntityModel(ModelPart root) {
-        this.chainKnot = root.getChild("knot");
+        super(root);
     }
 
     public static TexturedModelData getTexturedModelData() {
@@ -49,12 +48,4 @@ public class ChainKnotEntityModel<T extends Entity> extends SinglePartEntityMode
         return TexturedModelData.of(modelData, 16, 16);
     }
 
-    @Override
-    public ModelPart getPart() {
-        return chainKnot;
-    }
-
-    @Override
-    public void setAngles(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
-    }
 }

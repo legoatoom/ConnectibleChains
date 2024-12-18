@@ -15,15 +15,13 @@
 package com.github.legoatoom.connectiblechains.client;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
 import com.github.legoatoom.connectiblechains.client.render.entity.texture.ChainTextureManager;
 import com.github.legoatoom.connectiblechains.config.ModConfig;
-import com.github.legoatoom.connectiblechains.entity.ChainCollisionEntity;
-import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
-import com.github.legoatoom.connectiblechains.item.ChainItemInfo;
+import com.github.legoatoom.connectiblechains.item.ChainItemCallbacks;
+import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
 import com.github.legoatoom.connectiblechains.networking.packet.ConfigSyncPayload;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import me.shedaniel.autoconfig.AutoConfig;
@@ -31,25 +29,21 @@ import me.shedaniel.autoconfig.ConfigHolder;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.fabricmc.fabric.api.event.client.player.ClientPickBlockGatherCallback;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.model.EntityModelLayer;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.EntityHitResult;
 
 import java.util.Optional;
+
+import static net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver;
 
 /**
  * ClientInitializer.
@@ -65,7 +59,6 @@ public class ClientInitializer implements ClientModInitializer {
     private static ClientInitializer instance;
     private final ChainTextureManager chainTextureManager = new ChainTextureManager();
     private ChainKnotEntityRenderer chainKnotEntityRenderer;
-    private ChainPacketHandler chainPacketHandler;
 
 
     @Override
@@ -79,7 +72,7 @@ public class ClientInitializer implements ClientModInitializer {
         registerConfigSync();
 
         // Tooltip for chains.
-        ItemTooltipCallback.EVENT.register(ChainItemInfo::infoToolTip);
+        ItemTooltipCallback.EVENT.register(ChainItemCallbacks::infoToolTip);
     }
 
     private static void registerConfigSync() {
@@ -106,13 +99,15 @@ public class ClientInitializer implements ClientModInitializer {
             chainKnotEntityRenderer = new ChainKnotEntityRenderer(ctx);
             return chainKnotEntityRenderer;
         });
-        EntityRendererRegistry.register(ModEntityTypes.CHAIN_COLLISION, ChainCollisionEntityRenderer::new);
+//        EntityRendererRegistry.register(ModEntityTypes.CHAIN_COLLISION, ChainCollisionEntityRenderer::new);
 
         EntityModelLayerRegistry.registerModelLayer(CHAIN_KNOT, ChainKnotEntityModel::getTexturedModelData);
     }
 
     private void registerNetworkEventHandlers() {
-        chainPacketHandler = new ChainPacketHandler();
+        registerGlobalReceiver(ChainAttachS2CPacket.PAYLOAD_ID, ChainAttachS2CPacket::apply);
+//        registerGlobalReceiver(MultiChainAttachPayload.PAYLOAD_ID, MultiChainAttachPayload::apply);
+//        registerGlobalReceiver(KnotChangePayload.PAYLOAD_ID, KnotChangePayload::apply);
 
         ClientPlayConnectionEvents.INIT.register((handler, client) -> {
             // Load client config
@@ -124,21 +119,6 @@ public class ClientInitializer implements ClientModInitializer {
     }
 
     private void registerClientEventHandlers() {
-        ClientPickBlockGatherCallback.EVENT.register((player, result) -> {
-            if (result instanceof EntityHitResult) {
-                Entity entity = ((EntityHitResult) result).getEntity();
-                if (entity instanceof ChainKnotEntity knot) {
-                    return new ItemStack(knot.getChainItemSource());
-                } else if (entity instanceof ChainCollisionEntity collision) {
-                    Item sourceItem = collision.getLinkSourceItem();
-
-                    return new ItemStack(sourceItem);
-                }
-            }
-            return ItemStack.EMPTY;
-        });
-
-        ClientTickEvents.START_WORLD_TICK.register(world -> chainPacketHandler.tick());
         ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(chainTextureManager);
     }
 

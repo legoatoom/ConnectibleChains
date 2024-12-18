@@ -16,33 +16,30 @@ package com.github.legoatoom.connectiblechains.client.render.entity.texture;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.ClientInitializer;
+import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CrossCatenaryRenderer;
+import com.github.legoatoom.connectiblechains.client.render.entity.catenary.ICatenaryRenderer;
 import com.github.legoatoom.connectiblechains.util.Helper;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.fabricmc.fabric.api.resource.SimpleResourceReloadListener;
+import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.resource.JsonDataLoader;
+import net.minecraft.resource.ResourceFinder;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
+import net.minecraft.util.dynamic.Codecs;
 import net.minecraft.util.profiler.Profiler;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 /**
  * The manager loads the chain models that contain the texture information for all chain types.
  * It looks for models at models/entity/chain/ within the same namespace as the chain type.
- * Inspired by {@link net.minecraft.client.render.model.BakedModelManager} and {@link net.minecraft.client.render.model.ModelLoader}.
  */
-public class ChainTextureManager implements SimpleResourceReloadListener<Map<Identifier, JsonElement>> {
-    private static final Gson GSON = new GsonBuilder().setLenient().create();
+public class ChainTextureManager extends JsonDataLoader<JsonElement> implements IdentifiableResourceReloadListener {
     private static final String MODEL_FILE_LOCATION = "models/entity/" + ConnectibleChains.MODID;
     /**
      * How many different chain items do we expect?
@@ -62,27 +59,17 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
         return Helper.identifier("chain_models");
     }
 
-
-    @Override
-    public CompletableFuture<Map<Identifier, JsonElement>> load(ResourceManager manager, Profiler profiler, Executor executor) {
-        return CompletableFuture.supplyAsync(() -> {
-            HashMap<Identifier, JsonElement> map = new HashMap<>();
-            JsonDataLoader.load(manager, MODEL_FILE_LOCATION, GSON, map);
-            return map;
-        });
+    public ChainTextureManager() {
+        super(Codecs.JSON_ELEMENT, ResourceFinder.json(MODEL_FILE_LOCATION));
     }
 
     @Override
-    public CompletableFuture<Void> apply(Map<Identifier, JsonElement> data, ResourceManager manager, Profiler profiler, Executor executor) {
-        return CompletableFuture.supplyAsync(() -> {
-            clearCache();
-            data.forEach((identifier, jsonElement) -> {
-                Pair<Identifier, Identifier> textures = extractChainTextures(identifier, jsonElement);
-                chainTextures.put(identifier, textures.getLeft());
-                knotTextures.put(identifier, textures.getRight());
-            });
-
-            return null;
+    public void apply(Map<Identifier, JsonElement> data, ResourceManager manager, Profiler profiler) {
+        clearCache();
+        data.forEach((identifier, jsonElement) -> {
+            Pair<Identifier, Identifier> textures = extractChainTextures(identifier, jsonElement);
+            chainTextures.put(identifier, textures.getLeft());
+            knotTextures.put(identifier, textures.getRight());
         });
     }
 
@@ -112,7 +99,6 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
                 .ifPresent(it -> it.getChainRenderer().purge());
         chainTextures.clear();
         knotTextures.clear();
-
     }
 
 
@@ -121,6 +107,11 @@ public class ChainTextureManager implements SimpleResourceReloadListener<Map<Ide
     }
     private static @NotNull Identifier defaultKnotTextureId(Identifier itemId) {
         return Identifier.of(itemId.getNamespace(), "textures/item/%s.png".formatted(itemId.getPath()));
+    }
+
+
+    public ICatenaryRenderer getCatenaryRenderer(Identifier sourceItemId) {
+        return new CrossCatenaryRenderer();
     }
 
     public Identifier getChainTexture(Identifier sourceItemId) {

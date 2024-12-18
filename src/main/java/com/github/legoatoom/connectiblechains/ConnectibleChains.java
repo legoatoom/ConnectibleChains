@@ -17,7 +17,7 @@ package com.github.legoatoom.connectiblechains;
 
 import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
-import com.github.legoatoom.connectiblechains.item.ChainItemInfo;
+import com.github.legoatoom.connectiblechains.item.ChainItemCallbacks;
 import com.github.legoatoom.connectiblechains.networking.packet.Payloads;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
@@ -64,7 +64,7 @@ public class ConnectibleChains implements ModInitializer {
         runtimeConfig = new ModConfig().copyFrom(fileConfig);
 
         // On Clicking with a Chain event.
-        UseBlockCallback.EVENT.register(ChainItemInfo::chainUseEvent);
+        UseBlockCallback.EVENT.register(ChainItemCallbacks::chainUseEvent);
 
         // Need this event on dedicated and internal server because of 'open to lan'.
         ServerPlayConnectionEvents.INIT.register((handler, server) -> fileConfig.syncToClient(handler.getPlayer()));

@@ -17,8 +17,6 @@ package com.github.legoatoom.connectiblechains.entity;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.ActionResult;
@@ -27,37 +25,21 @@ import net.minecraft.util.ActionResult;
  * ChainLinkEntity implements common functionality between {@link ChainCollisionEntity} and {@link ChainKnotEntity}.
  */
 public interface ChainLinkEntity {
-
-    /**
-     * When a chain link entity is damaged by
-     * <ul>
-     * <li>A player with an item that has the tag c:shears or is minecraft:shears</li>
-     * <li>An explosion</li>
-     * </ul>
-     * it destroys the link that it is part of.
-     * Otherwise, it plays a hit sound.
-     *
-     * @param self   A {@link ChainCollisionEntity} or {@link ChainKnotEntity}.
-     * @param source The source that was used to damage.
-     * @return {@link ActionResult#SUCCESS} when the link should be destroyed,
-     * {@link ActionResult#CONSUME} when the link should be destroyed but not drop.
-     */
-    static ActionResult onDamageFrom(Entity self, DamageSource source, SoundEvent hitSound) {
-        if (self.isInvulnerableTo(source)) {
-            return ActionResult.FAIL;
-        }
+    private static <E extends Entity & ChainLinkEntity> ActionResult onDamageFrom(E self, DamageSource source, SoundEvent hitSound) {
         if (self.getWorld().isClient) {
             return ActionResult.PASS;
         }
-
+        // SERVER-SIDE //
+        if (self.isInvulnerable()) {
+            return ActionResult.FAIL;
+        }
 
         if (source.isIn(DamageTypeTags.IS_EXPLOSION)) {
             return ActionResult.SUCCESS;
         }
-        if (source.getSource() instanceof PlayerEntity player) {
-            if (canDestroyWith(player.getMainHandStack())) {
-                return ActionResult.success(!player.isCreative());
-            }
+
+        if (source.getWeaponStack() != null && source.getWeaponStack().isIn(ConventionalItemTags.SHEAR_TOOLS)) {
+            return ActionResult.SUCCESS;
         }
 
         if (!source.isIn(DamageTypeTags.IS_PROJECTILE)) {
@@ -71,17 +53,19 @@ public interface ChainLinkEntity {
     }
 
     /**
-     * @param item The item subject of an interaction
-     * @return true if a chain link entity can be destroyed with the item
-     */
-    static boolean canDestroyWith(ItemStack item) {
-        return item.isIn(ConventionalItemTags.SHEAR_TOOLS);
-    }
-
-    /**
-     * Destroys all links associated with this entity
+     * When a chain link entity is damaged by
+     * <ul>
+     * <li>A player with an item that has the tag c:shears or is minecraft:shears</li>
+     * <li>An explosion</li>
+     * </ul>
+     * it destroys the link that it is part of.
+     * Otherwise, it plays a hit sound.
      *
-     * @param mayDrop true when the links should drop
+     * @param source The source that was used to damage.
+     * @return {@link ActionResult#SUCCESS} when the link should be destroyed,
+     * {@link ActionResult#CONSUME} when the link should be destroyed but not drop.
      */
-    void destroyLinks(boolean mayDrop);
+    default ActionResult onDamageFrom(DamageSource source, SoundEvent hitSound) {
+        return onDamageFrom((Entity & ChainLinkEntity) this, source, hitSound);
+    }
 }

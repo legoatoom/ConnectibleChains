@@ -14,11 +14,8 @@
 
 package com.github.legoatoom.connectiblechains.chain;
 
-import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.Item;
 
 /**
  * Due to the asynchronous nature of networking an attach- or detach-packet cann arrive before the secondary exists.
@@ -26,53 +23,54 @@ import net.minecraft.item.Item;
  *
  * @author Qendolin
  */
+@Deprecated
 @Environment(EnvType.CLIENT)
 public class IncompleteChainLink {
-    /**
-     * @see ChainLink#primary
-     */
-    public final ChainKnotEntity primary;
-    /**
-     * @see ChainLink#primary
-     */
-    public final int secondaryId;
-
-    public final Item sourceItem;
-    /**
-     * Whether the link exists and is active
-     */
-    private boolean alive = true;
-
-    public IncompleteChainLink(ChainKnotEntity primary, int secondaryId, Item sourceItem) {
-        this.primary = primary;
-        this.secondaryId = secondaryId;
-        this.sourceItem = sourceItem;
-    }
-
-    /**
-     * Tries to complete the chain link by looking for an entity with {@link #secondaryId}.
-     *
-     * @return true if the incomplete chain link should be removed
-     */
-    public boolean tryCompleteOrRemove() {
-        if (isDead()) return true;
-        Entity secondary = primary.getWorld().getEntityById(secondaryId);
-        if (secondary == null) return false;
-        ChainLink.create(primary, secondary, sourceItem);
-        return true;
-    }
-
-    public boolean isDead() {
-        return !alive || this.primary.isRemoved();
-    }
-
-    /**
-     * Sometimes the detach-packed can be received before the secondary exists
-     * so even incomplete links can be destroyed.
-     */
-    public void destroy() {
-        if (!alive) return;
-        this.alive = false;
-        // Can't drop items on the client I guess
-    }
+//    /**
+//     * @see ChainLink#primary
+//     */
+//    public final ChainKnotEntity primary;
+//    /**
+//     * @see ChainLink#primary
+//     */
+//    public final int secondaryId;
+//
+//    public final Item sourceItem;
+//    /**
+//     * Whether the link exists and is active
+//     */
+//    private boolean alive = true;
+//
+//    public IncompleteChainLink(ChainKnotEntity primary, int secondaryId, Item sourceItem) {
+//        this.primary = primary;
+//        this.secondaryId = secondaryId;
+//        this.sourceItem = sourceItem;
+//    }
+//
+//    /**
+//     * Tries to complete the chain link by looking for an entity with {@link #secondaryId}.
+//     *
+//     * @return true if the incomplete chain link should be removed
+//     */
+//    public boolean tryCompleteOrRemove() {
+//        if (isDead()) return true;
+//        Entity secondary = primary.getWorld().getEntityById(secondaryId);
+//        if (secondary == null) return false;
+//        ChainLink.create(primary, secondary, sourceItem);
+//        return true;
+//    }
+//
+//    public boolean isDead() {
+//        return !alive || this.primary.isRemoved();
+//    }
+//
+//    /**
+//     * Sometimes the detach-packed can be received before the secondary exists
+//     * so even incomplete links can be destroyed.
+//     */
+//    public void destroy() {
+//        if (!alive) return;
+//        this.alive = false;
+//        // Can't drop items on the client I guess
+//    }
 }

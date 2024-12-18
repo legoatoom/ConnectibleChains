@@ -24,16 +24,17 @@ import net.minecraft.network.packet.CustomPayload;
 
 import java.util.List;
 
-public record MultiChainAttachPayload(List<ChainAttachPayload> packets) implements CustomPayload {
+@Deprecated
+public record MultiChainAttachPayload(List<ChainAttachS2CPacket> packets) implements CustomPayload {
     public static final CustomPayload.Id<MultiChainAttachPayload> PAYLOAD_ID = new CustomPayload.Id<>(Helper.identifier("s2c_multi_chain_attach_packet_id"));
     public static final PacketCodec<RegistryByteBuf, MultiChainAttachPayload> PACKET_CODEC = PacketCodec.of(MultiChainAttachPayload::encode, MultiChainAttachPayload::decode);
 
     private static MultiChainAttachPayload decode(RegistryByteBuf buf) {
-        return new MultiChainAttachPayload(buf.readList(ChainAttachPayload::new));
+        return new MultiChainAttachPayload(buf.readList(ChainAttachS2CPacket::new));
     }
 
     private static void encode(MultiChainAttachPayload packet, RegistryByteBuf buf) {
-        buf.writeCollection(packet.packets, (ChainAttachPayload::encode));
+        buf.writeCollection(packet.packets, (ChainAttachS2CPacket::encode));
     }
 
     @Environment(EnvType.CLIENT)

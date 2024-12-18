@@ -89,6 +89,7 @@ public class Helper {
      * @param end   fence pos
      * @return the x/z offset
      */
+    @Deprecated
     public static Vec3d getChainOffset(Vec3d start, Vec3d end) {
         Vector3f offset = end.subtract(start).toVector3f();
         offset.set(offset.x(), 0, offset.z());

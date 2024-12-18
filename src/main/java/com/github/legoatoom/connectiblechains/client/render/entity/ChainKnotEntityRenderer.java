@@ -15,12 +15,13 @@
 package com.github.legoatoom.connectiblechains.client.render.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.chain.ChainLink;
 import com.github.legoatoom.connectiblechains.client.ClientInitializer;
+import com.github.legoatoom.connectiblechains.client.render.entity.catenary.ICatenaryRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
+import com.github.legoatoom.connectiblechains.client.render.entity.state.ChainKnotEntityRenderState;
 import com.github.legoatoom.connectiblechains.client.render.entity.texture.ChainTextureManager;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
-import com.github.legoatoom.connectiblechains.util.Helper;
+import com.github.legoatoom.connectiblechains.entity.Chainable;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.*;
@@ -28,8 +29,8 @@ import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityAttachmentType;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
@@ -37,11 +38,12 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.LightType;
+import net.minecraft.world.World;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.util.List;
+import java.util.HashSet;
 
 /**
  * <p>This class renders the chain you see in game. The block around the fence and the chain.
@@ -55,13 +57,13 @@ import java.util.List;
  * @see net.minecraft.client.render.entity.MobEntityRenderer
  */
 @Environment(EnvType.CLIENT)
-public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
-    private final ChainKnotEntityModel<ChainKnotEntity> model;
+public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, ChainKnotEntityRenderState> {
+    private final ChainKnotEntityModel model;
     private final ChainRenderer chainRenderer = new ChainRenderer();
 
     public ChainKnotEntityRenderer(EntityRendererFactory.Context context) {
         super(context);
-        this.model = new ChainKnotEntityModel<>(context.getPart(ClientInitializer.CHAIN_KNOT));
+        this.model = new ChainKnotEntityModel(context.getPart(ClientInitializer.CHAIN_KNOT));
     }
 
     public ChainRenderer getChainRenderer() {
@@ -70,55 +72,153 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
     @Override
     public boolean shouldRender(ChainKnotEntity entity, Frustum frustum, double x, double y, double z) {
-        if (entity.ignoreCameraFrustum) return true;
-        for (ChainLink link : entity.getLinks()) {
-            if (link.getPrimary() != entity) continue;
-            if (link.getSecondary() instanceof PlayerEntity) return true;
-            else if (link.getSecondary().shouldRender(x, y, z)) return true;
+        if (super.shouldRender(entity, frustum, x, y, z)) {
+            return true;
         }
-        return super.shouldRender(entity, frustum, x, y, z);
+        for (Chainable.ChainData chainData : entity.getChainDataSet()) {
+            Entity chainHolder = entity.getChainHolder(chainData);
+            if (chainHolder != null) {
+                if (frustum.isVisible(chainHolder.getBoundingBox())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
-    public void render(ChainKnotEntity chainKnotEntity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
-        // Render the knot
-        if (chainKnotEntity.shouldRenderKnot()) {
-            matrices.push();
-            Vec3d leashOffset = chainKnotEntity.getLeashPos(tickDelta).subtract(chainKnotEntity.getLerpedPos(tickDelta));
-            matrices.translate(leashOffset.x, leashOffset.y + 6.5 / 16f, leashOffset.z);
-            // The model is 6 px wide, but it should be rendered at 5px
-            matrices.scale(5 / 6f, 1, 5 / 6f);
-            VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(getKnotTexture(chainKnotEntity.getChainItemSource())));
-            this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV);
-            matrices.pop();
-        }
+    public ChainKnotEntityRenderState createRenderState() {
+        return new ChainKnotEntityRenderState();
+    }
 
-        // Render the links
-        List<ChainLink> links = chainKnotEntity.getLinks();
-        for (ChainLink link : links) {
-            if (link.getPrimary() != chainKnotEntity || link.isDead()) continue;
-            this.renderChainLink(link, tickDelta, matrices, vertexConsumers);
+    @Override
+    public void render(ChainKnotEntityRenderState state, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+        // Render the knot
+        matrices.push();
+        matrices.translate(0, 0.7, 0);
+        matrices.scale(5 / 6f, 1, 5 / 6f);
+        this.model.setAngles(state);
+        VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(getKnotTexture(state.sourceItem)));
+        this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV);
+        matrices.pop();
+
+        HashSet<ChainKnotEntityRenderState.ChainData> chainDataSet = state.chainDataSet;
+        for (ChainKnotEntityRenderState.ChainData chainData : chainDataSet) {
+            renderChainLink(matrices, vertexConsumers, chainData);
             if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
-                this.drawDebugVector(matrices, chainKnotEntity, link.getSecondary(), vertexConsumers.getBuffer(RenderLayer.LINES));
+                this.drawDebugVector(matrices, chainData.startPos, chainData.endPos, vertexConsumers.getBuffer(RenderLayer.LINES));
             }
         }
 
         if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
             matrices.push();
-            // F stands for "from", T for "to"
-
-            Text holdingCount = Text.literal("F: " + chainKnotEntity.getLinks().stream()
-                    .filter(l -> l.getPrimary() == chainKnotEntity).count());
-            Text heldCount = Text.literal("T: " + chainKnotEntity.getLinks().stream()
-                    .filter(l -> l.getSecondary() == chainKnotEntity).count());
-            matrices.translate(0, 0.25, 0);
-            this.renderLabelIfPresent(chainKnotEntity, holdingCount, matrices, vertexConsumers, light, tickDelta);
-            matrices.translate(0, 0.25, 0);
-            this.renderLabelIfPresent(chainKnotEntity, heldCount, matrices, vertexConsumers, light, tickDelta);
+            Text holdingCount = Text.literal("C: " + chainDataSet.size());
+            this.renderLabelIfPresent(state, holdingCount, matrices, vertexConsumers, light);
             matrices.pop();
         }
-        super.render(chainKnotEntity, yaw, tickDelta, matrices, vertexConsumers, light);
+        super.render(state, matrices, vertexConsumers, light);
     }
+
+
+    private void renderChainLink(MatrixStack matrices, VertexConsumerProvider vertexConsumerProvider, ChainKnotEntityRenderState.ChainData chainData) {
+        Vec3d offset = chainData.offset;
+        Vec3d startPos = chainData.startPos;
+        Vec3d endPos = chainData.endPos;
+        Item sourceItem = chainData.sourceItem;
+        int chainedEntityBlockLight = chainData.chainedEntityBlockLight;
+        int chainHolderBlockLight = chainData.chainHolderBlockLight;
+        int chainedEntitySkyLight = chainData.chainedEntitySkyLight;
+        int chainHolderSkyLight = chainData.chainHolderSkyLight;
+
+        RenderLayer entityCutout = RenderLayer.getEntityCutoutNoCull(getChainTexture(sourceItem));
+        VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(entityCutout);
+        if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
+            vertexConsumer = vertexConsumerProvider.getBuffer(RenderLayer.getLines());
+        }
+
+        matrices.push();
+
+        // The leash pos offset
+        matrices.translate(chainData.offset);
+
+
+        // TODO: Document what this does.
+        Vector3f chainVec = new Vector3f((float) (endPos.x - startPos.x), (float) (endPos.y - startPos.y), (float) (endPos.z - startPos.z));
+        float angleY = -(float) Math.atan2(chainVec.z(), chainVec.x());
+        matrices.multiply(new Quaternionf().rotateXYZ(0, angleY, 0));
+
+        ICatenaryRenderer renderer = getCatenaryRenderer(sourceItem);
+
+        if (chainData.useBaked && false) {
+            ChainRenderer.BakeKey key = new ChainRenderer.BakeKey(startPos, endPos);
+            chainRenderer.renderBaked(renderer, vertexConsumer, matrices, key, chainVec, chainedEntityBlockLight, chainHolderBlockLight, chainedEntitySkyLight, chainHolderSkyLight);
+        } else {
+            chainRenderer.render(renderer, vertexConsumer, matrices, chainVec, chainedEntityBlockLight, chainHolderBlockLight, chainedEntitySkyLight, chainHolderSkyLight);
+        }
+
+        matrices.pop();
+    }
+
+    /**
+     * Draws a line fromEntity - toEntity, from green to red.
+     */
+    private void drawDebugVector(MatrixStack matrices, Vec3d startPos, Vec3d endPos, VertexConsumer buffer) {
+        if (startPos == null) return;
+        Matrix4f modelMat = matrices.peek().getPositionMatrix();
+        Vec3d vec = endPos.subtract(startPos);
+        Vec3d normal = vec.normalize();
+        buffer.vertex(modelMat, 0, 0, 0)
+                .color(0, 255, 0, 255)
+                .normal((float) normal.x, (float) normal.y, (float) normal.z);
+        buffer.vertex(modelMat, (float) vec.x, (float) vec.y, (float) vec.z)
+                .color(255, 0, 0, 255)
+                .normal((float) normal.x, (float) normal.y, (float) normal.z);
+    }
+
+
+    @Override
+    public void updateRenderState(ChainKnotEntity entity, ChainKnotEntityRenderState state, float tickDelta) {
+        super.updateRenderState(entity, state, tickDelta);
+        HashSet<ChainKnotEntityRenderState.ChainData> result = new HashSet<>(entity.getChainDataSet().size());
+        for (Chainable.ChainData chainData : entity.getChainDataSet()) {
+            Entity chainHolder = entity.getChainHolder(chainData);
+            if (chainHolder == null) {
+                continue;
+            }
+
+            Vec3d offset = new Vec3d(0, 0.3, 0);
+            Vec3d srcPos = entity.getChainPos(tickDelta);
+            Vec3d dstPos;
+            if (chainHolder instanceof ChainKnotEntity chainKnotEntity) {
+                dstPos = chainKnotEntity.getChainPos(tickDelta);
+            } else {
+                dstPos = chainHolder.getLeashPos(tickDelta);
+            }
+
+            BlockPos blockPosOfStart = BlockPos.ofFloored(entity.getCameraPosVec(tickDelta));
+            BlockPos blockPosOfEnd = BlockPos.ofFloored(chainHolder.getCameraPosVec(tickDelta));
+            World world = entity.getWorld();
+
+
+            ChainKnotEntityRenderState.ChainData renderChainData = new ChainKnotEntityRenderState.ChainData();
+            renderChainData.offset = offset;
+            renderChainData.startPos = srcPos;
+            renderChainData.endPos = dstPos;
+            renderChainData.chainedEntityBlockLight = world.getLightLevel(LightType.BLOCK, blockPosOfStart);
+            renderChainData.chainHolderBlockLight = world.getLightLevel(LightType.BLOCK, blockPosOfEnd);
+            renderChainData.chainedEntitySkyLight = world.getLightLevel(LightType.SKY, blockPosOfStart);
+            renderChainData.chainHolderSkyLight = world.getLightLevel(LightType.SKY, blockPosOfEnd);
+            renderChainData.sourceItem = chainData.sourceItem;
+            renderChainData.useBaked = chainHolder instanceof AbstractDecorationEntity;
+            result.add(renderChainData);
+        }
+        state.chainDataSet = result;
+        state.sourceItem = entity.getSourceItem();
+        if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
+            state.nameLabelPos = entity.getAttachments().getPointNullable(EntityAttachmentType.NAME_TAG, 0, entity.getLerpedYaw(tickDelta));
+        }
+    }
+
     private ChainTextureManager getTextureManager() {
         return ClientInitializer.getInstance().getChainTextureManager();
     }
@@ -133,102 +233,8 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         return getTextureManager().getChainTexture(id);
     }
 
-    /**
-     * If I am honest I do not really know what is happening here most of the time, most of the code was 'inspired' by
-     * the {@link net.minecraft.client.render.entity.LeashKnotEntityRenderer}.
-     * Many variables therefore have simple names. I tried my best to comment and explain what everything does.
-     *
-     * @param link                   A link that provides the positions and type
-     * @param tickDelta              Delta tick
-     * @param matrices               The render matrix stack.
-     * @param vertexConsumerProvider The VertexConsumerProvider, whatever it does.
-     */
-    private void renderChainLink(ChainLink link, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumerProvider) {
-        ChainKnotEntity fromEntity = link.getPrimary();
-        Entity toEntity = link.getSecondary();
-        matrices.push();
-
-        // Don't have to lerp knot position as it can't move
-        // Also lerping the position of an entity that was just created
-        // causes visual bugs because the position is lerped from 0/0/0.
-        Vec3d srcPos = fromEntity.getPos().add(fromEntity.getLeashOffset());
-        Vec3d dstPos;
-
-        if (toEntity instanceof AbstractDecorationEntity) {
-            dstPos = toEntity.getPos().add(toEntity.getLeashOffset(tickDelta));
-        } else {
-            dstPos = toEntity.getLeashPos(tickDelta);
-        }
-
-        // The leash pos offset
-        Vec3d leashOffset = fromEntity.getLeashOffset();
-        matrices.translate(leashOffset.x, leashOffset.y, leashOffset.z);
-
-        Item sourceItem = link.getSourceItem();
-        // Some further performance improvements can be made here:
-        // Create a rendering layer that:
-        // - does not have normals
-        // - does not have an overlay
-        // - does not have vertex color
-        // - uses a tri strip instead of quads
-        RenderLayer entityCutout = RenderLayer.getEntityCutoutNoCull(getChainTexture(sourceItem));
-
-        VertexConsumer buffer = vertexConsumerProvider.getBuffer(entityCutout);
-        if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
-            buffer = vertexConsumerProvider.getBuffer(RenderLayer.getLines());
-        }
-
-        Vec3d offset = Helper.getChainOffset(srcPos, dstPos);
-        matrices.translate(offset.getX(), 0, offset.getZ());
-
-        // Now we gather light information for the chain. Since the chain is lighter if there is more light.
-        BlockPos blockPosOfStart = BlockPos.ofFloored(fromEntity.getCameraPosVec(tickDelta));
-        BlockPos blockPosOfEnd = BlockPos.ofFloored(toEntity.getCameraPosVec(tickDelta));
-        int blockLightLevelOfStart = fromEntity.getWorld().getLightLevel(LightType.BLOCK, blockPosOfStart);
-        int blockLightLevelOfEnd = toEntity.getWorld().getLightLevel(LightType.BLOCK, blockPosOfEnd);
-        int skylightLevelOfStart = fromEntity.getWorld().getLightLevel(LightType.SKY, blockPosOfStart);
-        int skylightLevelOfEnd = fromEntity.getWorld().getLightLevel(LightType.SKY, blockPosOfEnd);
-
-        Vec3d startPos = srcPos.add(offset.getX(), 0, offset.getZ());
-        Vec3d endPos = dstPos.add(-offset.getX(), 0, -offset.getZ());
-        Vector3f chainVec = new Vector3f((float) (endPos.x - startPos.x), (float) (endPos.y - startPos.y), (float) (endPos.z - startPos.z));
-
-        float angleY = -(float) Math.atan2(chainVec.z(), chainVec.x());
-
-        matrices.multiply(new Quaternionf().rotateXYZ(0, angleY, 0));
-
-        if (toEntity instanceof AbstractDecorationEntity) {
-            ChainRenderer.BakeKey key = new ChainRenderer.BakeKey(fromEntity.getPos(), toEntity.getPos());
-            chainRenderer.renderBaked(buffer, matrices, key, chainVec, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd);
-        } else {
-            chainRenderer.render(buffer, matrices, chainVec, blockLightLevelOfStart, blockLightLevelOfEnd, skylightLevelOfStart, skylightLevelOfEnd);
-        }
-
-        matrices.pop();
+    private ICatenaryRenderer getCatenaryRenderer(Item item) {
+        Identifier id = Registries.ITEM.getId(item);
+        return getTextureManager().getCatenaryRenderer(id);
     }
-
-
-
-    /**
-     * Draws a line fromEntity - toEntity, from green to red.
-     */
-    private void drawDebugVector(MatrixStack matrices, Entity fromEntity, Entity toEntity, VertexConsumer buffer) {
-        if (toEntity == null) return;
-        Matrix4f modelMat = matrices.peek().getPositionMatrix();
-        Vec3d vec = toEntity.getPos().subtract(fromEntity.getPos());
-        Vec3d normal = vec.normalize();
-        buffer.vertex(modelMat, 0, 0, 0)
-                .color(0, 255, 0, 255)
-                .normal((float) normal.x, (float) normal.y, (float) normal.z);
-        buffer.vertex(modelMat, (float) vec.x, (float) vec.y, (float) vec.z)
-                .color(255, 0, 0, 255)
-                .normal((float) normal.x, (float) normal.y, (float) normal.z);
-    }
-
-    @Override
-    public Identifier getTexture(ChainKnotEntity entity) {
-        return getKnotTexture(entity.getChainItemSource());
-    }
-
-
 }
