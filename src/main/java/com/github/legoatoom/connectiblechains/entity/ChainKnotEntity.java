@@ -114,7 +114,6 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
             if (!chainDataSet.removeIf(chainData -> chainData.equals(oldChainData) || chainData.equals(newChainData))) {
                 ConnectibleChains.LOGGER.warn("Attempted to remove {}, from {}. But it was not able to find it?", oldChainData, chainDataSet);
             }
-            ;
         }
 
         if (newChainData != null) chainDataSet.add(newChainData);
@@ -135,63 +134,66 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
 
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
-        // TODO: AVOID SAME CONNECTIONS
+
         ItemStack handStack = player.getStackInHand(hand);
         if (getWorld().isClient()) {
             // CLIENT-SIDE
+            if (hand == Hand.MAIN_HAND)
+                ConnectibleChains.LOGGER.trace("Client {} {} {}", getId(), getChainDataSet().size(), getSourceItem().toString());
+
+            var list = ChainItemCallbacks.collectChainablesAround(getWorld(), getAttachedBlockPos(), entity -> entity.getChainData(player) != null);
+            if (!list.isEmpty()) {
+                if (list.stream().anyMatch(chainable -> chainable.equals(this))) {
+                    handStack.decrementUnlessCreative(-1, player);
+                }
+                return ActionResult.SUCCESS;
+            }
 
             // Client handle attach.
             if (handStack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
-                this.sourceItem = handStack.getItem();
                 handStack.decrementUnlessCreative(1, player);
                 return ActionResult.SUCCESS;
             }
 
             // Client handle destroy.
             if (handStack.isIn(ConventionalItemTags.SHEAR_TOOLS)) {
-                return ActionResult.SUCCESS;
+                return ActionResult.CONSUME;
             }
-
-            if (ChainItemCallbacks.collectChainablesAround(getWorld(), getAttachedBlockPos(), entity -> entity.getChainData(player) != null).isEmpty()) {
-                return ActionResult.PASS;
-            } else {
-                return ActionResult.SUCCESS;
-            }
+            return ActionResult.PASS;
         }
+        if (hand == Hand.MAIN_HAND)
+            ConnectibleChains.LOGGER.trace("Server {} {} {}", getId(), getChainDataSet().size(), getSourceItem().toString());
 
         // SERVER-SIDE
-        if (this.isAlive()) {
+        if (this.isAlive() && player.getWorld() instanceof ServerWorld serverWorld) {
             // CASE: Attempt to attach to this Knot.
             boolean hasConnectedFromPlayer = false;
-            List<Chainable> list = ChainItemCallbacks.collectChainablesAround(this.getWorld(), this.getAttachedBlockPos(), chainable -> chainable.getChainData(player) != null || chainable.getChainData(this) != null);
+            List<Chainable> list = ChainItemCallbacks.collectChainablesAround(this.getWorld(), this.getAttachedBlockPos(), entity -> entity.getChainData(player) != null);
 
             for (Chainable chainable : list) {
                 // TODO: Kinda inefficient, perhaps return a list of pairs? Chainable+ChainData.
                 ChainData chainData = chainable.getChainData(player);
-                if (chainData == null) continue;
+                if (chainData == null || !chainable.canAttachTo(this)) continue;
                 chainable.attachChain(new ChainData(this, chainData.sourceItem), player, true);
                 hasConnectedFromPlayer = true;
             }
 
             if (hasConnectedFromPlayer) {
                 onPlace();
-                return ActionResult.CONSUME;
+                return ActionResult.SUCCESS;
             }
 
             // CASE: Player interacts with knot that they are currently attached to. Causing it to be removed.
             ChainData matchingData = null;
-            for (ChainData chainData : getChainDataSet()) {
-                if (getChainHolder(chainData) == player) {
+            for (ChainData chainData : new HashSet<>(getChainDataSet())) {
+                if (player == getChainHolder(chainData)) {
                     matchingData = chainData;
                     break;
                 }
             }
             if (matchingData != null) {
-                if (player.isInCreativeMode()) {
-                    detachChainWithoutDrop(matchingData);
-                } else {
-                    detachChain(matchingData);
-                }
+                detachChainWithoutDrop(matchingData);
+                handStack.decrementUnlessCreative(-1, player);
                 this.emitGameEvent(GameEvent.ENTITY_INTERACT, player);
 
                 return ActionResult.SUCCESS.noIncrementStat();
@@ -199,9 +201,8 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
 
             // CASE: Player interacts with knot that they are currently NOT attached to. Make a new connection.
             if (handStack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
-                this.sourceItem = handStack.getItem();
                 onPlace();
-                attachChain(new ChainData(player, sourceItem), null, true);
+                attachChain(new ChainData(player, handStack.getItem()), null, true);
                 handStack.decrementUnlessCreative(1, player);
                 return ActionResult.SUCCESS;
             }
@@ -213,7 +214,9 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
                 } else {
                     detachAllChains();
                 }
-                this.discard();
+                this.remove(RemovalReason.DISCARDED);
+                this.onBreak(serverWorld, player);
+
                 return ActionResult.CONSUME;
             }
         }
@@ -288,8 +291,13 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
     }
 
     @Override
-    public Item getSourceItem() {
+    public @NotNull Item getSourceItem() {
         return sourceItem;
+    }
+
+    @Override
+    public void setSourceItem(@NotNull Item sourceItem) {
+        this.sourceItem = sourceItem;
     }
 
     @Override

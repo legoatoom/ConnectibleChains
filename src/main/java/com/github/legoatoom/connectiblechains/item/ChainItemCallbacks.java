@@ -99,7 +99,11 @@ public class ChainItemCallbacks {
                 chainKnotEntity.onPlace();
             }
 
-            chainable.attachChain(new Chainable.ChainData(chainKnotEntity, chainable.getSourceItem()), player, true);
+            if (chainable.canAttachTo(chainKnotEntity)) {
+                Chainable.ChainData chainData = chainable.getChainData(player);
+                assert chainData != null;
+                chainable.attachChain(new Chainable.ChainData(chainKnotEntity, chainData.sourceItem), player, true);
+            }
         }
 
         if (!list.isEmpty()) {

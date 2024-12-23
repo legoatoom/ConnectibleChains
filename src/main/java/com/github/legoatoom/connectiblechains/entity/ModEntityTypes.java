@@ -33,7 +33,7 @@ import net.minecraft.registry.RegistryKeys;
 public class ModEntityTypes {
 
     public static final EntityType<ChainKnotEntity> CHAIN_KNOT = register(EntityType.Builder.create((EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new, SpawnGroup.MISC).trackingTickInterval(Integer.MAX_VALUE).alwaysUpdateVelocity(false).dimensions(0.375f, 0.5F).spawnableFarFromPlayer().makeFireImmune(), "chain_knot");
-//    public static final EntityType<ChainCollisionEntity> CHAIN_COLLISION = register(EntityType.Builder.create((EntityType.EntityFactory<ChainCollisionEntity>) ChainCollisionEntity::new, SpawnGroup.MISC).maxTrackingRange(1).trackingTickInterval(Integer.MAX_VALUE).alwaysUpdateVelocity(false).dimensions(0.25f, 0.375f).disableSaving().disableSummon().makeFireImmune(), "chain_collision");
+    public static final EntityType<ChainCollisionEntity> CHAIN_COLLISION = register(EntityType.Builder.create((EntityType.EntityFactory<ChainCollisionEntity>) ChainCollisionEntity::new, SpawnGroup.MISC).maxTrackingRange(1).trackingTickInterval(Integer.MAX_VALUE).alwaysUpdateVelocity(false).dimensions(0.25f, 0.375f).disableSaving().disableSummon().makeFireImmune(), "chain_collision");
 
     public static <T extends Entity> EntityType<T> register(EntityType.Builder<T> builder, String id) {
         RegistryKey<EntityType<?>> key = RegistryKey.of(RegistryKeys.ENTITY_TYPE, Helper.identifier(id));

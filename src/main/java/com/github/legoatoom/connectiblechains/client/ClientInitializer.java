@@ -15,6 +15,7 @@
 package com.github.legoatoom.connectiblechains.client;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
 import com.github.legoatoom.connectiblechains.client.render.entity.texture.ChainTextureManager;
@@ -23,6 +24,7 @@ import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
 import com.github.legoatoom.connectiblechains.item.ChainItemCallbacks;
 import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
 import com.github.legoatoom.connectiblechains.networking.packet.ConfigSyncPayload;
+import com.github.legoatoom.connectiblechains.networking.packet.KnotChangeS2CPacket;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
@@ -99,7 +101,7 @@ public class ClientInitializer implements ClientModInitializer {
             chainKnotEntityRenderer = new ChainKnotEntityRenderer(ctx);
             return chainKnotEntityRenderer;
         });
-//        EntityRendererRegistry.register(ModEntityTypes.CHAIN_COLLISION, ChainCollisionEntityRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.CHAIN_COLLISION, ChainCollisionEntityRenderer::new);
 
         EntityModelLayerRegistry.registerModelLayer(CHAIN_KNOT, ChainKnotEntityModel::getTexturedModelData);
     }
@@ -107,7 +109,7 @@ public class ClientInitializer implements ClientModInitializer {
     private void registerNetworkEventHandlers() {
         registerGlobalReceiver(ChainAttachS2CPacket.PAYLOAD_ID, ChainAttachS2CPacket::apply);
 //        registerGlobalReceiver(MultiChainAttachPayload.PAYLOAD_ID, MultiChainAttachPayload::apply);
-//        registerGlobalReceiver(KnotChangePayload.PAYLOAD_ID, KnotChangePayload::apply);
+        registerGlobalReceiver(KnotChangeS2CPacket.PAYLOAD_ID, KnotChangeS2CPacket::apply);
 
         ClientPlayConnectionEvents.INIT.register((handler, client) -> {
             // Load client config

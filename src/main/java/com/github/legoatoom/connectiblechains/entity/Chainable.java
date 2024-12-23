@@ -3,19 +3,22 @@ package com.github.legoatoom.connectiblechains.entity;
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
 import com.mojang.datafixers.util.Either;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.Leashable;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
-import net.minecraft.item.Items;
 import net.minecraft.item.LeadItem;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameRules;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +42,15 @@ public interface Chainable {
         return ConnectibleChains.runtimeConfig.getMaxChainRange();
     }
 
+    private static <E extends Entity & Chainable> boolean canAttachTo(E entity, Entity potentialHolder) {
+        if (entity.getChainData(potentialHolder) != null) {
+            return false;
+        } else if (potentialHolder instanceof Chainable chainable) {
+            return !entity.equals(potentialHolder) && chainable.getChainData(entity) == null;
+        }
+        return false;
+    }
+
     private static HashSet<ChainData> readChainDataSet(NbtCompound nbt) {
         HashSet<ChainData> result = new HashSet<>();
         if (nbt.contains(CHAINS_NBT_KEY, NbtElement.LIST_TYPE)) {
@@ -47,13 +59,14 @@ public interface Chainable {
                 if (!(element instanceof NbtCompound compound)) continue;
 
                 ChainData newChainData = null;
+                Item source = Registries.ITEM.get(Identifier.tryParse(compound.getString(SOURCE_ITEM_KEY)));
 
                 if (compound.containsUuid("UUID")) {
-                    newChainData = new ChainData(Either.left(compound.getUuid("UUID")), Items.CHAIN);
+                    newChainData = new ChainData(Either.left(compound.getUuid("UUID")), source);
                 } else if (compound.contains("RelX")) {
                     // Vanilla uses an NbtIntArray, but changing it here means would have to create a data-fixer, probably.
                     Either<UUID, BlockPos> either = Either.right(new BlockPos(compound.getInt("RelX"), compound.getInt("RelY"), compound.getInt("RelZ")));
-                    newChainData = new ChainData(either, Items.CHAIN);
+                    newChainData = new ChainData(either, source);
                 }
 
                 if (newChainData != null) {
@@ -78,13 +91,15 @@ public interface Chainable {
                 if (optionalUUID.isPresent()) {
                     Entity chainHolder = serverWorld.getEntity(optionalUUID.get());
                     if (chainHolder != null) {
-                        chainData.setChainHolder(chainHolder);
-                        attachChain(entity, chainData, null, true); // TODO: Do it in one bulk action instead of separate.
+                        ChainData newChainData = new ChainData(chainHolder, chainData.sourceItem);
+                        entity.replaceChainData(chainData, null);
+                        attachChain(entity, newChainData, null, true); // TODO: Do it in one bulk action instead of separate.
                         continue;
                     }
                 } else if (optionalBlockPos.isPresent()) {
-                    chainData.setChainHolder(ChainKnotEntity.getOrCreate(serverWorld, optionalBlockPos.get(), chainData.sourceItem));
-                    attachChain(entity, chainData, null, true);
+                    ChainData newChainData = new ChainData(ChainKnotEntity.getOrCreate(serverWorld, optionalBlockPos.get(), chainData.sourceItem), chainData.sourceItem);
+                    entity.replaceChainData(chainData, null);
+                    attachChain(entity, newChainData, null, true);
                     continue;
                 }
 
@@ -109,6 +124,23 @@ public interface Chainable {
                 if (sendPacket) {
                     serverWorld.getChunkManager().sendToOtherNearbyPlayers(entity, new ChainAttachS2CPacket(entity, chainData.chainHolder, null, chainData.sourceItem).asPacket());
                 }
+                ChainCollisionEntity.destroyCollision(serverWorld, chainData);
+            }
+        }
+    }
+
+    private static <E extends Entity & Chainable> void attachChain(E entity, ChainData chainData, @Nullable Entity previousHolder, boolean sendPacket) {
+        if (chainData.chainHolder == null) {
+            throw new IllegalArgumentException("Given");
+        }
+
+        entity.replaceChainData(entity.getChainData(previousHolder), chainData);
+        entity.onChainAttached(chainData);
+
+        if (sendPacket && entity.getWorld() instanceof ServerWorld serverWorld) {
+            serverWorld.getChunkManager().sendToOtherNearbyPlayers(entity, new ChainAttachS2CPacket(entity, previousHolder, chainData.chainHolder, chainData.sourceItem).asPacket());
+            if (chainData.chainHolder instanceof Chainable) {
+                ChainCollisionEntity.createCollision(entity, chainData);
             }
         }
     }
@@ -145,19 +177,6 @@ public interface Chainable {
         }
     }
 
-    private static <E extends Entity & Chainable> void attachChain(E entity, ChainData chainData, @Nullable Entity previousHolder, boolean sendPacket) {
-        if (chainData.chainHolder == null) {
-            throw new IllegalArgumentException("Given");
-        }
-
-        entity.replaceChainData(entity.getChainData(previousHolder), chainData);
-        entity.onChainAttached(chainData);
-
-        if (sendPacket && entity.getWorld() instanceof ServerWorld serverWorld) {
-            serverWorld.getChunkManager().sendToOtherNearbyPlayers(entity, new ChainAttachS2CPacket(entity, previousHolder, chainData.chainHolder, chainData.sourceItem).asPacket());
-        }
-    }
-
     @Nullable
     private static <E extends Entity & Chainable> Entity getChainHolder(E entity, ChainData chainData) {
         if (!entity.getChainDataSet().contains(chainData)) {
@@ -168,7 +187,7 @@ public interface Chainable {
             // CLIENT-SIDE //
             Entity chainHolder = entity.getWorld().getEntityById(chainData.unresolvedChainHolderId);
             if (chainHolder instanceof Entity) {
-                chainData.setChainHolder(chainHolder);
+                entity.replaceChainData(chainData, new ChainData(chainHolder, chainData.sourceItem));
             }
         }
 
@@ -181,7 +200,7 @@ public interface Chainable {
     static BlockSoundGroup getSourceBlockSoundGroup(Item sourceItem) {
         return switch (sourceItem) {
             case BlockItem blockItem -> blockItem.getBlock().getDefaultState().getSoundGroup();
-            case LeadItem leadItem -> new BlockSoundGroup(
+            case LeadItem ignored -> new BlockSoundGroup(
                     1.0f,
                     1.0f,
                     SoundEvents.ENTITY_LEASH_KNOT_BREAK,
@@ -192,6 +211,10 @@ public interface Chainable {
             );
             case null, default -> BlockSoundGroup.CHAIN;
         };
+    }
+
+    default boolean canAttachTo(Entity entity) {
+        return canAttachTo((Entity & Chainable) this, entity);
     }
 
     HashSet<ChainData> getChainDataSet();
@@ -222,6 +245,8 @@ public interface Chainable {
     }
 
     default void readChainDataFromNbt(NbtCompound nbt) {
+        setSourceItem(Registries.ITEM.get(Identifier.tryParse(nbt.getString(SOURCE_ITEM_KEY))));
+
         HashSet<ChainData> chainData = readChainDataSet(nbt);
         if (!this.getChainDataSet().isEmpty() && chainData.isEmpty()) {
             this.detachAllChainsWithoutDrop();
@@ -231,26 +256,30 @@ public interface Chainable {
     }
 
     default void writeChainDataSetToNbt(NbtCompound nbt, HashSet<ChainData> chainDataSet) {
+        nbt.putString(SOURCE_ITEM_KEY, Registries.ITEM.getId(getSourceItem()).toString());
+
         NbtList linksTag = new NbtList();
         for (ChainData chainData : chainDataSet) {
             Either<UUID, BlockPos> either = chainData.unresolvedChainData;
             if (chainData.chainHolder instanceof ChainKnotEntity chainKnotEntity) {
                 either = Either.right(chainKnotEntity.getAttachedBlockPos());
             } else if (chainData.chainHolder != null) {
-
                 either = Either.left(chainData.chainHolder.getUuid());
             }
 
             if (either != null) {
+                String sourceItem = Registries.ITEM.getId(chainData.sourceItem).toString();
                 linksTag.add(either.map(uuid -> {
                     NbtCompound nbtCompound = new NbtCompound();
                     nbtCompound.putUuid("UUID", uuid);
+                    nbtCompound.putString(SOURCE_ITEM_KEY, sourceItem);
                     return nbtCompound;
                 }, blockPos -> {
                     NbtCompound nbtCompound = new NbtCompound();
                     nbtCompound.putInt("RelX", blockPos.getX());
                     nbtCompound.putInt("RelY", blockPos.getY());
                     nbtCompound.putInt("RelZ", blockPos.getZ());
+                    nbtCompound.putString(SOURCE_ITEM_KEY, sourceItem);
                     return nbtCompound;
                 }));
             }
@@ -314,7 +343,7 @@ public interface Chainable {
     @Nullable
     default ChainData getChainData(@Nullable Entity holder) {
         if (holder != null) {
-            for (ChainData chainData : getChainDataSet()) {
+            for (ChainData chainData : new HashSet<>(getChainDataSet())) {
                 if (getChainHolder(chainData) == holder) {
                     return chainData;
                 }
@@ -328,42 +357,51 @@ public interface Chainable {
      */
     Item getSourceItem();
 
+    void setSourceItem(Item item);
+
     default BlockSoundGroup getSourceBlockSoundGroup() {
         return getSourceBlockSoundGroup(getSourceItem());
     }
 
+    Vec3d getChainPos(float delta);
+
     public static final class ChainData {
+
+        /**
+         * A list of collision entity ids, only used in the server.
+         */
+        public final IntArrayList collisionStorage = new IntArrayList(16);
+        @Nullable
+        public final Either<UUID, BlockPos> unresolvedChainData;
+        @NotNull
+        public final Item sourceItem;
+        final int unresolvedChainHolderId;
         /**
          * The Holder is the entity that gets/receives the chain.
          * Either a ChainKnotEntity or a Player.
          */
         @Nullable
-        private Entity chainHolder;
-        @Nullable
-        public Either<UUID, BlockPos> unresolvedChainData;
-        @NotNull
-        public Item sourceItem;
-        int unresolvedChainHolderId;
+        private final Entity chainHolder;
 
         public ChainData(@Nullable Either<UUID, BlockPos> unresolvedChainData, @NotNull Item sourceItem) {
             this.unresolvedChainData = unresolvedChainData;
             this.sourceItem = sourceItem;
+            this.chainHolder = null;
+            this.unresolvedChainHolderId = 0;
         }
 
         public ChainData(@Nullable Entity chainHolder, @NotNull Item sourceItem) {
             this.chainHolder = chainHolder;
             this.sourceItem = sourceItem;
+            this.unresolvedChainData = null;
+            this.unresolvedChainHolderId = 0;
         }
 
         public ChainData(int unresolvedChainHolderId, @NotNull Item sourceItem) {
             this.unresolvedChainHolderId = unresolvedChainHolderId;
             this.sourceItem = sourceItem;
-        }
-
-        public void setChainHolder(Entity chainHolder) {
-            this.chainHolder = chainHolder;
+            this.chainHolder = null;
             this.unresolvedChainData = null;
-            this.unresolvedChainHolderId = 0;
         }
 
         public BlockSoundGroup getSourceBlockSoundGroup() {
@@ -382,8 +420,10 @@ public interface Chainable {
 
             int thisId = getHolderId();
             int thatId = chainData.getHolderId();
-
-            return thisId != 0 && thisId == thatId;
+            if (thisId != 0 && thisId == thatId) {
+                return true;
+            }
+            return unresolvedChainData != null && unresolvedChainData.equals(chainData.unresolvedChainData);
         }
 
         @Override

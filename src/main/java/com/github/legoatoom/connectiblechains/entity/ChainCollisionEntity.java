@@ -14,189 +14,275 @@
 
 package com.github.legoatoom.connectiblechains.entity;
 
+import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.util.Helper;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
+import net.minecraft.registry.Registries;
+import net.minecraft.server.network.EntityTrackerEntry;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.github.legoatoom.connectiblechains.entity.Chainable.getSourceBlockSoundGroup;
+
 /**
  * ChainCollisionEntity is an Entity that is invisible but has a collision.
  * It is used to create a collision for links.
  *
  * @author legoatoom, Qendolin
  */
-public class ChainCollisionEntity {
-//
-//    /**
-//     * The link that this collider is a part of.
-//     */
-//    @Nullable
-//    private ChainLink link;
-//
-//    @NotNull
-//    private Item linkSourceItem;
-//
-//
-//    public ChainCollisionEntity(World world, double x, double y, double z, @NotNull ChainLink link) {
-//        this(ModEntityTypes.CHAIN_COLLISION, world);
-//        this.link = link;
-//        this.setPosition(x, y, z);
-//        this.linkSourceItem = link.sourceItem;
-//    }
-//
-//    public ChainCollisionEntity(EntityType<? extends ChainCollisionEntity> entityType, World world) {
-//        super(entityType, world);
-//    }
-//
-//    @SuppressWarnings("unused")
-//    public @Nullable ChainLink getLink() {
-//        // Only available in the server. In the client, it is null.
-//        return link;
-//    }
-//
-//    public @NotNull Item getLinkSourceItem() {
-//        // Always available.
-//        return linkSourceItem;
-//    }
-//
-//    @Override
-//    public boolean canHit() {
-//        return !isRemoved();
-//    }
-//
-//    /**
-//     * We don't want to be able to push the collision box of the chain.
-//     *
-//     * @return false
-//     */
-//    @Override
-//    public boolean isPushable() {
-//        return false;
-//    }
-//
-//    /**
-//     * We only allow the collision box to be rendered if a player is holding a shears type item.
-//     * This might be helpful when using F3+B to see the boxes of the chain.
-//     *
-//     * @param distance the camera distance from the collider.
-//     * @return true when it should be rendered
-//     */
-//    @Environment(EnvType.CLIENT)
-//    @Override
-//    public boolean shouldRender(double distance) {
-//        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-//        if (player != null && player.isHolding(itemStack -> itemStack.isIn(ConventionalItemTags.SHEAR_TOOLS))) {
-//            return super.shouldRender(distance);
-//        } else {
-//            return false;
-//        }
-//    }
-//
-//    @Override
-//    public boolean isFireImmune() {
-//        return super.isFireImmune();
-//    }
-//
-//    @Override
-//    protected void readCustomDataFromNbt(NbtCompound tag) {
-//    }
-//
-//    @Override
-//    protected void writeCustomDataToNbt(NbtCompound tag) {
-//    }
-//
-//    /**
-//     * Makes sure that nothing can walk through it.
-//     *
-//     * @return true
-//     */
-//    @Override
-//    public boolean isCollidable() {
-//        return true;
-//    }
-//
-//    /**
-//     * @see ChainKnotEntity#handleAttack(Entity)
-//     */
-//    @Override
-//    public boolean handleAttack(Entity attacker) {
-//        if (!super.handleAttack(attacker)) {
-//            playSound(getHitSound(), 0.5F, 1.0F);
-//        }
-//        return true;
-//    }
-//
-//
-//    /**
-//     * @see ChainKnotEntity#damage(ServerWorld, DamageSource, float)
-//     */
-//    @Override
-//    public boolean damage(ServerWorld world, DamageSource source, float amount) {
-//        ActionResult result = ChainLinkEntity.onDamageFrom(this, source, getHitSound());
-//
-//        if (result.isAccepted()) {
-//            destroyLinks(result == ActionResult.SUCCESS);
-//            return true;
-//        }
-//        return false;
-//    }
-//
-//    @Override
-//    public void destroyLinks(boolean mayDrop) {
-//        if (link != null) link.destroy(mayDrop);
-//    }
-//
-//    private SoundEvent getHitSound() {
-//        if (link != null) {
-//            return ChainLink.getSoundGroup(link.sourceItem).getHitSound();
-//        } else {
-//            return ChainLink.getSoundGroup(null).getHitSound();
-//        }
-//    }
-//
-//    /**
-//     * Interaction (attack or use) of a player and this entity.
-//     * Tries to destroy the link with the item in the players hand.
-//     *
-//     * @param player The player that interacted.
-//     * @param hand   The hand that interacted.
-//     * @return {@link ActionResult#SUCCESS} when the interaction was successful.
-//     */
-//    @Override
-//    public ActionResult interact(PlayerEntity player, Hand hand) {
-//        if (ChainLinkEntity.canDestroyWith(player.getStackInHand(hand))) {
-//            destroyLinks(!player.isCreative());
-//            return ActionResult.SUCCESS;
-//        }
-//        return ActionResult.PASS;
-//    }
-//
-//    @Override
-//    protected void initDataTracker(DataTracker.Builder builder) {
-//
-//    }
-//
-//    @Override
-//    public Packet<ClientPlayPacketListener> createSpawnPacket(EntityTrackerEntry entityTrackerEntry) {
-//        int id = Registries.ITEM.getRawId(linkSourceItem);
-//        return new EntitySpawnS2CPacket(this, entityTrackerEntry, id);
-//    }
-//
-//    @Override
-//    public void onSpawnPacket(EntitySpawnS2CPacket packet) {
-//        super.onSpawnPacket(packet);
-//        int rawChainItemSourceId = packet.getEntityData();
-//        linkSourceItem = Registries.ITEM.get(rawChainItemSourceId);
-//    }
-//
-//    /**
-//     * Destroys broken links and removes itself when there is no alive link.
-//     */
-//    @Override
-//    public void tick() {
-//        if (getWorld().isClient()) return;
-//        // Condition can be met when the knots were removed with commands
-//        // but the collider still exists
-//        if (link != null && link.needsBeDestroyed()) link.destroy(true);
-//
-//        // Collider removes itself when the link is dead
-//        if (link == null || link.isDead()) {
-//            remove(Entity.RemovalReason.DISCARDED);
-//        }
-//    }
+public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
+    /**
+     * The x/z distance between collision entities.
+     * A value of 1 means they are "shoulder to shoulder"
+     */
+    private static final float COLLIDER_SPACING = 1.5f;
+
+    /**
+     * The link that this collider is a part of.
+     * Only available in the server.
+     */
+    @Nullable
+    private Chainable.ChainData link;
+
+    private Entity chainedEntity;
+
+    @NotNull
+    private Item linkSourceItem;
+
+
+    public ChainCollisionEntity(World world, double x, double y, double z, Entity chainedEntity, @NotNull Chainable.ChainData link) {
+        this(ModEntityTypes.CHAIN_COLLISION, world);
+        this.link = link;
+        this.setPosition(x, y, z);
+        this.linkSourceItem = link.sourceItem;
+        this.chainedEntity = chainedEntity;
+    }
+
+    public ChainCollisionEntity(EntityType<? extends ChainCollisionEntity> entityType, World world) {
+        super(entityType, world);
+    }
+
+    public static <E extends Entity & Chainable> void createCollision(E chainedEntity, Chainable.ChainData chainData) {
+        if (!chainData.collisionStorage.isEmpty()) return;
+        if (chainedEntity.getWorld().isClient()) return;
+        // SERVER-SIDE //
+        Entity chainHolder = chainedEntity.getChainHolder(chainData);
+
+        if (chainHolder == null) {
+            return;
+        }
+
+        double distance = chainedEntity.distanceTo(chainHolder);
+        // step = spacing * √(width^2 + width^2) / distance
+        double step = COLLIDER_SPACING * Math.sqrt(Math.pow(ModEntityTypes.CHAIN_COLLISION.getWidth(), 2) * 2) / distance;
+        double v = step;
+        // reserve space for the center collider
+        double centerHoldout = ModEntityTypes.CHAIN_COLLISION.getWidth() / distance;
+
+        while (v < 0.5 - centerHoldout) {
+            Entity collider1 = spawnCollision(false, chainedEntity, chainData, v);
+            if (collider1 != null) chainData.collisionStorage.add(collider1.getId());
+            Entity collider2 = spawnCollision(true, chainedEntity, chainData, v);
+            if (collider2 != null) chainData.collisionStorage.add(collider2.getId());
+
+            v += step;
+        }
+
+        Entity centerCollider = spawnCollision(false, chainedEntity, chainData, 0.5);
+        if (centerCollider != null) chainData.collisionStorage.add(centerCollider.getId());
+    }
+
+    public static <E extends Entity & Chainable> ChainCollisionEntity spawnCollision(boolean reverse, E chainedEntity, Chainable.ChainData chainData, double distancePercentage) {
+        if (!(chainedEntity.getWorld() instanceof ServerWorld serverWorld)) {
+            return null;
+        }
+        Entity chainHolder = chainedEntity.getChainHolder(chainData);
+        assert chainHolder != null;
+
+        Vec3d srcPos = chainedEntity.getChainPos(1);
+        Vec3d dstPos;
+        if (chainHolder instanceof ChainKnotEntity chainKnotEntity) {
+            dstPos = chainKnotEntity.getChainPos(1);
+        } else {
+            dstPos = chainHolder.getLeashPos(1);
+        }
+
+        Vec3d tmp = dstPos;
+        if (reverse) {
+            dstPos = srcPos;
+            srcPos = tmp;
+        }
+
+        double distance = srcPos.distanceTo(dstPos);
+
+        double x = MathHelper.lerp(distancePercentage, srcPos.getX(), dstPos.getX());
+        double y = srcPos.getY() + Helper.drip2((distancePercentage * distance), distance, dstPos.getY() - srcPos.getY());
+        double z = MathHelper.lerp(distancePercentage, srcPos.getZ(), dstPos.getZ());
+
+        y += -ModEntityTypes.CHAIN_COLLISION.getHeight() + 2 / 16f;
+
+        ChainCollisionEntity c = new ChainCollisionEntity(serverWorld, x, y, z, chainedEntity, chainData);
+        if (serverWorld.spawnEntity(c)) {
+            return c;
+        } else {
+            ConnectibleChains.LOGGER.warn("Tried to summon collision entity for a chain, failed to do so");
+            return null;
+        }
+    }
+
+    public static <E extends Entity & Chainable> void destroyCollision(ServerWorld world, Chainable.ChainData chainData) {
+        for (Integer entityId : chainData.collisionStorage) {
+            Entity e = world.getEntityById(entityId);
+            if (e instanceof ChainCollisionEntity) {
+                e.discard();
+            } else {
+                ConnectibleChains.LOGGER.warn("Collision storage contained reference to {} (#{}) which is not a collision entity.", e, entityId);
+            }
+        }
+    }
+
+    public @Nullable Chainable.ChainData getLink() {
+        // Only available in the server. In the client, it is null.
+        return link;
+    }
+
+    public @NotNull Item getLinkSourceItem() {
+        // Always available.
+        return linkSourceItem;
+    }
+
+    @Override
+    public boolean canHit() {
+        return !isRemoved();
+    }
+
+    /**
+     * We don't want to be able to push the collision box of the chain.
+     *
+     * @return false
+     */
+    @Override
+    public boolean isPushable() {
+        return false;
+    }
+
+    /**
+     * We only allow the collision box to be rendered if a player is holding a shears type item.
+     * This might be helpful when using F3+B to see the boxes of the chain.
+     *
+     * @param distance the camera distance from the collider.
+     * @return true when it should be rendered
+     */
+    @Environment(EnvType.CLIENT)
+    @Override
+    public boolean shouldRender(double distance) {
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        if (player != null && player.isHolding(itemStack -> itemStack.isIn(ConventionalItemTags.SHEAR_TOOLS))) {
+            return super.shouldRender(distance);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    protected void readCustomDataFromNbt(NbtCompound nbt) {
+    }
+
+    @Override
+    protected void writeCustomDataToNbt(NbtCompound nbt) {
+    }
+
+    /**
+     * Makes sure that nothing can walk through it.
+     *
+     * @return true
+     */
+    @Override
+    public boolean isCollidable() {
+        return true;
+    }
+
+    /**
+     * @see ChainKnotEntity#handleAttack(Entity)
+     */
+    @Override
+    public boolean handleAttack(Entity attacker) {
+        if (!super.handleAttack(attacker))
+            playSound(getSourceBlockSoundGroup(getLinkSourceItem()).getHitSound(), 0.5F, 1.0F);
+        return false;
+    }
+
+    /**
+     * @see ChainKnotEntity#damage
+     */
+    @Override
+    public boolean damage(ServerWorld world, DamageSource source, float amount) {
+        // SEVER-SIDE //
+        assert getLink() != null;
+        ActionResult result = onDamageFrom(source, getSourceBlockSoundGroup(getLinkSourceItem()).getHitSound());
+
+        if (!result.isAccepted()) {
+            return false;
+        }
+
+        if (chainedEntity instanceof Chainable chainable) {
+            chainable.detachChain(getLink());
+        }
+        return true;
+
+    }
+
+    /**
+     * Interaction (attack or use) of a player and this entity.
+     * Tries to destroy the link with the item in the players hand.
+     *
+     * @param player The player that interacted.
+     * @param hand   The hand that interacted.
+     * @return {@link ActionResult#SUCCESS} when the interaction was successful.
+     */
+    @Override
+    public ActionResult interact(PlayerEntity player, Hand hand) {
+        if (player.getStackInHand(hand).isIn(ConventionalItemTags.SHEAR_TOOLS)) {
+
+            return ActionResult.SUCCESS;
+        }
+        return ActionResult.PASS;
+    }
+
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+    }
+
+    @Override
+    public Packet<ClientPlayPacketListener> createSpawnPacket(EntityTrackerEntry entityTrackerEntry) {
+        int id = Registries.ITEM.getRawId(linkSourceItem);
+        return new EntitySpawnS2CPacket(this, entityTrackerEntry, id);
+    }
+
+    @Override
+    public void onSpawnPacket(EntitySpawnS2CPacket packet) {
+        super.onSpawnPacket(packet);
+        int rawChainItemSourceId = packet.getEntityData();
+        linkSourceItem = Registries.ITEM.get(rawChainItemSourceId);
+    }
 }

@@ -30,7 +30,7 @@ import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityAttachmentType;
-import net.minecraft.entity.decoration.AbstractDecorationEntity;
+import net.minecraft.entity.decoration.BlockAttachedEntity;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
@@ -75,7 +75,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
         if (super.shouldRender(entity, frustum, x, y, z)) {
             return true;
         }
-        for (Chainable.ChainData chainData : entity.getChainDataSet()) {
+        for (Chainable.ChainData chainData : new HashSet<>(entity.getChainDataSet())) {
             Entity chainHolder = entity.getChainHolder(chainData);
             if (chainHolder != null) {
                 if (frustum.isVisible(chainHolder.getBoundingBox())) {
@@ -139,7 +139,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
         matrices.push();
 
         // The leash pos offset
-        matrices.translate(chainData.offset);
+        matrices.translate(offset);
 
 
         // TODO: Document what this does.
@@ -149,7 +149,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
 
         ICatenaryRenderer renderer = getCatenaryRenderer(sourceItem);
 
-        if (chainData.useBaked && false) {
+        if (chainData.useBaked) {
             ChainRenderer.BakeKey key = new ChainRenderer.BakeKey(startPos, endPos);
             chainRenderer.renderBaked(renderer, vertexConsumer, matrices, key, chainVec, chainedEntityBlockLight, chainHolderBlockLight, chainedEntitySkyLight, chainHolderSkyLight);
         } else {
@@ -180,7 +180,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
     public void updateRenderState(ChainKnotEntity entity, ChainKnotEntityRenderState state, float tickDelta) {
         super.updateRenderState(entity, state, tickDelta);
         HashSet<ChainKnotEntityRenderState.ChainData> result = new HashSet<>(entity.getChainDataSet().size());
-        for (Chainable.ChainData chainData : entity.getChainDataSet()) {
+        for (Chainable.ChainData chainData : new HashSet<>(entity.getChainDataSet())) {
             Entity chainHolder = entity.getChainHolder(chainData);
             if (chainHolder == null) {
                 continue;
@@ -209,7 +209,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
             renderChainData.chainedEntitySkyLight = world.getLightLevel(LightType.SKY, blockPosOfStart);
             renderChainData.chainHolderSkyLight = world.getLightLevel(LightType.SKY, blockPosOfEnd);
             renderChainData.sourceItem = chainData.sourceItem;
-            renderChainData.useBaked = chainHolder instanceof AbstractDecorationEntity;
+            renderChainData.useBaked = chainHolder instanceof BlockAttachedEntity;
             result.add(renderChainData);
         }
         state.chainDataSet = result;
