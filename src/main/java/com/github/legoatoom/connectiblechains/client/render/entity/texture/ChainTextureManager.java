@@ -59,10 +59,10 @@ public class ChainTextureManager extends JsonDataLoader<CatenaryModel> implement
     }
 
     private static @NotNull Identifier defaultChainTextureId(Identifier itemId) {
-        return Identifier.of(itemId.getNamespace(), "textures/block/%s.png".formatted(itemId.getPath()));
+        return Identifier.of(itemId.getNamespace(), "block/%s".formatted(itemId.getPath()));
     }
     private static @NotNull Identifier defaultKnotTextureId(Identifier itemId) {
-        return Identifier.of(itemId.getNamespace(), "textures/item/%s.png".formatted(itemId.getPath()));
+        return Identifier.of(itemId.getNamespace(), "item/%s".formatted(itemId.getPath()));
     }
 
     public CatenaryRenderer getCatenaryRenderer(Identifier sourceItemId) {
