@@ -79,13 +79,10 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
     }
 
     @Nullable
-    public static ChainKnotEntity getOrNull(World world, BlockPos pos, @Nullable Item newSourceItem) {
+    public static ChainKnotEntity getOrNull(World world, BlockPos pos) {
         List<ChainKnotEntity> chainKnotEntities = world.getNonSpectatingEntities(ChainKnotEntity.class, new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ()).expand(1));
         for (ChainKnotEntity chainKnotEntity : chainKnotEntities) {
             if (chainKnotEntity.getAttachedBlockPos().equals(pos)) {
-                if (newSourceItem != null) {
-                    chainKnotEntity.sourceItem = newSourceItem;
-                }
                 return chainKnotEntity;
             }
         }
@@ -94,7 +91,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
     }
 
     public static ChainKnotEntity getOrCreate(World world, BlockPos pos, @NotNull Item newSourceItem) {
-        ChainKnotEntity chainKnotEntity = getOrNull(world, pos, newSourceItem);
+        ChainKnotEntity chainKnotEntity = getOrNull(world, pos);
 
         if (chainKnotEntity == null) {
             chainKnotEntity = new ChainKnotEntity(world, pos, newSourceItem);
