@@ -6,11 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
-### [2.5.0] - 12024-12-24
+## [2.5.0] - 12024-12-24
 - Reworked logic and rendering of the mod.
 - Implemented 2 new rendering models: `connectiblechains:square` and `connectiblechains:plus`
   - See wiki for more info.
-- Fixing bug of randomly broken chains when one end is in an unloaded chunk.
+
+### Fixes
+
+- Fixed bug of randomly broken chains when one end is in an unloaded
+  chunk. [#68](https://github.com/legoatoom/ConnectibleChains/issues/68)
+- While leading animals, right-clicking with a lead in hand now first tries to attach animals to a
+  fence. [#65](https://github.com/legoatoom/ConnectibleChains/issues/65)
+- Connecting to existing uses the correct sound. [#64](https://github.com/legoatoom/ConnectibleChains/issues/64)
 
 ## [2.4.2] - 12024-08-15
 - Fixed pick block bug where you would always get a vanilla chain.

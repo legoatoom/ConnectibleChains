@@ -135,9 +135,6 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
         ItemStack handStack = player.getStackInHand(hand);
         if (getWorld().isClient()) {
             // CLIENT-SIDE
-            if (hand == Hand.MAIN_HAND)
-                ConnectibleChains.LOGGER.info("Client {} {} {}", getId(), getChainDataSet().size(), getSourceItem().toString());
-
             var list = ChainItemCallbacks.collectChainablesAround(getWorld(), getAttachedBlockPos(), entity -> entity.getChainData(player) != null);
             if (!list.isEmpty()) {
                 if (list.stream().anyMatch(chainable -> chainable.equals(this))) {
@@ -158,9 +155,6 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
             }
             return ActionResult.PASS;
         }
-        if (hand == Hand.MAIN_HAND)
-            ConnectibleChains.LOGGER.info("Server {} {} {}", getId(), getChainDataSet().size(), getSourceItem().toString());
-
         // SERVER-SIDE
         if (this.isAlive() && player.getWorld() instanceof ServerWorld serverWorld) {
             // CASE: Attempt to attach to this Knot.
