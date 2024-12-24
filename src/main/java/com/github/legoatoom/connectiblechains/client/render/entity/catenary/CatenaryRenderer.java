@@ -7,7 +7,7 @@ import org.joml.Vector3f;
 import java.util.HashMap;
 import java.util.function.Supplier;
 
-public abstract class ICatenaryRenderer {
+public abstract class CatenaryRenderer {
 
     /**
      * Changes the width of the chain but does not cause uv distortion.
@@ -19,9 +19,9 @@ public abstract class ICatenaryRenderer {
      */
     protected static final int MAX_SEGMENTS = 2048;
 
-    private static final HashMap<Identifier, Supplier<ICatenaryRenderer>> renderers = new HashMap<>();
+    private static final HashMap<Identifier, Supplier<CatenaryRenderer>> renderers = new HashMap<>();
 
-    public static void addRenderer(Identifier id, Supplier<ICatenaryRenderer> rendererSupplier) {
+    public static void addRenderer(Identifier id, Supplier<CatenaryRenderer> rendererSupplier) {
         renderers.put(id, rendererSupplier);
     }
 
@@ -31,7 +31,7 @@ public abstract class ICatenaryRenderer {
      * @param id The identifier of the renderer.
      * @return a ICatenaryRenderer.
      */
-    public static ICatenaryRenderer getRenderer(Identifier id) {
+    public static CatenaryRenderer getRenderer(Identifier id) {
         return renderers.getOrDefault(id, CrossCatenaryRenderer::new).get();
     }
 

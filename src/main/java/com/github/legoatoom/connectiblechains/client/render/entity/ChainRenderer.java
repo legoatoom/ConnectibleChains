@@ -15,7 +15,7 @@
 package com.github.legoatoom.connectiblechains.client.render.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.client.render.entity.catenary.ICatenaryRenderer;
+import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CatenaryRenderer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.render.VertexConsumer;
@@ -44,7 +44,7 @@ public class ChainRenderer {
      * @param skyLight0   The sky light level at the start
      * @param skyLight1   The sky light level at the end
      */
-    public void renderBaked(ICatenaryRenderer renderer, VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
+    public void renderBaked(CatenaryRenderer renderer, VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model;
         if (models.containsKey(key)) {
             model = models.get(key);
@@ -60,12 +60,12 @@ public class ChainRenderer {
 
 
     /**
-     * Same as {@link #renderBaked(VertexConsumer, MatrixStack, BakeKey, Vector3f, int, int, int, int)} but will not use
+     * Same as {@link #renderBaked but will not use
      * the model cache. This should be used when {@code chainVec} is changed very frequently.
      *
      * @see #renderBaked
      */
-    public void render(ICatenaryRenderer renderer, VertexConsumer buffer, MatrixStack matrices, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
+    public void render(CatenaryRenderer renderer, VertexConsumer buffer, MatrixStack matrices, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model = renderer.buildModel(chainVec);
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
     }

@@ -23,8 +23,6 @@ public class Payloads {
     public static void init() {
         ConnectibleChains.LOGGER.info("Register Custom Payloads for Networking.");
         PayloadTypeRegistry.playS2C().register(ChainAttachS2CPacket.PAYLOAD_ID, ChainAttachS2CPacket.PACKET_CODEC);
-//        PayloadTypeRegistry.playS2C().register(MultiChainAttachPayload.PAYLOAD_ID, MultiChainAttachPayload.PACKET_CODEC);
-        PayloadTypeRegistry.playS2C().register(KnotChangeS2CPacket.PAYLOAD_ID, KnotChangeS2CPacket.PACKET_CODEC);
         PayloadTypeRegistry.playS2C().register(ConfigSyncPayload.PAYLOAD_ID, ConfigSyncPayload.PACKET_CODEC);
     }
 }

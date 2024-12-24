@@ -27,6 +27,7 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
@@ -284,5 +285,10 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
         super.onSpawnPacket(packet);
         int rawChainItemSourceId = packet.getEntityData();
         linkSourceItem = Registries.ITEM.get(rawChainItemSourceId);
+    }
+
+    @Override
+    public @Nullable ItemStack getPickBlockStack() {
+        return new ItemStack(linkSourceItem);
     }
 }

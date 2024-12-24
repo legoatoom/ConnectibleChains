@@ -9,7 +9,7 @@ import org.joml.Vector3f;
 import static com.github.legoatoom.connectiblechains.util.Helper.drip2;
 import static com.github.legoatoom.connectiblechains.util.Helper.drip2prime;
 
-public class CrossCatenaryRenderer extends CatenaryRenderer {
+public class PlussCatenaryRenderer extends CatenaryRenderer {
 
     @Override
     public ChainModel buildModel(Vector3f chainVec) {
@@ -18,11 +18,11 @@ public class CrossCatenaryRenderer extends CatenaryRenderer {
         ChainModel.Builder builder = ChainModel.builder(initialCapacity);
 
         if (chainVec.x() == 0F && chainVec.z() == 0F) {
-            buildFaceVertical(builder, chainVec, 45, UVRect.DEFAULT_SIDE_A);
-            buildFaceVertical(builder, chainVec, -45, UVRect.DEFAULT_SIDE_B);
+            buildFaceVertical(builder, chainVec, 0, UVRect.DEFAULT_SIDE_A);
+            buildFaceVertical(builder, chainVec, 90, UVRect.DEFAULT_SIDE_B);
         } else {
-            buildFace(builder, chainVec, 45, UVRect.DEFAULT_SIDE_A);
-            buildFace(builder, chainVec, -45, UVRect.DEFAULT_SIDE_B);
+            buildFace(builder, chainVec, 0, UVRect.DEFAULT_SIDE_A);
+            buildFace(builder, chainVec, 90, UVRect.DEFAULT_SIDE_B);
         }
 
         return builder.build();
@@ -129,7 +129,6 @@ public class CrossCatenaryRenderer extends CatenaryRenderer {
             if (x >= distanceXZ) {
                 break;
             }
-
             segmentStart.set(segmentEnd);
         }
     }

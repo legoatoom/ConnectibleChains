@@ -139,7 +139,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
         if (getWorld().isClient()) {
             // CLIENT-SIDE
             if (hand == Hand.MAIN_HAND)
-                ConnectibleChains.LOGGER.trace("Client {} {} {}", getId(), getChainDataSet().size(), getSourceItem().toString());
+                ConnectibleChains.LOGGER.info("Client {} {} {}", getId(), getChainDataSet().size(), getSourceItem().toString());
 
             var list = ChainItemCallbacks.collectChainablesAround(getWorld(), getAttachedBlockPos(), entity -> entity.getChainData(player) != null);
             if (!list.isEmpty()) {
@@ -162,7 +162,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
             return ActionResult.PASS;
         }
         if (hand == Hand.MAIN_HAND)
-            ConnectibleChains.LOGGER.trace("Server {} {} {}", getId(), getChainDataSet().size(), getSourceItem().toString());
+            ConnectibleChains.LOGGER.info("Server {} {} {}", getId(), getChainDataSet().size(), getSourceItem().toString());
 
         // SERVER-SIDE
         if (this.isAlive() && player.getWorld() instanceof ServerWorld serverWorld) {

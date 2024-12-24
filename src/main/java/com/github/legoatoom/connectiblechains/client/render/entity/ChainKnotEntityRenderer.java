@@ -16,7 +16,7 @@ package com.github.legoatoom.connectiblechains.client.render.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.ClientInitializer;
-import com.github.legoatoom.connectiblechains.client.render.entity.catenary.ICatenaryRenderer;
+import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CatenaryRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
 import com.github.legoatoom.connectiblechains.client.render.entity.state.ChainKnotEntityRenderState;
 import com.github.legoatoom.connectiblechains.client.render.entity.texture.ChainTextureManager;
@@ -78,7 +78,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
         for (Chainable.ChainData chainData : new HashSet<>(entity.getChainDataSet())) {
             Entity chainHolder = entity.getChainHolder(chainData);
             if (chainHolder != null) {
-                if (frustum.isVisible(chainHolder.getBoundingBox())) {
+                if (frustum.isVisible(chainHolder.getBoundingBox().expand(entity.distanceTo(chainHolder)))) {
                     return true;
                 }
             }
@@ -147,7 +147,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
         float angleY = -(float) Math.atan2(chainVec.z(), chainVec.x());
         matrices.multiply(new Quaternionf().rotateXYZ(0, angleY, 0));
 
-        ICatenaryRenderer renderer = getCatenaryRenderer(sourceItem);
+        CatenaryRenderer renderer = getCatenaryRenderer(sourceItem);
 
         if (chainData.useBaked) {
             ChainRenderer.BakeKey key = new ChainRenderer.BakeKey(startPos, endPos);
@@ -233,7 +233,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
         return getTextureManager().getChainTexture(id);
     }
 
-    private ICatenaryRenderer getCatenaryRenderer(Item item) {
+    private CatenaryRenderer getCatenaryRenderer(Item item) {
         Identifier id = Registries.ITEM.getId(item);
         return getTextureManager().getCatenaryRenderer(id);
     }

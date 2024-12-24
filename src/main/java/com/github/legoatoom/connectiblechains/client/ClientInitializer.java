@@ -17,6 +17,10 @@ package com.github.legoatoom.connectiblechains.client;
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
+import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CatenaryRenderer;
+import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CrossCatenaryRenderer;
+import com.github.legoatoom.connectiblechains.client.render.entity.catenary.PlussCatenaryRenderer;
+import com.github.legoatoom.connectiblechains.client.render.entity.catenary.SquareCatenaryRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.model.ChainKnotEntityModel;
 import com.github.legoatoom.connectiblechains.client.render.entity.texture.ChainTextureManager;
 import com.github.legoatoom.connectiblechains.config.ModConfig;
@@ -24,7 +28,6 @@ import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
 import com.github.legoatoom.connectiblechains.item.ChainItemCallbacks;
 import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
 import com.github.legoatoom.connectiblechains.networking.packet.ConfigSyncPayload;
-import com.github.legoatoom.connectiblechains.networking.packet.KnotChangeS2CPacket;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
@@ -75,6 +78,14 @@ public class ClientInitializer implements ClientModInitializer {
 
         // Tooltip for chains.
         ItemTooltipCallback.EVENT.register(ChainItemCallbacks::infoToolTip);
+
+        registerCatenaryRenders();
+    }
+
+    private void registerCatenaryRenders() {
+        CatenaryRenderer.addRenderer(Helper.identifier("cross"), CrossCatenaryRenderer::new);
+        CatenaryRenderer.addRenderer(Helper.identifier("square"), SquareCatenaryRenderer::new);
+        CatenaryRenderer.addRenderer(Helper.identifier("plus"), PlussCatenaryRenderer::new);
     }
 
     private static void registerConfigSync() {
@@ -107,9 +118,9 @@ public class ClientInitializer implements ClientModInitializer {
     }
 
     private void registerNetworkEventHandlers() {
+        ConnectibleChains.LOGGER.info("Initializing Network even handlers.");
+
         registerGlobalReceiver(ChainAttachS2CPacket.PAYLOAD_ID, ChainAttachS2CPacket::apply);
-//        registerGlobalReceiver(MultiChainAttachPayload.PAYLOAD_ID, MultiChainAttachPayload::apply);
-        registerGlobalReceiver(KnotChangeS2CPacket.PAYLOAD_ID, KnotChangeS2CPacket::apply);
 
         ClientPlayConnectionEvents.INIT.register((handler, client) -> {
             // Load client config
@@ -121,6 +132,8 @@ public class ClientInitializer implements ClientModInitializer {
     }
 
     private void registerClientEventHandlers() {
+        ConnectibleChains.LOGGER.info("Registering texture handlers..");
+
         ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(chainTextureManager);
     }
 

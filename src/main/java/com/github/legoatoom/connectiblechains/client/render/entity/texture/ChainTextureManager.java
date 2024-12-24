@@ -15,44 +15,34 @@
 package com.github.legoatoom.connectiblechains.client.render.entity.texture;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
-import com.github.legoatoom.connectiblechains.client.ClientInitializer;
-import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CrossCatenaryRenderer;
-import com.github.legoatoom.connectiblechains.client.render.entity.catenary.ICatenaryRenderer;
+import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CatenaryModel;
+import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CatenaryRenderer;
 import com.github.legoatoom.connectiblechains.util.Helper;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.resource.JsonDataLoader;
 import net.minecraft.resource.ResourceFinder;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Pair;
-import net.minecraft.util.dynamic.Codecs;
 import net.minecraft.util.profiler.Profiler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The manager loads the chain models that contain the texture information for all chain types.
  * It looks for models at models/entity/chain/ within the same namespace as the chain type.
  */
-public class ChainTextureManager extends JsonDataLoader<JsonElement> implements IdentifiableResourceReloadListener {
+public class ChainTextureManager extends JsonDataLoader<CatenaryModel> implements IdentifiableResourceReloadListener {
     private static final String MODEL_FILE_LOCATION = "models/entity/" + ConnectibleChains.MODID;
     /**
      * How many different chain items do we expect?
      */
     private static final int EXPECTED_UNIQUE_CHAIN_COUNT = 64;
-    /**
-     * Maps chain types to chain texture ids.
-     */
-    private final Object2ObjectMap<Identifier, Identifier> chainTextures = new Object2ObjectOpenHashMap<>(EXPECTED_UNIQUE_CHAIN_COUNT);
-    /**
-     * Maps chain types to knot texture ids.
-     */
-    private final Object2ObjectMap<Identifier, Identifier> knotTextures = new Object2ObjectOpenHashMap<>(EXPECTED_UNIQUE_CHAIN_COUNT);
+
+    private Map<Identifier, CatenaryModel> models = new Object2ObjectOpenHashMap<>(EXPECTED_UNIQUE_CHAIN_COUNT);
+
 
     @Override
     public Identifier getFabricId() {
@@ -60,47 +50,13 @@ public class ChainTextureManager extends JsonDataLoader<JsonElement> implements 
     }
 
     public ChainTextureManager() {
-        super(Codecs.JSON_ELEMENT, ResourceFinder.json(MODEL_FILE_LOCATION));
+        super(CatenaryModel.CODEC.codec(), ResourceFinder.json(MODEL_FILE_LOCATION));
     }
 
     @Override
-    public void apply(Map<Identifier, JsonElement> data, ResourceManager manager, Profiler profiler) {
-        clearCache();
-        data.forEach((identifier, jsonElement) -> {
-            Pair<Identifier, Identifier> textures = extractChainTextures(identifier, jsonElement);
-            chainTextures.put(identifier, textures.getLeft());
-            knotTextures.put(identifier, textures.getRight());
-        });
+    protected void apply(Map<Identifier, CatenaryModel> prepared, ResourceManager manager, Profiler profiler) {
+        this.models = prepared;
     }
-
-    private static Pair<Identifier, Identifier> extractChainTextures(Identifier itemId, JsonElement jsonElement) {
-        //Default
-        Identifier chainTextureId = defaultChainTextureId(itemId);
-        Identifier knotTextureId = defaultKnotTextureId(itemId);
-
-        if (jsonElement.isJsonObject()) {
-            JsonObject jsonObject = jsonElement.getAsJsonObject();
-            JsonObject texturesObject = jsonObject.getAsJsonObject("textures");
-
-            if (texturesObject.has("chain") && texturesObject.get("chain").isJsonPrimitive()) {
-                chainTextureId = Identifier.tryParse(texturesObject.get("chain").getAsString()+ ".png");
-            }
-            if (texturesObject.has("knot") && texturesObject.get("knot").isJsonPrimitive()) {
-                knotTextureId = Identifier.tryParse(texturesObject.get("knot").getAsString()+ ".png");
-            }
-        }
-
-        return new Pair<>(chainTextureId, knotTextureId);
-    }
-
-    public void clearCache() {
-        ClientInitializer.getInstance()
-                .getChainKnotEntityRenderer()
-                .ifPresent(it -> it.getChainRenderer().purge());
-        chainTextures.clear();
-        knotTextures.clear();
-    }
-
 
     private static @NotNull Identifier defaultChainTextureId(Identifier itemId) {
         return Identifier.of(itemId.getNamespace(), "textures/block/%s.png".formatted(itemId.getPath()));
@@ -109,24 +65,15 @@ public class ChainTextureManager extends JsonDataLoader<JsonElement> implements 
         return Identifier.of(itemId.getNamespace(), "textures/item/%s.png".formatted(itemId.getPath()));
     }
 
-
-    public ICatenaryRenderer getCatenaryRenderer(Identifier sourceItemId) {
-        return new CrossCatenaryRenderer();
+    public CatenaryRenderer getCatenaryRenderer(Identifier sourceItemId) {
+        return CatenaryRenderer.getRenderer(Optional.ofNullable(models.get(sourceItemId)).flatMap(CatenaryModel::catenaryRendererId).orElseGet(() -> Helper.identifier("cross")));
     }
 
     public Identifier getChainTexture(Identifier sourceItemId) {
-        return chainTextures.computeIfAbsent(sourceItemId, (Identifier id) -> {
-            // Default location.
-            ConnectibleChains.LOGGER.warn("Did not find a model file for the chain '%s', assuming default path.".formatted(sourceItemId));
-            return defaultChainTextureId(id);
-        });
+        return Optional.ofNullable(models.get(sourceItemId)).flatMap(CatenaryModel::textures).flatMap(CatenaryModel.CatenaryTextures::chainTexture).orElseGet(() -> defaultChainTextureId(sourceItemId)).withPath("textures/%s.png"::formatted);
     }
 
     public Identifier getKnotTexture(Identifier sourceItemId) {
-        return knotTextures.computeIfAbsent(sourceItemId, (Identifier id) -> {
-            // Default location.
-            ConnectibleChains.LOGGER.warn("Did not find a model file for the chain '%s', assuming default path.".formatted(sourceItemId));
-            return defaultKnotTextureId(id);
-        });
+        return Optional.ofNullable(models.get(sourceItemId)).flatMap(CatenaryModel::textures).flatMap(CatenaryModel.CatenaryTextures::knotTexture).orElseGet(() -> defaultKnotTextureId(sourceItemId)).withPath("textures/%s.png"::formatted);
     }
 }

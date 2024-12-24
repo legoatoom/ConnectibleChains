@@ -115,7 +115,7 @@ public class ChainItemCallbacks {
     }
 
     public static List<Chainable> collectChainablesAround(World world, BlockPos pos, Predicate<Chainable> predicate) {
-        double distance = 7.0;
+        double distance = ConnectibleChains.runtimeConfig.getMaxChainRange();
 
         Box box = new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ()).expand(distance);
         return world.getEntitiesByClass(Entity.class, box, entity -> entity instanceof Chainable chainable && predicate.test(chainable)).stream().map(Chainable.class::cast).toList();
@@ -123,7 +123,7 @@ public class ChainItemCallbacks {
 
 
     @Environment(EnvType.CLIENT)
-    public static void infoToolTip(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipType tooltipType, List<Text> texts) {
+    public static void infoToolTip(ItemStack itemStack, Item.TooltipContext ignoredTooltipContext, TooltipType ignoredTooltipType, List<Text> texts) {
         if (ConnectibleChains.runtimeConfig.doShowToolTip()) {
             if (itemStack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
                 if (Screen.hasShiftDown()) {
