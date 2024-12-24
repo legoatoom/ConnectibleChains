@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.5.1] - 12024-12-24
+
+- Hotfix fallback chain texture incorrect.
+
 ## [2.5.0] - 12024-12-24
 - Reworked logic and rendering of the mod.
 - Implemented 2 new rendering models: `connectiblechains:square` and `connectiblechains:plus`
