@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.5.2] - 12025-01-29
+
+- UV Configuration in model JSON
+- Support for Farmers Delights Rope
+
 ## [2.5.1] - 12024-12-24
 
 - Hotfix fallback chain texture incorrect.
