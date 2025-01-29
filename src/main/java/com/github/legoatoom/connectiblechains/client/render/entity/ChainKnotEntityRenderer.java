@@ -57,13 +57,13 @@ import java.util.HashSet;
  * @see net.minecraft.client.render.entity.MobEntityRenderer
  */
 @Environment(EnvType.CLIENT)
-public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, ChainKnotEntityRenderState> {
-    private final ChainKnotEntityModel model;
+public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
+    private final ChainKnotEntityModel<ChainKnotEntity> model;
     private final ChainRenderer chainRenderer = new ChainRenderer();
 
     public ChainKnotEntityRenderer(EntityRendererFactory.Context context) {
         super(context);
-        this.model = new ChainKnotEntityModel(context.getPart(ClientInitializer.CHAIN_KNOT));
+        this.model = new ChainKnotEntityModel<>(context.getPart(ClientInitializer.CHAIN_KNOT));
     }
 
     public ChainRenderer getChainRenderer() {
@@ -87,17 +87,28 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
     }
 
     @Override
+    public Identifier getTexture(ChainKnotEntity entity) {
+        return null;
+    }
+
     public ChainKnotEntityRenderState createRenderState() {
         return new ChainKnotEntityRenderState();
     }
 
     @Override
-    public void render(ChainKnotEntityRenderState state, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+    public void render(ChainKnotEntity entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+        ChainKnotEntityRenderState state = createRenderState();
+        updateRenderState(entity, state, tickDelta);
+        render(entity, state, matrices, vertexConsumers, light, tickDelta);
+        super.render(entity, yaw, tickDelta, matrices, vertexConsumers, light);
+    }
+
+
+    public void render(ChainKnotEntity entity, ChainKnotEntityRenderState state, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, float tickDelta) {
         // Render the knot
         matrices.push();
         matrices.translate(0, 0.7, 0);
         matrices.scale(5 / 6f, 1, 5 / 6f);
-        this.model.setAngles(state);
         VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(getKnotTexture(state.sourceItem)));
         this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV);
         matrices.pop();
@@ -113,10 +124,9 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
         if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
             matrices.push();
             Text holdingCount = Text.literal("C: " + chainDataSet.size());
-            this.renderLabelIfPresent(state, holdingCount, matrices, vertexConsumers, light);
+            this.renderLabelIfPresent(entity, holdingCount, matrices, vertexConsumers, light, tickDelta);
             matrices.pop();
         }
-        super.render(state, matrices, vertexConsumers, light);
     }
 
 
@@ -139,7 +149,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
         matrices.push();
 
         // The leash pos offset
-        matrices.translate(offset);
+        matrices.translate(offset.x, offset.y, offset.z);
 
 
         // TODO: Document what this does.
@@ -176,9 +186,8 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
     }
 
 
-    @Override
+
     public void updateRenderState(ChainKnotEntity entity, ChainKnotEntityRenderState state, float tickDelta) {
-        super.updateRenderState(entity, state, tickDelta);
         HashSet<ChainKnotEntityRenderState.ChainData> result = new HashSet<>(entity.getChainDataSet().size());
         for (Chainable.ChainData chainData : new HashSet<>(entity.getChainDataSet())) {
             Entity chainHolder = entity.getChainHolder(chainData);
@@ -215,7 +224,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
         state.chainDataSet = result;
         state.sourceItem = entity.getSourceItem();
         if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
-            state.nameLabelPos = entity.getAttachments().getPointNullable(EntityAttachmentType.NAME_TAG, 0, entity.getLerpedYaw(tickDelta));
+            state.nameLabelPos = entity.getAttachments().getPointNullable(EntityAttachmentType.NAME_TAG, 0, entity.getLerpTargetYaw());
         }
     }
 

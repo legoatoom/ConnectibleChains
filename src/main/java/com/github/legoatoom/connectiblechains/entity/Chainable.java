@@ -110,7 +110,7 @@ public interface Chainable {
                 }
 
                 if (entity.age > 100) {
-                    entity.dropItem(serverWorld, chainData.sourceItem);
+                    entity.dropItem(chainData.sourceItem);
                     entity.replaceChainData(chainData, null);
                 }
             }
@@ -124,7 +124,7 @@ public interface Chainable {
             if (entity.getWorld() instanceof ServerWorld serverWorld) {
                 // SERVER-SIDE //
                 if (dropItem) {
-                    entity.dropItem(serverWorld, chainData.sourceItem);
+                    entity.dropItem(chainData.sourceItem);
                 }
 
                 if (sendPacket) {

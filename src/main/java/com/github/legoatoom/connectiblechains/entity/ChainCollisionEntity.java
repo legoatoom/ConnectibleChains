@@ -237,7 +237,9 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
      * @see ChainKnotEntity#damage
      */
     @Override
-    public boolean damage(ServerWorld world, DamageSource source, float amount) {
+    public boolean damage(DamageSource source, float amount) {
+        if (getWorld().isClient) return false;
+
         // SEVER-SIDE //
         assert getLink() != null;
         ActionResult result = onDamageFrom(source, getSourceBlockSoundGroup(getLinkSourceItem()).getHitSound());

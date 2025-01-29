@@ -2,15 +2,15 @@ package com.github.legoatoom.connectiblechains.client.render.entity.state;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.render.entity.state.EntityRenderState;
 import net.minecraft.item.Item;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.HashSet;
 
-public class ChainKnotEntityRenderState extends EntityRenderState {
+public class ChainKnotEntityRenderState {
     public HashSet<ChainData> chainDataSet = new HashSet<>();
     public Item sourceItem;
+    public Vec3d nameLabelPos;
 
 
     @Environment(EnvType.CLIENT)

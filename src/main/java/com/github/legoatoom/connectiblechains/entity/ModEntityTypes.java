@@ -37,7 +37,7 @@ public class ModEntityTypes {
 
     public static <T extends Entity> EntityType<T> register(EntityType.Builder<T> builder, String id) {
         RegistryKey<EntityType<?>> key = RegistryKey.of(RegistryKeys.ENTITY_TYPE, Helper.identifier(id));
-        return Registry.register(Registries.ENTITY_TYPE, key, builder.build(key));
+        return Registry.register(Registries.ENTITY_TYPE, key, builder.build());
     }
 
     public static void init() {

@@ -15,13 +15,17 @@
 package com.github.legoatoom.connectiblechains.client.render.entity.texture;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.client.ClientInitializer;
 import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CatenaryModel;
 import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CatenaryRenderer;
 import com.github.legoatoom.connectiblechains.util.Helper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.resource.JsonDataLoader;
-import net.minecraft.resource.ResourceFinder;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.profiler.Profiler;
@@ -29,13 +33,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * The manager loads the chain models that contain the texture information for all chain types.
  * It looks for models at models/entity/chain/ within the same namespace as the chain type.
  */
-public class ChainTextureManager extends JsonDataLoader<CatenaryModel> implements IdentifiableResourceReloadListener {
+public class ChainTextureManager extends JsonDataLoader implements IdentifiableResourceReloadListener {
     private static final String MODEL_FILE_LOCATION = "models/entity/" + ConnectibleChains.MODID;
+    private static final Gson GSON = new GsonBuilder().create();
+
+
     /**
      * How many different chain items do we expect?
      */
@@ -50,12 +58,17 @@ public class ChainTextureManager extends JsonDataLoader<CatenaryModel> implement
     }
 
     public ChainTextureManager() {
-        super(CatenaryModel.CODEC.codec(), ResourceFinder.json(MODEL_FILE_LOCATION));
+        super(GSON, MODEL_FILE_LOCATION);
     }
 
     @Override
-    protected void apply(Map<Identifier, CatenaryModel> prepared, ResourceManager manager, Profiler profiler) {
-        this.models = prepared;
+    protected void apply(Map<Identifier, JsonElement> prepared, ResourceManager manager, Profiler profiler) {
+        clearCache();
+        this.models = prepared.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, o -> CatenaryModel.CODEC.codec().parse(JsonOps.INSTANCE, o.getValue()).getOrThrow()));
+    }
+
+    public void clearCache() {
+        ClientInitializer.getInstance().getChainKnotEntityRenderer().ifPresent(it -> it.getChainRenderer().purge());
     }
 
     private static @NotNull Identifier defaultChainTextureId(Identifier itemId) {

@@ -187,7 +187,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
                 handStack.decrementUnlessCreative(-1, player);
                 this.emitGameEvent(GameEvent.ENTITY_INTERACT, player);
 
-                return ActionResult.SUCCESS.noIncrementStat();
+                return ActionResult.SUCCESS;
             }
 
             // CASE: Player interacts with knot that they are currently NOT attached to. Make a new connection.
@@ -206,7 +206,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
                     detachAllChains();
                 }
                 this.remove(RemovalReason.DISCARDED);
-                this.onBreak(serverWorld, player);
+                this.onBreak(player);
 
                 return ActionResult.CONSUME;
             }
@@ -221,7 +221,8 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
     }
 
     @Override
-    public boolean damage(ServerWorld world, DamageSource source, float amount) {
+    public boolean damage(DamageSource source, float amount) {
+        if (getWorld().isClient) return false;
         ActionResult result = onDamageFrom(source, getSourceBlockSoundGroup().getHitSound());
 
         if (!result.isAccepted()) {
@@ -233,7 +234,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
         } else {
             detachAllChainsWithoutDrop();
         }
-        return super.damage(world, source, amount);
+        return super.damage(source, amount);
     }
 
     @Override
@@ -301,7 +302,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
     }
 
     @Override
-    public void onBreak(ServerWorld world, @Nullable Entity breaker) {
+    public void onBreak(@Nullable Entity breaker) {
         this.playSound(getSourceBlockSoundGroup().getBreakSound(), 1.0F, 1.0F);
     }
 

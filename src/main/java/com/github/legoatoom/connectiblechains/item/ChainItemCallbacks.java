@@ -112,7 +112,7 @@ public class ChainItemCallbacks {
 
         if (!list.isEmpty()) {
             world.emitGameEvent(GameEvent.BLOCK_ATTACH, pos, GameEvent.Emitter.of(player));
-            return ActionResult.SUCCESS_SERVER;
+            return ActionResult.SUCCESS;
         } else {
             return ActionResult.PASS;
         }

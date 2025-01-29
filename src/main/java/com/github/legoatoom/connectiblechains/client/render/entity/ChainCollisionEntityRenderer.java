@@ -19,7 +19,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.state.EntityRenderState;
+import net.minecraft.util.Identifier;
 
 /**
  * Renderer for the {@link ChainCollisionEntity}.
@@ -29,14 +29,14 @@ import net.minecraft.client.render.entity.state.EntityRenderState;
  * @author legoatoom
  */
 @Environment(EnvType.CLIENT)
-public class ChainCollisionEntityRenderer extends EntityRenderer<ChainCollisionEntity, EntityRenderState> {
+public class ChainCollisionEntityRenderer extends EntityRenderer<ChainCollisionEntity> {
 
     public ChainCollisionEntityRenderer(EntityRendererFactory.Context dispatcher) {
         super(dispatcher);
     }
 
     @Override
-    public EntityRenderState createRenderState() {
-        return new EntityRenderState();
+    public Identifier getTexture(ChainCollisionEntity entity) {
+        return null;
     }
 }
