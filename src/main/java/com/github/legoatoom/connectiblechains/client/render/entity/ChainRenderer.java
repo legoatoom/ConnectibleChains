@@ -23,6 +23,8 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Vector3f;
 
+import java.util.Objects;
+
 public class ChainRenderer {
 
     /**
@@ -82,29 +84,23 @@ public class ChainRenderer {
      * Chains that have an identical bake key can use the same model as the geometry is the same.
      */
     public static class BakeKey {
-        private final int hash;
+        private final Vec3d srcPos;
+        private final Vec3d dstPos;
 
         public BakeKey(Vec3d srcPos, Vec3d dstPos) {
-            float dY = (float) (srcPos.y - dstPos.y);
-            float dXZ = new Vector3f((float) srcPos.x, 0, (float) srcPos.z)
-                    .distance((float) dstPos.x, 0, (float) dstPos.z);
-            int hash = Float.floatToIntBits(dY);
-            hash = 31 * hash + Float.floatToIntBits(dXZ);
-            this.hash = hash;
+            this.srcPos = srcPos;
+            this.dstPos = dstPos;
         }
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            BakeKey bakeKey = (BakeKey) o;
-            return hash == bakeKey.hash;
+            if (!(o instanceof BakeKey bakeKey)) return false;
+            return Objects.equals(srcPos, bakeKey.srcPos) && Objects.equals(dstPos, bakeKey.dstPos);
         }
 
         @Override
         public int hashCode() {
-            return hash;
+            return Objects.hash(srcPos, dstPos);
         }
     }
 }

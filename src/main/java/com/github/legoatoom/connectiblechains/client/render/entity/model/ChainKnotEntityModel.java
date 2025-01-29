@@ -54,15 +54,21 @@ public class ChainKnotEntityModel<T extends Entity> extends SinglePartEntityMode
         this.knot.pitch = headPitch * (float) (Math.PI / 180.0);
     }
 
+    /**
+     * Exported from Blockbench
+     */
     public static TexturedModelData getTexturedModelData() {
         ModelData modelData = new ModelData();
         ModelPartData modelPartData = modelData.getRoot();
-        ModelPartData bb_main = modelPartData.addChild("knot", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, -12.5F, 0.0F));
+        ModelPartData knot = modelPartData.addChild("knot", ModelPartBuilder.create(), ModelTransform.of(0.0F, -7F, 0.0F, 0.0F, 0.0F, -3.1416F));
 
-        bb_main.addChild("knot_child", ModelPartBuilder.create().uv(3, 1).cuboid(-1.0F, -1.5F, 3.0F, 3.0F, 6.0F, 0.0F, new Dilation(0.0F))
-                .uv(0, 1).cuboid(-1.0F, -1.5F, -3.0F, 3.0F, 0.0F, 6.0F, new Dilation(0.0F))
-                .uv(0, 9).mirrored().cuboid(-1.0F, 4.5F, -3.0F, 3.0F, 0.0F, 6.0F, new Dilation(0.0F)).mirrored(false)
-                .uv(3, 6).cuboid(-1.0F, -1.5F, -3.0F, 3.0F, 6.0F, 0.0F, new Dilation(0.0F)), ModelTransform.of(-1.5F, 7.0F, 0.0F, 0.0F, 0.0F, -1.5708F));
+        ModelPartData south_r1 = knot.addChild("south_r1", ModelPartBuilder.create().uv(-4, 3).mirrored().cuboid(-2.5F, 0.0F, -3.0F, 4.0F, 0.0F, 6.0F, new Dilation(0.0F)).mirrored(false), ModelTransform.of(0.0F, -0.5F, 3.0F, 1.5708F, 0.0F, -1.5708F));
+
+        ModelPartData north_r1 = knot.addChild("north_r1", ModelPartBuilder.create().uv(-4, 3).cuboid(-2.0F, 0.0F, -3.0F, 4.0F, 0.0F, 6.0F, new Dilation(0.0F)), ModelTransform.of(0.0F, -0.0F, -3.0F, 1.5708F, 0.0F, 1.5708F));
+
+        ModelPartData east_r1 = knot.addChild("east_r1", ModelPartBuilder.create().uv(-4, 8).cuboid(-2.0F, 0.0F, -3.0F, 4.0F, 0.0F, 6.0F, new Dilation(0.0F)), ModelTransform.of(-3.0F, -0.0F, 0.0F, -3.1416F, 0.0F, 1.5708F));
+
+        ModelPartData west_r1 = knot.addChild("west_r1", ModelPartBuilder.create().uv(-4, 8).mirrored().cuboid(-2.5F, 0.0F, -3.0F, 4.0F, 0.0F, 6.0F, new Dilation(0.0F)).mirrored(false), ModelTransform.of(3.0F, -0.5F, 0.0F, 0.0F, 0.0F, -1.5708F));
         return TexturedModelData.of(modelData, 16, 16);
     }
 }

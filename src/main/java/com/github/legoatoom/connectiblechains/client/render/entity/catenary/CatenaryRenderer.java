@@ -1,11 +1,13 @@
 package com.github.legoatoom.connectiblechains.client.render.entity.catenary;
 
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainModel;
+import com.github.legoatoom.connectiblechains.client.render.entity.UVRect;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Pair;
 import org.joml.Vector3f;
 
 import java.util.HashMap;
-import java.util.function.Supplier;
+import java.util.function.BiFunction;
 
 public abstract class CatenaryRenderer {
 
@@ -19,9 +21,16 @@ public abstract class CatenaryRenderer {
      */
     protected static final int MAX_SEGMENTS = 2048;
 
-    private static final HashMap<Identifier, Supplier<CatenaryRenderer>> renderers = new HashMap<>();
+    private static final HashMap<Identifier, BiFunction<UVRect, UVRect, CatenaryRenderer>> renderers = new HashMap<>();
+    protected final UVRect SIDE_A;
+    protected final UVRect SIDE_B;
 
-    public static void addRenderer(Identifier id, Supplier<CatenaryRenderer> rendererSupplier) {
+    protected CatenaryRenderer(UVRect a, UVRect b) {
+        SIDE_A = a;
+        SIDE_B = b;
+    }
+
+    public static void addRenderer(Identifier id, BiFunction<UVRect, UVRect, CatenaryRenderer> rendererSupplier) {
         renderers.put(id, rendererSupplier);
     }
 
@@ -29,10 +38,11 @@ public abstract class CatenaryRenderer {
      * Get the renderer for a given id. If non exist, get the {@link CrossCatenaryRenderer} as default.
      *
      * @param id The identifier of the renderer.
+     * @param uvRects The UV mapping to use, determine the width.
      * @return a ICatenaryRenderer.
      */
-    public static CatenaryRenderer getRenderer(Identifier id) {
-        return renderers.getOrDefault(id, CrossCatenaryRenderer::new).get();
+    public static CatenaryRenderer getRenderer(Identifier id, Pair<UVRect, UVRect> uvRects) {
+        return renderers.getOrDefault(id, CrossCatenaryRenderer::new).apply(uvRects.getLeft(), uvRects.getRight());
     }
 
     /**
