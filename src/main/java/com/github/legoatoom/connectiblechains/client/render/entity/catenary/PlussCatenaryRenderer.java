@@ -11,6 +11,10 @@ import static com.github.legoatoom.connectiblechains.util.Helper.drip2prime;
 
 public class PlussCatenaryRenderer extends CatenaryRenderer {
 
+    public PlussCatenaryRenderer(UVRect a, UVRect b) {
+        super(a, b);
+    }
+
     @Override
     public ChainModel buildModel(Vector3f chainVec) {
         float desiredSegmentLength = 1f / ConnectibleChains.runtimeConfig.getQuality();
@@ -18,11 +22,11 @@ public class PlussCatenaryRenderer extends CatenaryRenderer {
         ChainModel.Builder builder = ChainModel.builder(initialCapacity);
 
         if (chainVec.x() == 0F && chainVec.z() == 0F) {
-            buildFaceVertical(builder, chainVec, 0, UVRect.DEFAULT_SIDE_A);
-            buildFaceVertical(builder, chainVec, 90, UVRect.DEFAULT_SIDE_B);
+            buildFaceVertical(builder, chainVec, 0, SIDE_A);
+            buildFaceVertical(builder, chainVec, 90, SIDE_B);
         } else {
-            buildFace(builder, chainVec, 0, UVRect.DEFAULT_SIDE_A);
-            buildFace(builder, chainVec, 90, UVRect.DEFAULT_SIDE_B);
+            buildFace(builder, chainVec, 0, SIDE_A);
+            buildFace(builder, chainVec, 90, SIDE_B);
         }
 
         return builder.build();

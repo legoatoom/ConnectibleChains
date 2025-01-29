@@ -1,0 +1,13 @@
+{
+  "textures": {
+    "chain": "farmersdelight:block/rope",
+    "knot": "farmersdelight:entity/rope_knot"
+  },
+  "model": "connectiblechains:square",
+  "uv": [
+    7,
+    9,
+    7,
+    9
+  ]
+}

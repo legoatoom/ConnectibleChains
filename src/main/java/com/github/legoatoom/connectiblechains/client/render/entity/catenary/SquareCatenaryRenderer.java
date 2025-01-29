@@ -10,9 +10,12 @@ import static com.github.legoatoom.connectiblechains.util.Helper.drip2;
 import static com.github.legoatoom.connectiblechains.util.Helper.drip2prime;
 
 public class SquareCatenaryRenderer extends CatenaryRenderer {
+    public static final float SQRT_2 = (float) Math.sqrt(2);
+    protected static final float CHAIN_SCALE = 1F;
 
-    protected static final float CHAIN_SCALE = 1.2F;
-
+    public SquareCatenaryRenderer(UVRect a, UVRect b) {
+        super(a, b);
+    }
 
     @Override
     public ChainModel buildModel(Vector3f chainVec) {
@@ -36,13 +39,13 @@ public class SquareCatenaryRenderer extends CatenaryRenderer {
     private void buildFaceVertical(ChainModel.Builder builder, Vector3f endPosition) {
         endPosition.x = 0F;
         endPosition.z = 0F;
-        final float chainHalfWidthA = (UVRect.DEFAULT_SIDE_A.x1() - UVRect.DEFAULT_SIDE_A.x0()) / 32F * CHAIN_SCALE;
-        final float chainHalfWidthB = (UVRect.DEFAULT_SIDE_B.x1() - UVRect.DEFAULT_SIDE_B.x0()) / 32F * CHAIN_SCALE;
+        final float chainHalfWidthA = (SIDE_A.x1() - SIDE_A.x0()) / 32F * CHAIN_SCALE;
+        final float chainHalfWidthB = (SIDE_B.x1() - SIDE_B.x0()) / 32F * CHAIN_SCALE;
 
         Vector3f normalA = new Vector3f((float) Math.cos(Math.toRadians(45)), 0F, (float) Math.sin(Math.toRadians(45)));
         Vector3f normalB = new Vector3f((float) Math.cos(Math.toRadians(-45)), 0F, (float) Math.sin(Math.toRadians(-45)));
-        normalA.normalize(chainHalfWidthA);
-        normalB.normalize(chainHalfWidthB);
+        normalA.normalize(chainHalfWidthA * SQRT_2);
+        normalB.normalize(chainHalfWidthB * SQRT_2);
 
         Vector3f vert00A = new Vector3f(-normalA.x(), 0, -normalA.z());
         Vector3f vert01A = new Vector3f(normalA.x(), 0, normalA.z());
@@ -55,25 +58,7 @@ public class SquareCatenaryRenderer extends CatenaryRenderer {
         Vector3f vert11B = new Vector3f(normalB.x(), endPosition.y(), normalB.z());
 
         float uvv0 = 0F, uvv1 = Math.abs(endPosition.y()) / CHAIN_SCALE;
-        builder.vertex(vert00A).uv(UVRect.DEFAULT_SIDE_A.x0() / 16f, uvv0).next();
-        builder.vertex(vert01B).uv(UVRect.DEFAULT_SIDE_A.x1() / 16f, uvv0).next();
-        builder.vertex(vert11B).uv(UVRect.DEFAULT_SIDE_A.x1() / 16f, uvv1).next();
-        builder.vertex(vert10A).uv(UVRect.DEFAULT_SIDE_A.x0() / 16f, uvv1).next();
-
-        builder.vertex(vert00A).uv(UVRect.DEFAULT_SIDE_B.x0() / 16f, uvv0).next();
-        builder.vertex(vert00B).uv(UVRect.DEFAULT_SIDE_B.x1() / 16f, uvv0).next();
-        builder.vertex(vert10B).uv(UVRect.DEFAULT_SIDE_B.x1() / 16f, uvv1).next();
-        builder.vertex(vert10A).uv(UVRect.DEFAULT_SIDE_B.x0() / 16f, uvv1).next();
-
-        builder.vertex(vert00B).uv(UVRect.DEFAULT_SIDE_A.x0() / 16f, uvv0).next();
-        builder.vertex(vert01A).uv(UVRect.DEFAULT_SIDE_A.x1() / 16f, uvv0).next();
-        builder.vertex(vert11A).uv(UVRect.DEFAULT_SIDE_A.x1() / 16f, uvv1).next();
-        builder.vertex(vert10B).uv(UVRect.DEFAULT_SIDE_A.x0() / 16f, uvv1).next();
-
-        builder.vertex(vert01A).uv(UVRect.DEFAULT_SIDE_B.x0() / 16f, uvv0).next();
-        builder.vertex(vert01B).uv(UVRect.DEFAULT_SIDE_B.x1() / 16f, uvv0).next();
-        builder.vertex(vert11B).uv(UVRect.DEFAULT_SIDE_B.x1() / 16f, uvv1).next();
-        builder.vertex(vert11A).uv(UVRect.DEFAULT_SIDE_B.x0() / 16f, uvv1).next();
+        build4Sides(builder, uvv0, uvv1, vert00A, vert01A, vert10A, vert11A, vert00B, vert01B, vert10B, vert11B);
     }
 
     /**
@@ -95,8 +80,8 @@ public class SquareCatenaryRenderer extends CatenaryRenderer {
         // Original code used total distance between start and end instead of horizontal distance
         // That changed the look of chains when there was a big height difference, but it looks better.
         final float wrongDistanceFactor = distance / distanceXZ;
-        final float chainHalfWidthA = (UVRect.DEFAULT_SIDE_A.x1() - UVRect.DEFAULT_SIDE_A.x0()) / 32F * CHAIN_SCALE;
-        final float chainHalfWidthB = (UVRect.DEFAULT_SIDE_B.x1() - UVRect.DEFAULT_SIDE_B.x0()) / 32F * CHAIN_SCALE;
+        final float chainHalfWidthA = (SIDE_A.x1() - SIDE_A.x0()) / 32F * CHAIN_SCALE;
+        final float chainHalfWidthB = (SIDE_B.x1() - SIDE_B.x0()) / 32F * CHAIN_SCALE;
         Vector3f normal = new Vector3f(), rotAxis = new Vector3f();
         // 00, 01, 11, 11 refers to the X and Y position of the vertex.
         // 00 is the lower X and Y vertex. 10 Has the same y value as 00 but a higher x value.
@@ -132,8 +117,8 @@ public class SquareCatenaryRenderer extends CatenaryRenderer {
             Vector3f normalA = new Vector3f(), normalB = new Vector3f();
             normal.rotate(rotatorA, normalA);
             normal.rotate(rotatorB, normalB);
-            normalA.normalize(chainHalfWidthA);
-            normalB.normalize(chainHalfWidthB);
+            normalA.normalize(chainHalfWidthA * SQRT_2);
+            normalB.normalize(chainHalfWidthB * SQRT_2);
 
             if (segment == 0) {
                 //first iteration, thus the previous one does not yet exist.
@@ -157,31 +142,34 @@ public class SquareCatenaryRenderer extends CatenaryRenderer {
             uvv0 = uvv1;
             uvv1 = uvv0 + actualSegmentLength / CHAIN_SCALE;
 
-            builder.vertex(vert00A).uv(UVRect.DEFAULT_SIDE_A.x0() / 16f, uvv0).next();
-            builder.vertex(vert01B).uv(UVRect.DEFAULT_SIDE_A.x1() / 16f, uvv0).next();
-            builder.vertex(vert11B).uv(UVRect.DEFAULT_SIDE_A.x1() / 16f, uvv1).next();
-            builder.vertex(vert10A).uv(UVRect.DEFAULT_SIDE_A.x0() / 16f, uvv1).next();
-
-            builder.vertex(vert00A).uv(UVRect.DEFAULT_SIDE_B.x0() / 16f, uvv0).next();
-            builder.vertex(vert00B).uv(UVRect.DEFAULT_SIDE_B.x1() / 16f, uvv0).next();
-            builder.vertex(vert10B).uv(UVRect.DEFAULT_SIDE_B.x1() / 16f, uvv1).next();
-            builder.vertex(vert10A).uv(UVRect.DEFAULT_SIDE_B.x0() / 16f, uvv1).next();
-
-            builder.vertex(vert00B).uv(UVRect.DEFAULT_SIDE_A.x0() / 16f, uvv0).next();
-            builder.vertex(vert01A).uv(UVRect.DEFAULT_SIDE_A.x1() / 16f, uvv0).next();
-            builder.vertex(vert11A).uv(UVRect.DEFAULT_SIDE_A.x1() / 16f, uvv1).next();
-            builder.vertex(vert10B).uv(UVRect.DEFAULT_SIDE_A.x0() / 16f, uvv1).next();
-
-            builder.vertex(vert01A).uv(UVRect.DEFAULT_SIDE_B.x0() / 16f, uvv0).next();
-            builder.vertex(vert01B).uv(UVRect.DEFAULT_SIDE_B.x1() / 16f, uvv0).next();
-            builder.vertex(vert11B).uv(UVRect.DEFAULT_SIDE_B.x1() / 16f, uvv1).next();
-            builder.vertex(vert11A).uv(UVRect.DEFAULT_SIDE_B.x0() / 16f, uvv1).next();
-
+            build4Sides(builder, uvv0, uvv1, vert00A, vert01A, vert10A, vert11A, vert00B, vert01B, vert10B, vert11B);
 
             if (x >= distanceXZ) {
                 break;
             }
             segmentStart.set(segmentEnd);
         }
+    }
+
+    private void build4Sides(ChainModel.Builder builder, float uvv0, float uvv1, Vector3f vert00A, Vector3f vert01A, Vector3f vert10A, Vector3f vert11A, Vector3f vert00B, Vector3f vert01B, Vector3f vert10B, Vector3f vert11B) {
+        builder.vertex(vert00A).uv(SIDE_A.x0() / 16f, uvv0).next();
+        builder.vertex(vert01B).uv(SIDE_A.x1() / 16f, uvv0).next();
+        builder.vertex(vert11B).uv(SIDE_A.x1() / 16f, uvv1).next();
+        builder.vertex(vert10A).uv(SIDE_A.x0() / 16f, uvv1).next();
+
+        builder.vertex(vert00A).uv(SIDE_B.x0() / 16f, uvv0).next();
+        builder.vertex(vert00B).uv(SIDE_B.x1() / 16f, uvv0).next();
+        builder.vertex(vert10B).uv(SIDE_B.x1() / 16f, uvv1).next();
+        builder.vertex(vert10A).uv(SIDE_B.x0() / 16f, uvv1).next();
+
+        builder.vertex(vert00B).uv(SIDE_A.x1() / 16f, uvv0).next();
+        builder.vertex(vert01A).uv(SIDE_A.x0() / 16f, uvv0).next();
+        builder.vertex(vert11A).uv(SIDE_A.x0() / 16f, uvv1).next();
+        builder.vertex(vert10B).uv(SIDE_A.x1() / 16f, uvv1).next();
+
+        builder.vertex(vert01A).uv(SIDE_B.x0() / 16f, uvv0).next();
+        builder.vertex(vert01B).uv(SIDE_B.x1() / 16f, uvv0).next();
+        builder.vertex(vert11B).uv(SIDE_B.x1() / 16f, uvv1).next();
+        builder.vertex(vert11A).uv(SIDE_B.x0() / 16f, uvv1).next();
     }
 }

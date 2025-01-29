@@ -2,6 +2,10 @@
   "replace": false,
   "values": [
     "#c:chains",
-    "minecraft:lead"
+    "minecraft:lead",
+    {
+      "id": "farmersdelight:rope",
+      "required": false
+    }
   ]
 }

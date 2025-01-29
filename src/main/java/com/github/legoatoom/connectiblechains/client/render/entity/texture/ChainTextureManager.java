@@ -15,6 +15,8 @@
 package com.github.legoatoom.connectiblechains.client.render.entity.texture;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.client.ClientInitializer;
+import com.github.legoatoom.connectiblechains.client.render.entity.UVRect;
 import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CatenaryModel;
 import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CatenaryRenderer;
 import com.github.legoatoom.connectiblechains.util.Helper;
@@ -24,6 +26,7 @@ import net.minecraft.resource.JsonDataLoader;
 import net.minecraft.resource.ResourceFinder;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Pair;
 import net.minecraft.util.profiler.Profiler;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +43,8 @@ public class ChainTextureManager extends JsonDataLoader<CatenaryModel> implement
      * How many different chain items do we expect?
      */
     private static final int EXPECTED_UNIQUE_CHAIN_COUNT = 64;
+    public static final Identifier DEFAULT_CATENARY = Helper.identifier("cross");
+    public static final Pair<UVRect, UVRect> DEFAULT_UV = new Pair<>(UVRect.DEFAULT_SIDE_A, UVRect.DEFAULT_SIDE_B);
 
     private Map<Identifier, CatenaryModel> models = new Object2ObjectOpenHashMap<>(EXPECTED_UNIQUE_CHAIN_COUNT);
 
@@ -55,7 +60,12 @@ public class ChainTextureManager extends JsonDataLoader<CatenaryModel> implement
 
     @Override
     protected void apply(Map<Identifier, CatenaryModel> prepared, ResourceManager manager, Profiler profiler) {
+        this.clearCache();
         this.models = prepared;
+    }
+
+    public void clearCache() {
+        ClientInitializer.getInstance().getChainKnotEntityRenderer().ifPresent(it -> it.getChainRenderer().purge());
     }
 
     private static @NotNull Identifier defaultChainTextureId(Identifier itemId) {
@@ -66,14 +76,17 @@ public class ChainTextureManager extends JsonDataLoader<CatenaryModel> implement
     }
 
     public CatenaryRenderer getCatenaryRenderer(Identifier sourceItemId) {
-        return CatenaryRenderer.getRenderer(Optional.ofNullable(models.get(sourceItemId)).flatMap(CatenaryModel::catenaryRendererId).orElseGet(() -> Helper.identifier("cross")));
+        Optional<CatenaryModel> catenaryModel = Optional.ofNullable(models.get(sourceItemId));
+        Identifier catenaryId = catenaryModel.flatMap(CatenaryModel::catenaryRendererId).orElse(DEFAULT_CATENARY);
+        Pair<UVRect, UVRect> uvMappings = catenaryModel.flatMap(CatenaryModel::uvRects).orElse(DEFAULT_UV);
+        return CatenaryRenderer.getRenderer(catenaryId, uvMappings);
     }
 
     public Identifier getChainTexture(Identifier sourceItemId) {
-        return Optional.ofNullable(models.get(sourceItemId)).flatMap(CatenaryModel::textures).flatMap(CatenaryModel.CatenaryTextures::chainTexture).orElseGet(() -> defaultChainTextureId(sourceItemId)).withPath("textures/%s.png"::formatted);
+        return Optional.ofNullable(models.get(sourceItemId)).flatMap(CatenaryModel::textures).flatMap(CatenaryModel.CatenaryTextures::chainTexture).orElse(defaultChainTextureId(sourceItemId)).withPath("textures/%s.png"::formatted);
     }
 
     public Identifier getKnotTexture(Identifier sourceItemId) {
-        return Optional.ofNullable(models.get(sourceItemId)).flatMap(CatenaryModel::textures).flatMap(CatenaryModel.CatenaryTextures::knotTexture).orElseGet(() -> defaultKnotTextureId(sourceItemId)).withPath("textures/%s.png"::formatted);
+        return Optional.ofNullable(models.get(sourceItemId)).flatMap(CatenaryModel::textures).flatMap(CatenaryModel.CatenaryTextures::knotTexture).orElse(defaultKnotTextureId(sourceItemId)).withPath("textures/%s.png"::formatted);
     }
 }
