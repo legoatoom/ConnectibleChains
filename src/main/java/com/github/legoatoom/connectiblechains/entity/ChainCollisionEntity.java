@@ -247,6 +247,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
         }
 
         if (chainedEntity instanceof Chainable chainable) {
+            ConnectibleChains.LOGGER.info("Dropping chain ({}) due to receiving damage from source: {}", getLink(), source);
             chainable.detachChain(getLink());
         }
         return true;
