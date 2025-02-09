@@ -99,13 +99,17 @@ public interface Chainable {
                         continue;
                     }
                 } else if (optionalBlockPos.isPresent()) {
-                    ChainData newChainData = new ChainData(ChainKnotEntity.getOrCreate(serverWorld, optionalBlockPos.get(), chainData.sourceItem), chainData.sourceItem);
-                    entity.replaceChainData(chainData, null);
-                    attachChain(entity, newChainData, null, true);
-                    continue;
+                    ChainKnotEntity chainHolder = ChainKnotEntity.getOrNull(serverWorld, optionalBlockPos.get());
+                    if (chainHolder != null) {
+                        ChainData newChainData = new ChainData(chainHolder, chainData.sourceItem);
+                        entity.replaceChainData(chainData, null);
+                        attachChain(entity, newChainData, null, true);
+                        continue;
+                    }
                 }
 
                 if (entity.age > 100) {
+                    ConnectibleChains.LOGGER.info("Dropping chain connection as we have not been able to find chainholder for {}", chainData);
                     entity.dropItem(chainData.sourceItem);
                     entity.replaceChainData(chainData, null);
                 }
@@ -156,6 +160,12 @@ public interface Chainable {
             Entity chainHolder = entity.getChainHolder(chainData);
             if (chainHolder != null) {
                 if (!entity.isAlive() || !chainHolder.isAlive()) {
+                    if (!entity.isAlive()) {
+                        ConnectibleChains.LOGGER.info("Removing chain since chainReceiver ({}) is no longer alive, data: {}", entity, chainData);
+                    } else {
+                        ConnectibleChains.LOGGER.info("Removing chain since chainHolder ({}) is no longer alive, data: {}", chainHolder, chainData);
+                    }
+
                     if (world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
                         entity.detachChain(chainData);
                     } else {
@@ -327,6 +337,7 @@ public interface Chainable {
     }
 
     default void breakLongChain(ChainData chainData) {
+        ConnectibleChains.LOGGER.info("Breaking chain as it is too long! {}", chainData);
         this.detachChain(chainData);
     }
 
@@ -431,6 +442,18 @@ public interface Chainable {
         @Override
         public int hashCode() {
             return Objects.hash(getHolderId());
+        }
+
+
+        @Override
+        public String toString() {
+            return "ChainData{" +
+                    "collisionStorage=" + collisionStorage +
+                    ", unresolvedChainData=" + unresolvedChainData +
+                    ", sourceItem=" + sourceItem +
+                    ", unresolvedChainHolderId=" + unresolvedChainHolderId +
+                    ", chainHolder=" + chainHolder +
+                    '}';
         }
     }
 }

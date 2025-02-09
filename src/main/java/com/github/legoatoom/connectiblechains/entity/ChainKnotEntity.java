@@ -200,6 +200,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
 
             // CASE: Interacted with anything else, check for shears
             if (handStack.isIn(ConventionalItemTags.SHEAR_TOOLS)) {
+                ConnectibleChains.LOGGER.info("Removing all connections due to player {} action on chain: {}", player, this);
                 if (player.isInCreativeMode()) {
                     detachAllChainsWithoutDrop();
                 } else {
@@ -230,10 +231,10 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
         }
 
         if (result == ActionResult.SUCCESS) {
+            ConnectibleChains.LOGGER.info("Dropping all chains from knot ({}) due to receiving damage from source: {}", this, source);
             detachAllChains();
-        } else {
-            detachAllChainsWithoutDrop();
         }
+
         return super.damage(source, amount);
     }
 
