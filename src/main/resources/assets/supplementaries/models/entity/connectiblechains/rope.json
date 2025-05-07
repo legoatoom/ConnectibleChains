@@ -1,0 +1,13 @@
+{
+  "textures": {
+    "chain": "supplementaries:block/rope",
+    "knot": "supplementaries:entity/rope_knot"
+  },
+  "model": "connectiblechains:square",
+  "uv": [
+    7,
+    9,
+    7,
+    9
+  ]
+}

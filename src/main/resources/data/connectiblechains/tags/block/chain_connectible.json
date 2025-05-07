@@ -3,6 +3,10 @@
   "values": [
     "#c:bars",
     "#minecraft:walls",
-    "#minecraft:fences"
+    "#minecraft:fences",
+    {
+      "id": "supplementaries:rope_knot",
+      "required": false
+    }
   ]
 }
