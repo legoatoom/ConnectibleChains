@@ -135,10 +135,10 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
         ItemStack handStack = player.getStackInHand(hand);
         if (getWorld().isClient()) {
             // CLIENT-SIDE
-            var list = ChainItemCallbacks.collectChainablesAround(getWorld(), getAttachedBlockPos(), entity -> entity.getChainData(player) != null);
-            if (!list.isEmpty()) {
-                if (list.stream().anyMatch(chainable -> chainable.equals(this))) {
-                    handStack.decrementUnlessCreative(-1, player);
+            ChainData chainDataForPlayer = getChainData(player);
+            if (chainDataForPlayer != null) {
+                if (!player.isInCreativeMode()) {
+                    player.giveItemStack(new ItemStack(chainDataForPlayer.sourceItem));
                 }
                 return ActionResult.SUCCESS;
             }
@@ -184,7 +184,9 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
             }
             if (matchingData != null) {
                 detachChainWithoutDrop(matchingData);
-                handStack.decrementUnlessCreative(-1, player);
+                if (!player.isInCreativeMode()) {
+                    player.giveItemStack(new ItemStack(matchingData.sourceItem));
+                }
                 this.emitGameEvent(GameEvent.ENTITY_INTERACT, player);
 
                 return ActionResult.SUCCESS.noIncrementStat();
