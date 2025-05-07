@@ -3,7 +3,6 @@ package com.github.legoatoom.connectiblechains.entity;
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
 import com.mojang.datafixers.util.Either;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.Leashable;
 import net.minecraft.entity.decoration.BlockAttachedEntity;
@@ -24,10 +23,7 @@ import net.minecraft.world.GameRules;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * This class contains all the logic for chaining entities.
@@ -376,7 +372,7 @@ public interface Chainable {
         /**
          * A list of collision entity ids, only used in the server.
          */
-        public final IntArrayList collisionStorage = new IntArrayList(16);
+        public final ArrayList<Integer> collisionStorage = new ArrayList<>(16);
         @Nullable
         public final Either<UUID, BlockPos> unresolvedChainData;
         @NotNull
