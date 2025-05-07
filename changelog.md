@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.5.3] - 12025-05-07
+
+- Added `nl_nl` translations
+- Updated `es_ar` translation by courtesy of [Texaliuz](https://github.com/Texaliuz)
+- Fixed duplication bug [#78](https://github.com/legoatoom/ConnectibleChains/issues/78)
+- Support for Supplementaries Rope [#72](https://github.com/legoatoom/ConnectibleChains/issues/72)
+- Introduced more debug logging when connections break.
+
 ## [2.5.2] - 12025-01-29
 
 - UV Configuration in model JSON
