@@ -19,14 +19,14 @@ import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
 import com.github.legoatoom.connectiblechains.item.ChainItemCallbacks;
 import com.github.legoatoom.connectiblechains.networking.packet.Payloads;
+import com.mojang.logging.LogUtils;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 /**
  * Mod Initializer for Connectible chains.
@@ -39,7 +39,7 @@ public class ConnectibleChains implements ModInitializer {
      * it will be a lot easier!
      */
     public static final String MODID = "connectiblechains";
-    public static final Logger LOGGER = LogManager.getLogger("ConnectibleChains");
+    public static final Logger LOGGER = LogUtils.getLogger();
     /**
      * ModConfigs are helpful if people keep demanding for your chains to get longer...
      * File config is what's saved on disk, runtimeConfig should be used in most cases

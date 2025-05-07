@@ -113,7 +113,7 @@ public interface Chainable {
                 }
 
                 if (entity.age > 100) {
-                    ConnectibleChains.LOGGER.info("Dropping chain connection as we have not been able to find chainholder for {}", chainData);
+                    ConnectibleChains.LOGGER.debug("Dropping chain connection as we have not been able to find chainholder for {}", chainData);
                     entity.dropItem(serverWorld, chainData.sourceItem);
                     entity.replaceChainData(chainData, null);
                 }
@@ -141,7 +141,7 @@ public interface Chainable {
 
     private static <E extends BlockAttachedEntity & Chainable> void attachChain(E entity, ChainData chainData, @Nullable Entity previousHolder, boolean sendPacket) {
         if (chainData.chainHolder == null) {
-            throw new IllegalArgumentException("Given");
+            throw new IllegalArgumentException("Given chainData has empty holder");
         }
 
         entity.replaceChainData(entity.getChainData(previousHolder), chainData);
@@ -165,9 +165,9 @@ public interface Chainable {
             if (chainHolder != null) {
                 if (!entity.isAlive() || !chainHolder.isAlive()) {
                     if (!entity.isAlive()) {
-                        ConnectibleChains.LOGGER.info("Removing chain since chainReceiver ({}) is no longer alive, data: {}", entity, chainData);
+                        ConnectibleChains.LOGGER.debug("Removing chain since chainReceiver ({}) is no longer alive, data: {}", entity, chainData);
                     } else {
-                        ConnectibleChains.LOGGER.info("Removing chain since chainHolder ({}) is no longer alive, data: {}", chainHolder, chainData);
+                        ConnectibleChains.LOGGER.debug("Removing chain since chainHolder ({}) is no longer alive, data: {}", chainHolder, chainData);
                     }
 
                     if (world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
@@ -341,7 +341,7 @@ public interface Chainable {
     }
 
     default void breakLongChain(ChainData chainData) {
-        ConnectibleChains.LOGGER.info("Breaking chain as it is too long! {}", chainData);
+        ConnectibleChains.LOGGER.debug("Breaking chain as it is too long! {}", chainData);
         this.detachChain(chainData);
     }
 

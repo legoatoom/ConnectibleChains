@@ -151,12 +151,13 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
         }
     }
 
-    public static <E extends Entity & Chainable> void destroyCollision(ServerWorld world, Chainable.ChainData chainData) {
+    public static void destroyCollision(ServerWorld world, Chainable.ChainData chainData) {
         for (Integer entityId : chainData.collisionStorage) {
             Entity e = world.getEntityById(entityId);
             if (e instanceof ChainCollisionEntity) {
                 e.discard();
-            } else {
+            } else if (e != null) {
+                // Ignore null
                 ConnectibleChains.LOGGER.warn("Collision storage contained reference to {} (#{}) which is not a collision entity.", e, entityId);
             }
         }
@@ -247,7 +248,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
         }
 
         if (chainedEntity instanceof Chainable chainable) {
-            ConnectibleChains.LOGGER.info("Dropping chain ({}) due to receiving damage from source: {}", getLink(), source);
+            ConnectibleChains.LOGGER.debug("Dropping chain ({}) due to receiving damage from source: {}", getLink(), source);
             chainable.detachChain(getLink());
         }
         return true;
