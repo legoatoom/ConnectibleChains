@@ -1,0 +1,19 @@
+{
+  "entity.connectiblechains.chain_knot": "Kettingknoop",
+  "message.connectiblechains.connectible_chain": "Kettinglijn compatibel [Shift]",
+  "message.connectiblechains.connectible_chain_detailed": "Klik op hekken/muren om een kettinglijn te maken!",
+  "entity.connectiblechains.chain_collision": "Kettingmuur",
+  "text.autoconfig.connectiblechains.option.chainHangAmount": "Kettingdruppel",
+  "text.autoconfig.connectiblechains.option.maxChainRange": "Maximale kettingafstand",
+  "text.autoconfig.connectiblechains.option.quality": "Kettingkwaliteit",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[0]": "Beïnvloedt hoe veel de ketting hangt.",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[1]": "Lagere getallen geven een grotere curve.",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[2]": "De muur wordt bijgewerkt bij nieuwe ketens of bij het laden van de wereld.",
+  "text.autoconfig.connectiblechains.option.showToolTip": "Toon tooltip voor kettinglijn compatibiliteit",
+  "text.autoconfig.connectiblechains.option.showToolTip.@Tooltip": "Toon tooltip voor ketenitems die compatibel zijn met deze mod.",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[0]": "Beïnvloedt hoe lang een keten kan zijn.",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[1]": "§nWaarschuwing§r: Lange ketens kunnen soms onzichtbaar worden!",
+  "text.autoconfig.connectiblechains.option.quality.@Tooltip": "Beïnvloedt de visuele kwaliteit van de keten.",
+  "text.autoconfig.connectiblechains.title": "Configuraties van Connectible Chains",
+  "tag.item.connectiblechains.catenary_items": "Kettinglijnitems"
+}
