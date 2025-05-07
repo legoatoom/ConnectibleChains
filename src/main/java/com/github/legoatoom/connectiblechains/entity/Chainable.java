@@ -9,6 +9,7 @@ import net.minecraft.entity.Leashable;
 import net.minecraft.entity.decoration.BlockAttachedEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
+import net.minecraft.item.Items;
 import net.minecraft.item.LeadItem;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
@@ -52,26 +53,38 @@ public interface Chainable {
         return false;
     }
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     private static <E extends BlockAttachedEntity & Chainable> HashSet<ChainData> readChainDataSet(E entity, NbtCompound nbt) {
         HashSet<ChainData> result = new HashSet<>();
-        if (nbt.contains(CHAINS_NBT_KEY, NbtElement.LIST_TYPE)) {
-            NbtList list = nbt.getList(CHAINS_NBT_KEY, NbtElement.COMPOUND_TYPE);
+        Optional<NbtList> optionalList = nbt.getList(CHAINS_NBT_KEY);
+        if (optionalList.isPresent()) {
+            NbtList list = optionalList.get();
             for (NbtElement element : list) {
                 if (!(element instanceof NbtCompound compound)) continue;
 
                 ChainData newChainData = null;
-                Item source = Registries.ITEM.get(Identifier.tryParse(compound.getString(SOURCE_ITEM_KEY)));
+                Item source = compound.getString(SOURCE_ITEM_KEY).map(sourceKey -> Registries.ITEM.get(Identifier.tryParse(sourceKey))).orElse(Items.CHAIN);
 
-                if (compound.containsUuid("UUID")) {
-                    newChainData = new ChainData(Either.left(compound.getUuid("UUID")), source);
-                } else if (compound.contains("DestX")) {
+                Optional<String> optionalUUID = compound.getString("UUID");
+                Optional<Integer> optionalDest = compound.getInt("DestX");
+                Optional<Integer> optionalRel = compound.getInt("RelX");
+                if (optionalUUID.isPresent()) {
+                    UUID uuid = UUID.fromString(optionalUUID.get());
+                    newChainData = new ChainData(Either.left(uuid), source);
+                } else if (optionalDest.isPresent()) {
+                    Integer destX = optionalDest.get();
+                    Integer destY = compound.getInt("DestY").get();
+                    Integer destZ = compound.getInt("DestZ").get();
                     // Vanilla uses an NbtIntArray, but changing it here means would have to create a data-fixer, probably.
-                    Either<UUID, BlockPos> either = Either.right(new BlockPos(compound.getInt("DestX"), compound.getInt("DestY"), compound.getInt("DestZ")));
+                    Either<UUID, BlockPos> either = Either.right(new BlockPos(destX, destY, destZ));
                     newChainData = new ChainData(either, source);
-                } else if (compound.contains("RelX")) {
+                } else if (optionalRel.isPresent()) {
                     // OLD DEPRECATED RELATIVE WAY OF STORING: Here for when people upgrade from previous versions. //
-                    var relPos = new BlockPos(compound.getInt("RelX"), compound.getInt("RelY"), compound.getInt("RelZ"));
-                    var desPos = relPos.add(entity.getAttachedBlockPos());
+                    Integer relX = optionalRel.get();
+                    Integer relY = compound.getInt("RelY").get();
+                    Integer relZ = compound.getInt("RelZ").get();
+                    BlockPos relPos = new BlockPos(relX, relY, relZ);
+                    BlockPos desPos = relPos.add(entity.getAttachedBlockPos());
                     newChainData = new ChainData(Either.right(desPos), source);
                 }
 
@@ -261,7 +274,8 @@ public interface Chainable {
     }
 
     default void readChainDataFromNbt(NbtCompound nbt) {
-        setSourceItem(Registries.ITEM.get(Identifier.tryParse(nbt.getString(SOURCE_ITEM_KEY))));
+        Item source = nbt.getString(SOURCE_ITEM_KEY).map(sourceKey -> Registries.ITEM.get(Identifier.tryParse(sourceKey))).orElse(Items.CHAIN);
+        setSourceItem(source);
 
         HashSet<ChainData> chainData = readChainDataSet((BlockAttachedEntity & Chainable) this, nbt);
         if (!this.getChainDataSet().isEmpty() && chainData.isEmpty()) {
@@ -287,7 +301,7 @@ public interface Chainable {
                 String sourceItem = Registries.ITEM.getId(chainData.sourceItem).toString();
                 linksTag.add(either.map(uuid -> {
                     NbtCompound nbtCompound = new NbtCompound();
-                    nbtCompound.putUuid("UUID", uuid);
+                    nbtCompound.putString("UUID", uuid.toString());
                     nbtCompound.putString(SOURCE_ITEM_KEY, sourceItem);
                     return nbtCompound;
                 }, blockPos -> {
@@ -382,7 +396,7 @@ public interface Chainable {
 
     Vec3d getChainPos(float delta);
 
-    public static final class ChainData {
+    final class ChainData {
 
         /**
          * A list of collision entity ids, only used in the server.
