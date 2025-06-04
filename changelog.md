@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.5.4] - 12025-06-04
+
+- Fixed issue when chain is broken by TNT explosion [#86](https://github.com/legoatoom/ConnectibleChains/issues/86)
+
 ## [2.5.3] - 12025-05-07
 
 - Added `nl_nl` translations
