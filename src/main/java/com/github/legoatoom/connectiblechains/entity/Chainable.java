@@ -209,9 +209,10 @@ public interface Chainable {
      * Get the sound used for the source item, this way the sound is consistent.
      */
     static BlockSoundGroup getSourceBlockSoundGroup(Item sourceItem) {
-        return switch (sourceItem) {
-            case BlockItem blockItem -> blockItem.getBlock().getDefaultState().getSoundGroup();
-            case LeadItem ignored -> new BlockSoundGroup(
+        if (sourceItem instanceof BlockItem blockItem) {
+            return blockItem.getBlock().getDefaultState().getSoundGroup();
+        } else if (sourceItem instanceof LeadItem) {
+            return new BlockSoundGroup(
                     1.0f,
                     1.0f,
                     SoundEvents.ENTITY_LEASH_KNOT_BREAK,
@@ -220,8 +221,8 @@ public interface Chainable {
                     BlockSoundGroup.WOOL.getHitSound(),
                     BlockSoundGroup.WOOL.getFallSound()
             );
-            case null, default -> BlockSoundGroup.CHAIN;
-        };
+        }
+        return BlockSoundGroup.CHAIN;
     }
 
     default boolean canAttachTo(Entity entity) {
