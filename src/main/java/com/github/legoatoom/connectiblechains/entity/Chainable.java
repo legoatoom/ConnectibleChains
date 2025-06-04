@@ -118,7 +118,8 @@ public interface Chainable {
     }
 
     private static <E extends BlockAttachedEntity & Chainable> void detachChain(E entity, ChainData chainData, boolean sendPacket, boolean dropItem) {
-        if (chainData.chainHolder != null) {
+        if (chainData.chainHolder != null && chainData.isAlive()) {
+            chainData.kill();
             entity.replaceChainData(chainData, null);
             entity.onChainDetached(chainData);
             if (entity.getWorld() instanceof ServerWorld serverWorld) {
@@ -379,7 +380,10 @@ public interface Chainable {
     Vec3d getChainPos(float delta);
 
     public static final class ChainData {
-
+        /**
+         * Boolean to check if the chain link is already dead
+         */
+        private boolean isDead = false;
         /**
          * A list of collision entity ids, only used in the server.
          */
@@ -437,6 +441,17 @@ public interface Chainable {
                 return true;
             }
             return unresolvedChainData != null && unresolvedChainData.equals(chainData.unresolvedChainData);
+        }
+
+        public void kill() {
+            if (isDead) {
+                ConnectibleChains.LOGGER.warn("Stop! Stop! {} is already dead!", this);
+            }
+            isDead = true;
+        }
+
+        public boolean isAlive() {
+            return !isDead;
         }
 
         @Override
