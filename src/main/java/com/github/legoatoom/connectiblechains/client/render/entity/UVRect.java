@@ -27,7 +27,7 @@ import java.util.List;
  */
 @Environment(EnvType.CLIENT)
 public record UVRect(float x0, float x1) {
-    public static final Codec<Pair<UVRect, UVRect>> CODEC = Codec.FLOAT.listOf(4, 4).xmap(UVRect::to, UVRect::from);
+    public static final Codec<Pair<UVRect, UVRect>> CODEC = Codec.FLOAT.listOf().xmap(UVRect::to, UVRect::from);
 
     /**
      * Default UV's for side A

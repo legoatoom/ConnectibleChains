@@ -29,8 +29,7 @@ import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityAttachmentType;
-import net.minecraft.entity.decoration.BlockAttachedEntity;
+import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
@@ -110,7 +109,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         matrices.translate(0, 0.7, 0);
         matrices.scale(5 / 6f, 1, 5 / 6f);
         VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.model.getLayer(getKnotTexture(state.sourceItem)));
-        this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV);
+        this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
         matrices.pop();
 
         HashSet<ChainKnotEntityRenderState.ChainData> chainDataSet = state.chainDataSet;
@@ -124,7 +123,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
         if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
             matrices.push();
             Text holdingCount = Text.literal("C: " + chainDataSet.size());
-            this.renderLabelIfPresent(entity, holdingCount, matrices, vertexConsumers, light, tickDelta);
+            this.renderLabelIfPresent(entity, holdingCount, matrices, vertexConsumers, light);
             matrices.pop();
         }
     }
@@ -218,14 +217,11 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
             renderChainData.chainedEntitySkyLight = world.getLightLevel(LightType.SKY, blockPosOfStart);
             renderChainData.chainHolderSkyLight = world.getLightLevel(LightType.SKY, blockPosOfEnd);
             renderChainData.sourceItem = chainData.sourceItem;
-            renderChainData.useBaked = chainHolder instanceof BlockAttachedEntity;
+            renderChainData.useBaked = chainHolder instanceof AbstractDecorationEntity;
             result.add(renderChainData);
         }
         state.chainDataSet = result;
         state.sourceItem = entity.getSourceItem();
-        if (ConnectibleChains.runtimeConfig.doDebugDraw()) {
-            state.nameLabelPos = entity.getAttachments().getPointNullable(EntityAttachmentType.NAME_TAG, 0, entity.getLerpTargetYaw());
-        }
     }
 
     private ChainTextureManager getTextureManager() {

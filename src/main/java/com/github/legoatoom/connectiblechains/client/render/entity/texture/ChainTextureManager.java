@@ -68,7 +68,7 @@ public class ChainTextureManager extends JsonDataLoader implements IdentifiableR
     @Override
     protected void apply(Map<Identifier, JsonElement> prepared, ResourceManager manager, Profiler profiler) {
         clearCache();
-        this.models = prepared.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, o -> CatenaryModel.CODEC.codec().parse(JsonOps.INSTANCE, o.getValue()).getOrThrow()));
+        this.models = prepared.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, o -> CatenaryModel.CODEC.codec().parse(JsonOps.INSTANCE, o.getValue()).get().orThrow()));
     }
 
     public void clearCache() {

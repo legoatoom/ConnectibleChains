@@ -48,8 +48,6 @@ import net.minecraft.util.ActionResult;
 
 import java.util.Optional;
 
-import static net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver;
-
 /**
  * ClientInitializer.
  * This method is called when the game starts with a client.
@@ -119,8 +117,8 @@ public class ClientInitializer implements ClientModInitializer {
 
     private void registerNetworkEventHandlers() {
         ConnectibleChains.LOGGER.info("Initializing Network even handlers.");
-
-        registerGlobalReceiver(ChainAttachS2CPacket.PAYLOAD_ID, ChainAttachS2CPacket::apply);
+        ClientPlayNetworking.registerGlobalReceiver(ChainAttachS2CPacket.TYPE, ChainAttachS2CPacket::apply);
+        ClientPlayNetworking.registerGlobalReceiver(ConfigSyncPayload.TYPE, ConfigSyncPayload::apply);
 
         ClientPlayConnectionEvents.INIT.register((handler, client) -> {
             // Load client config
@@ -128,7 +126,6 @@ public class ClientInitializer implements ClientModInitializer {
             getChainKnotEntityRenderer().ifPresent(r -> r.getChainRenderer().purge());
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(ConfigSyncPayload.PAYLOAD_ID, ConfigSyncPayload::apply);
     }
 
     private void registerClientEventHandlers() {

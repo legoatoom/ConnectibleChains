@@ -18,7 +18,6 @@ package com.github.legoatoom.connectiblechains;
 import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
 import com.github.legoatoom.connectiblechains.item.ChainItemCallbacks;
-import com.github.legoatoom.connectiblechains.networking.packet.Payloads;
 import com.mojang.logging.LogUtils;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
@@ -57,7 +56,6 @@ public class ConnectibleChains implements ModInitializer {
     public void onInitialize() {
 
         ModEntityTypes.init();
-        Payloads.init();
         AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
         ConfigHolder<ModConfig> configHolder = AutoConfig.getConfigHolder(ModConfig.class);
         fileConfig = configHolder.getConfig();

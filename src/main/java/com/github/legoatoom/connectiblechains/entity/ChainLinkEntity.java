@@ -14,9 +14,10 @@
 
 package com.github.legoatoom.connectiblechains.entity;
 
-import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
+import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.ActionResult;
@@ -38,8 +39,10 @@ public interface ChainLinkEntity {
             return ActionResult.SUCCESS;
         }
 
-        if (source.getWeaponStack() != null && source.getWeaponStack().isIn(ConventionalItemTags.SHEAR_TOOLS)) {
-            return ActionResult.SUCCESS;
+        if (source.getAttacker() instanceof PlayerEntity player) {
+            if (player.getMainHandStack().isIn(ConventionalItemTags.SHEARS)) {
+                return ActionResult.SUCCESS;
+            }
         }
 
         if (!source.isIn(DamageTypeTags.IS_PROJECTILE)) {

@@ -4,8 +4,7 @@ import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
 import com.mojang.datafixers.util.Either;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.Leashable;
-import net.minecraft.entity.decoration.BlockAttachedEntity;
+import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.LeadItem;
@@ -29,7 +28,6 @@ import java.util.*;
  * This class contains all the logic for chaining entities.
  * Inspired by Leashable, but this allows for multiple connections.
  *
- * @see Leashable
  */
 public interface Chainable {
     String CHAINS_NBT_KEY = "Chains";
@@ -39,7 +37,7 @@ public interface Chainable {
         return ConnectibleChains.runtimeConfig.getMaxChainRange();
     }
 
-    private static <E extends BlockAttachedEntity & Chainable> boolean canAttachTo(E entity, Entity potentialHolder) {
+    private static <E extends AbstractDecorationEntity & Chainable> boolean canAttachTo(E entity, Entity potentialHolder) {
         if (entity.getChainData(potentialHolder) != null) {
             return false;
         } else if (potentialHolder instanceof Chainable chainable) {
@@ -48,7 +46,7 @@ public interface Chainable {
         return false;
     }
 
-    private static <E extends BlockAttachedEntity & Chainable> HashSet<ChainData> readChainDataSet(E entity, NbtCompound nbt) {
+    private static <E extends AbstractDecorationEntity & Chainable> HashSet<ChainData> readChainDataSet(E entity, NbtCompound nbt) {
         HashSet<ChainData> result = new HashSet<>();
         if (nbt.contains(CHAINS_NBT_KEY, NbtElement.LIST_TYPE)) {
             NbtList list = nbt.getList(CHAINS_NBT_KEY, NbtElement.COMPOUND_TYPE);
@@ -67,7 +65,7 @@ public interface Chainable {
                 } else if (compound.contains("RelX")) {
                     // OLD DEPRECATED RELATIVE WAY OF STORING: Here for when people upgrade from previous versions. //
                     var relPos = new BlockPos(compound.getInt("RelX"), compound.getInt("RelY"), compound.getInt("RelZ"));
-                    var desPos = relPos.add(entity.getAttachedBlockPos());
+                    var desPos = relPos.add(entity.getDecorationBlockPos());
                     newChainData = new ChainData(Either.right(desPos), source);
                 }
 
@@ -82,7 +80,7 @@ public interface Chainable {
     /**
      * Goes through all the data sets and resolves the unresolved data.
      */
-    private static <E extends BlockAttachedEntity & Chainable> void resolveChainDataSet(E entity, HashSet<ChainData> chainDataSet) {
+    private static <E extends AbstractDecorationEntity & Chainable> void resolveChainDataSet(E entity, HashSet<ChainData> chainDataSet) {
         // Sanity check for server world
         if (!(entity.getWorld() instanceof ServerWorld serverWorld)) return;
 
@@ -117,7 +115,7 @@ public interface Chainable {
         }
     }
 
-    private static <E extends BlockAttachedEntity & Chainable> void detachChain(E entity, ChainData chainData, boolean sendPacket, boolean dropItem) {
+    private static <E extends AbstractDecorationEntity & Chainable> void detachChain(E entity, ChainData chainData, boolean sendPacket, boolean dropItem) {
         if (chainData.chainHolder != null) {
             entity.replaceChainData(chainData, null);
             entity.onChainDetached(chainData);
@@ -135,7 +133,7 @@ public interface Chainable {
         }
     }
 
-    private static <E extends BlockAttachedEntity & Chainable> void attachChain(E entity, ChainData chainData, @Nullable Entity previousHolder, boolean sendPacket) {
+    private static <E extends AbstractDecorationEntity & Chainable> void attachChain(E entity, ChainData chainData, @Nullable Entity previousHolder, boolean sendPacket) {
         if (chainData.chainHolder == null) {
             throw new IllegalArgumentException("Given chainData has empty holder");
         }
@@ -151,7 +149,7 @@ public interface Chainable {
         }
     }
 
-    static <E extends BlockAttachedEntity & Chainable> void tickChain(ServerWorld world, E entity) {
+    static <E extends AbstractDecorationEntity & Chainable> void tickChain(ServerWorld world, E entity) {
         // SERVER-SIDE //
         HashSet<ChainData> chainDataSet = entity.getChainDataSet();
         resolveChainDataSet(entity, chainDataSet);
@@ -190,7 +188,7 @@ public interface Chainable {
     }
 
     @Nullable
-    private static <E extends BlockAttachedEntity & Chainable> Entity getChainHolder(E entity, ChainData chainData) {
+    private static <E extends AbstractDecorationEntity & Chainable> Entity getChainHolder(E entity, ChainData chainData) {
         if (!entity.getChainDataSet().contains(chainData)) {
             return null;
         }
@@ -226,7 +224,7 @@ public interface Chainable {
     }
 
     default boolean canAttachTo(Entity entity) {
-        return canAttachTo((BlockAttachedEntity & Chainable) this, entity);
+        return canAttachTo((AbstractDecorationEntity & Chainable) this, entity);
     }
 
     HashSet<ChainData> getChainDataSet();
@@ -259,7 +257,7 @@ public interface Chainable {
     default void readChainDataFromNbt(NbtCompound nbt) {
         setSourceItem(Registries.ITEM.get(Identifier.tryParse(nbt.getString(SOURCE_ITEM_KEY))));
 
-        HashSet<ChainData> chainData = readChainDataSet((BlockAttachedEntity & Chainable) this, nbt);
+        HashSet<ChainData> chainData = readChainDataSet((AbstractDecorationEntity & Chainable) this, nbt);
         if (!this.getChainDataSet().isEmpty() && chainData.isEmpty()) {
             this.detachAllChainsWithoutDrop();
         }
@@ -274,7 +272,7 @@ public interface Chainable {
         for (ChainData chainData : chainDataSet) {
             Either<UUID, BlockPos> either = chainData.unresolvedChainData;
             if (chainData.chainHolder instanceof ChainKnotEntity chainKnotEntity) {
-                either = Either.right(chainKnotEntity.getAttachedBlockPos());
+                either = Either.right(chainKnotEntity.getDecorationBlockPos());
             } else if (chainData.chainHolder != null) {
                 either = Either.left(chainData.chainHolder.getUuid());
             }
@@ -302,11 +300,11 @@ public interface Chainable {
     }
 
     default void detachChain(ChainData chainData) {
-        detachChain((BlockAttachedEntity & Chainable) this, chainData, true, true);
+        detachChain((AbstractDecorationEntity & Chainable) this, chainData, true, true);
     }
 
     default void detachChainWithoutDrop(ChainData chainData) {
-        detachChain((BlockAttachedEntity & Chainable) this, chainData, true, false);
+        detachChain((AbstractDecorationEntity & Chainable) this, chainData, true, false);
     }
 
     default void detachAllChains() {
@@ -342,7 +340,7 @@ public interface Chainable {
     }
 
     default void attachChain(ChainData chainData, @Nullable Entity previousHolder, boolean sendPacket) {
-        attachChain((BlockAttachedEntity & Chainable) this, chainData, previousHolder, sendPacket);
+        attachChain((AbstractDecorationEntity & Chainable) this, chainData, previousHolder, sendPacket);
     }
 
     default void onChainAttached(ChainData newChainData) {
@@ -350,7 +348,7 @@ public interface Chainable {
 
     @Nullable
     default Entity getChainHolder(ChainData chainData) {
-        return getChainHolder((BlockAttachedEntity & Chainable) this, chainData);
+        return getChainHolder((AbstractDecorationEntity & Chainable) this, chainData);
     }
 
     @Nullable

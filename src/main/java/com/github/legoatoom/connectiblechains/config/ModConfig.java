@@ -71,7 +71,7 @@ public class ModConfig implements ConfigData {
     }
 
     public boolean doDebugDraw() {
-        return IS_DEBUG_ENV && MinecraftClient.getInstance().getDebugHud().shouldShowDebugHud();
+        return IS_DEBUG_ENV && MinecraftClient.getInstance().options.debugEnabled;
     }
 
     public void syncToClients(MinecraftServer server) {

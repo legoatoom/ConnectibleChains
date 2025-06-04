@@ -18,13 +18,12 @@ import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
+import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -33,7 +32,6 @@ import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.registry.Registries;
-import net.minecraft.server.network.EntityTrackerEntry;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -199,7 +197,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Override
     public boolean shouldRender(double distance) {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player != null && player.isHolding(itemStack -> itemStack.isIn(ConventionalItemTags.SHEAR_TOOLS))) {
+        if (player != null && player.isHolding(itemStack -> itemStack.isIn(ConventionalItemTags.SHEARS))) {
             return super.shouldRender(distance);
         } else {
             return false;
@@ -267,7 +265,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
      */
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
-        if (player.getStackInHand(hand).isIn(ConventionalItemTags.SHEAR_TOOLS)) {
+        if (player.getStackInHand(hand).isIn(ConventionalItemTags.SHEARS)) {
 
             return ActionResult.SUCCESS;
         }
@@ -275,13 +273,13 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
+    protected void initDataTracker() {
     }
 
     @Override
-    public Packet<ClientPlayPacketListener> createSpawnPacket(EntityTrackerEntry entityTrackerEntry) {
+    public Packet<ClientPlayPacketListener> createSpawnPacket() {
         int id = Registries.ITEM.getRawId(linkSourceItem);
-        return new EntitySpawnS2CPacket(this, entityTrackerEntry, id);
+        return new EntitySpawnS2CPacket(this, id);
     }
 
     @Override

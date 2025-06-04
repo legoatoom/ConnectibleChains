@@ -17,29 +17,36 @@ package com.github.legoatoom.connectiblechains.networking.packet;
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.ClientInitializer;
 import com.github.legoatoom.connectiblechains.util.Helper;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.networking.v1.FabricPacket;
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.fabricmc.fabric.api.networking.v1.PacketType;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
 
-public record ConfigSyncPayload(float chainHangAmount, int maxChainRange) implements CustomPayload {
-    public static final Id<ConfigSyncPayload> PAYLOAD_ID = new CustomPayload.Id<>(Helper.identifier("s2c_config_sync_packet_id"));
-    public static final PacketCodec<PacketByteBuf, ConfigSyncPayload> PACKET_CODEC =
-            PacketCodec.tuple(
-                    PacketCodecs.FLOAT, ConfigSyncPayload::chainHangAmount,
-                    PacketCodecs.INTEGER, ConfigSyncPayload::maxChainRange,
-                    ConfigSyncPayload::new
-            );
+public record ConfigSyncPayload(float chainHangAmount, int maxChainRange) implements FabricPacket {
+    public static final PacketType<ConfigSyncPayload> TYPE = PacketType.create(Helper.identifier("s2c_config_sync_packet_id"), ConfigSyncPayload::new);
 
-    @Override
-    public Id<? extends CustomPayload> getId() {
-        return PAYLOAD_ID;
+    public ConfigSyncPayload(PacketByteBuf buf) {
+        this(buf.readFloat(), buf.readInt());
     }
 
-    public void apply(ClientPlayNetworking.Context context) {
-        MinecraftClient client = context.client();
+    @Override
+    public void write(PacketByteBuf buf) {
+        buf.writeFloat(chainHangAmount);
+        buf.writeInt(maxChainRange);
+    }
+
+    @Override
+    public PacketType<?> getType() {
+        return TYPE;
+    }
+
+    @Environment(EnvType.CLIENT)
+    public void apply(ClientPlayerEntity ignoredClientPlayerEntity, PacketSender ignoredPacketSender) {
+        MinecraftClient client = MinecraftClient.getInstance();
         if (client.isInSingleplayer()) {
             return;
         }

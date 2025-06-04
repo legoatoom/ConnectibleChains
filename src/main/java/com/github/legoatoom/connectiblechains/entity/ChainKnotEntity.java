@@ -19,12 +19,11 @@ import com.github.legoatoom.connectiblechains.item.ChainItemCallbacks;
 import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
 import com.github.legoatoom.connectiblechains.tag.ModTagRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
+import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.decoration.BlockAttachedEntity;
+import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.decoration.LeashKnotEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -37,7 +36,6 @@ import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.network.EntityTrackerEntry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
@@ -60,14 +58,14 @@ import java.util.List;
  *
  * @author legoatoom, Qendolin
  */
-public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, ChainLinkEntity {
+public class ChainKnotEntity extends AbstractDecorationEntity implements Chainable, ChainLinkEntity {
 
     private HashSet<ChainData> chainDataSet = new HashSet<>();
 
     @NotNull
     private Item sourceItem;
 
-    protected ChainKnotEntity(EntityType<? extends BlockAttachedEntity> entityType, World world) {
+    protected ChainKnotEntity(EntityType<? extends AbstractDecorationEntity> entityType, World world) {
         super(entityType, world);
         sourceItem = Items.CHAIN; // Should be overwritten by spawn package.
     }
@@ -82,7 +80,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
     public static ChainKnotEntity getOrNull(World world, BlockPos pos) {
         List<ChainKnotEntity> chainKnotEntities = world.getNonSpectatingEntities(ChainKnotEntity.class, new Box(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ()).expand(1));
         for (ChainKnotEntity chainKnotEntity : chainKnotEntities) {
-            if (chainKnotEntity.getAttachedBlockPos().equals(pos)) {
+            if (chainKnotEntity.getDecorationBlockPos().equals(pos)) {
                 return chainKnotEntity;
             }
         }
@@ -137,7 +135,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
             // CLIENT-SIDE
             ChainData chainDataForPlayer = getChainData(player);
             if (chainDataForPlayer != null) {
-                if (!player.isInCreativeMode()) {
+                if (!player.isCreative()) {
                     player.giveItemStack(new ItemStack(chainDataForPlayer.sourceItem));
                 }
                 return ActionResult.SUCCESS;
@@ -145,12 +143,14 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
 
             // Client handle attach.
             if (handStack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
-                handStack.decrementUnlessCreative(1, player);
+                if (!player.isCreative()) {
+                    handStack.decrement(1);
+                }
                 return ActionResult.SUCCESS;
             }
 
             // Client handle destroy.
-            if (handStack.isIn(ConventionalItemTags.SHEAR_TOOLS)) {
+            if (handStack.isIn(ConventionalItemTags.SHEARS)) {
                 return ActionResult.CONSUME;
             }
             return ActionResult.PASS;
@@ -159,7 +159,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
         if (this.isAlive() && player.getWorld() instanceof ServerWorld serverWorld) {
             // CASE: Attempt to attach to this Knot.
             boolean hasConnectedFromPlayer = false;
-            List<Chainable> list = ChainItemCallbacks.collectChainablesAround(this.getWorld(), this.getAttachedBlockPos(), entity -> entity.getChainData(player) != null);
+            List<Chainable> list = ChainItemCallbacks.collectChainablesAround(this.getWorld(), this.getDecorationBlockPos(), entity -> entity.getChainData(player) != null);
 
             for (Chainable chainable : list) {
                 // TODO: Kinda inefficient, perhaps return a list of pairs? Chainable+ChainData.
@@ -184,7 +184,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
             }
             if (matchingData != null) {
                 detachChainWithoutDrop(matchingData);
-                if (!player.isInCreativeMode()) {
+                if (!player.isCreative()) {
                     player.giveItemStack(new ItemStack(matchingData.sourceItem));
                 }
                 this.emitGameEvent(GameEvent.ENTITY_INTERACT, player);
@@ -196,14 +196,16 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
             if (handStack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
                 onPlace();
                 attachChain(new ChainData(player, handStack.getItem()), null, true);
-                handStack.decrementUnlessCreative(1, player);
+                if (!player.isCreative()) {
+                    handStack.decrement(1);
+                }
                 return ActionResult.SUCCESS;
             }
 
             // CASE: Interacted with anything else, check for shears
-            if (handStack.isIn(ConventionalItemTags.SHEAR_TOOLS)) {
+            if (handStack.isIn(ConventionalItemTags.SHEARS)) {
                 ConnectibleChains.LOGGER.debug("Removing all connections due to player {} action on chain: {}", player, this);
-                if (player.isInCreativeMode()) {
+                if (player.isCreative()) {
                     detachAllChainsWithoutDrop();
                 } else {
                     detachAllChains();
@@ -261,7 +263,8 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
      */
     @Override
     protected void updateAttachmentPosition() {
-        setPos(attachedBlockPos.getX() + 0.5D, attachedBlockPos.getY() + 0.5D, attachedBlockPos.getZ() + 0.5D);
+        BlockPos attachedBlockPos = getDecorationBlockPos();
+        setPos(attachedBlockPos.getX() + 0.5D, attachmentPos.getY() + 0.5D, attachedBlockPos.getZ() + 0.5D);
         double width = getType().getWidth() / 2.0;
         double height = getType().getHeight();
         setBoundingBox(new Box(getX() - width, getY(), getZ() - width, getX() + width, getY() + height, getZ() + width));
@@ -269,7 +272,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
 
     @Override
     public boolean shouldRender(double distance) {
-        if (getWorld().getBlockState(getAttachedBlockPos()).isIn(BlockTags.WALLS)) {
+        if (getWorld().getBlockState(getDecorationBlockPos()).isIn(BlockTags.WALLS)) {
             return false;
         }
         return distance < 1024.0; //TODO: Determine if this needs to be changed, it used to be just true.
@@ -277,7 +280,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
 
     @Override
     public boolean canStayAttached() {
-        return this.getWorld().getBlockState(this.attachedBlockPos).isIn(ModTagRegistry.CHAIN_CONNECTIBLE);
+        return this.getWorld().getBlockState(this.getDecorationBlockPos()).isIn(ModTagRegistry.CHAIN_CONNECTIBLE);
     }
 
     @Override
@@ -317,13 +320,9 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-    }
-
-    @Override
-    public Packet<ClientPlayPacketListener> createSpawnPacket(EntityTrackerEntry entityTrackerEntry) {
+    public Packet<ClientPlayPacketListener> createSpawnPacket() {
         int id = Registries.ITEM.getRawId(getSourceItem());
-        return new EntitySpawnS2CPacket(this, id, this.getAttachedBlockPos());
+        return new EntitySpawnS2CPacket(this, id, this.getDecorationBlockPos());
     }
 
     @Override
@@ -340,5 +339,15 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
 
     public Vec3d getChainPos(float delta) {
         return this.getLerpedPos(delta).add(0.0, 0.2, 0.0);
+    }
+
+    @Override
+    public int getWidthPixels() {
+        return 9;
+    }
+
+    @Override
+    public int getHeightPixels() {
+        return 9;
     }
 }

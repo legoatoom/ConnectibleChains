@@ -16,13 +16,12 @@ package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.util.Helper;
-import net.minecraft.entity.Entity;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
+import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
 
 /**
  * This class keeps track of all entities that this mod has.
@@ -31,13 +30,33 @@ import net.minecraft.registry.RegistryKeys;
  * @author legoatoom
  */
 public class ModEntityTypes {
+    public static final EntityType<ChainKnotEntity> CHAIN_KNOT;
+    public static final EntityType<ChainCollisionEntity> CHAIN_COLLISION;
 
-    public static final EntityType<ChainKnotEntity> CHAIN_KNOT = register(EntityType.Builder.create((EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new, SpawnGroup.MISC).trackingTickInterval(Integer.MAX_VALUE).alwaysUpdateVelocity(false).dimensions(0.375f, 0.5F).spawnableFarFromPlayer().makeFireImmune(), "chain_knot");
-    public static final EntityType<ChainCollisionEntity> CHAIN_COLLISION = register(EntityType.Builder.create((EntityType.EntityFactory<ChainCollisionEntity>) ChainCollisionEntity::new, SpawnGroup.MISC).maxTrackingRange(1).trackingTickInterval(Integer.MAX_VALUE).alwaysUpdateVelocity(false).dimensions(0.25f, 0.375f).disableSaving().disableSummon().makeFireImmune(), "chain_collision");
+    static {
+        CHAIN_KNOT = Registry.register(
+                Registries.ENTITY_TYPE, Helper.identifier("chain_knot"),
+                FabricEntityTypeBuilder.create(SpawnGroup.MISC,
+                                (EntityType.EntityFactory<ChainKnotEntity>) ChainKnotEntity::new)
+                        .trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
+                        .dimensions(EntityDimensions.fixed(0.375f, 0.5F))
+                        .spawnableFarFromPlayer()
+                        .fireImmune()
+                        .build()
+        );
+        CHAIN_COLLISION = Registry.register(
+                Registries.ENTITY_TYPE, Helper.identifier("chain_collision"),
+                FabricEntityTypeBuilder.create(SpawnGroup.MISC,
+                                (EntityType.EntityFactory<ChainCollisionEntity>) ChainCollisionEntity::new)
+                        .trackRangeChunks(1).trackedUpdateRate(Integer.MAX_VALUE).forceTrackedVelocityUpdates(false)
+                        // 4/16 is the width of a fence
+                        .dimensions(EntityDimensions.fixed(0.25f, 0.375f))
+                        .disableSaving()
+                        .disableSummon()
+                        .fireImmune()
+                        .build()
+        );
 
-    public static <T extends Entity> EntityType<T> register(EntityType.Builder<T> builder, String id) {
-        RegistryKey<EntityType<?>> key = RegistryKey.of(RegistryKeys.ENTITY_TYPE, Helper.identifier(id));
-        return Registry.register(Registries.ENTITY_TYPE, key, builder.build());
     }
 
     public static void init() {

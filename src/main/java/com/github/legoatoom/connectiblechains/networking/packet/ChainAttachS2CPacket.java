@@ -18,31 +18,20 @@ import com.github.legoatoom.connectiblechains.entity.Chainable;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.*;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.listener.ClientCommonPacketListener;
-import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.registry.Registries;
 import org.jetbrains.annotations.Nullable;
 
 
 public record ChainAttachS2CPacket(int attachedEntityId, int oldHoldingEntityId, int newHoldingEntityId,
-                                   int chainTypeId) implements CustomPayload {
-    public static final Id<ChainAttachS2CPacket> PAYLOAD_ID = new Id<>(Helper.identifier("s2c_chain_attach_packet_id"));
-    public static final PacketCodec<RegistryByteBuf, ChainAttachS2CPacket> PACKET_CODEC =
-            PacketCodec.tuple(
-                    PacketCodecs.INTEGER, ChainAttachS2CPacket::attachedEntityId,
-                    PacketCodecs.INTEGER, ChainAttachS2CPacket::oldHoldingEntityId,
-                    PacketCodecs.INTEGER, ChainAttachS2CPacket::newHoldingEntityId,
-                    PacketCodecs.INTEGER, ChainAttachS2CPacket::chainTypeId,
-                    ChainAttachS2CPacket::new);
+                                   int chainTypeId) implements FabricPacket {
+    public static final PacketType<ChainAttachS2CPacket> TYPE = PacketType.create(Helper.identifier("s2c_chain_attach_packet_id"), ChainAttachS2CPacket::new);
 
     public ChainAttachS2CPacket(Entity attachedEntity, @Nullable Entity oldHoldingEntity, @Nullable Entity newHoldingEntity, Item souceItem) {
         this(attachedEntity.getId(), oldHoldingEntity != null ? oldHoldingEntity.getId() : 0, newHoldingEntity != null ? newHoldingEntity.getId() : 0, Registries.ITEM.getRawId(souceItem));
@@ -52,26 +41,29 @@ public record ChainAttachS2CPacket(int attachedEntityId, int oldHoldingEntityId,
         this(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt());
     }
 
-    public static void encode(PacketByteBuf buf1, ChainAttachS2CPacket packet) {
-        buf1.writeInt(packet.attachedEntityId);
-        buf1.writeInt(packet.oldHoldingEntityId);
-        buf1.writeInt(packet.newHoldingEntityId);
-        buf1.writeInt(packet.chainTypeId);
+    @Override
+    public void write(PacketByteBuf buf1) {
+        buf1.writeInt(attachedEntityId);
+        buf1.writeInt(oldHoldingEntityId);
+        buf1.writeInt(newHoldingEntityId);
+        buf1.writeInt(chainTypeId);
     }
 
     @Override
-    public Id<ChainAttachS2CPacket> getId() {
-        return PAYLOAD_ID;
+    public PacketType<ChainAttachS2CPacket> getType() {
+        return TYPE;
     }
 
     @Environment(EnvType.CLIENT)
-    public void apply(ClientPlayNetworking.Context context) {
-        if (context.player().getWorld().getEntityById(this.attachedEntityId()) instanceof Chainable chainable) {
+    public void apply(ClientPlayerEntity clientPlayerEntity, PacketSender ignoredPacketSender) {
+        if (clientPlayerEntity.getWorld().getEntityById(this.attachedEntityId()) instanceof Chainable chainable) {
             chainable.addUnresolvedChainHolderId(this.oldHoldingEntityId(), this.newHoldingEntityId(), Registries.ITEM.get(this.chainTypeId()));
         }
     }
 
-    public Packet<ClientCommonPacketListener> asPacket() {
-        return ServerPlayNetworking.createS2CPacket(this);
+    public Packet<ClientPlayPacketListener> asPacket() {
+        PacketByteBuf buf = PacketByteBufs.create();
+        write(buf);
+        return ServerPlayNetworking.createS2CPacket(TYPE.getId(), buf);
     }
 }

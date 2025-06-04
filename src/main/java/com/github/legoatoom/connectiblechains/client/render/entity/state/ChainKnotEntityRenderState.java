@@ -10,7 +10,6 @@ import java.util.HashSet;
 public class ChainKnotEntityRenderState {
     public HashSet<ChainData> chainDataSet = new HashSet<>();
     public Item sourceItem;
-    public Vec3d nameLabelPos;
 
 
     @Environment(EnvType.CLIENT)

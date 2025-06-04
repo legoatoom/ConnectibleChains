@@ -22,12 +22,12 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.decoration.LeashKnotEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.LeadItem;
-import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -68,7 +68,7 @@ public class ChainItemCallbacks {
         BlockState blockState = world.getBlockState(blockPos);
 
         if (blockState.isIn(ModTagRegistry.CHAIN_CONNECTIBLE)) {
-            if (!LeadItem.collectLeashablesAround(world, blockPos, entity -> entity.getLeashHolder() == player).isEmpty()) {
+            if (hasAnyLeadsToConnect(world, blockPos, player)) {
                 return ActionResult.PASS;
             }
             if (stack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
@@ -125,9 +125,33 @@ public class ChainItemCallbacks {
         return world.getEntitiesByClass(Entity.class, box, entity -> entity instanceof Chainable chainable && predicate.test(chainable)).stream().map(Chainable.class::cast).toList();
     }
 
+    /**
+     * Backport helper.
+     */
+    public static boolean hasAnyLeadsToConnect(World world, BlockPos pos, PlayerEntity player) {
+        LeashKnotEntity leashKnotEntity = null;
+        boolean found = false;
+
+        int i = pos.getX();
+        int j = pos.getY();
+        int k = pos.getZ();
+        for (MobEntity mobEntity : world.getNonSpectatingEntities(MobEntity.class, new Box(i - 7.0, j - 7.0, k - 7.0, i + 7.0, j + 7.0, k + 7.0))) {
+            if (mobEntity.getHoldingEntity() == player) {
+                if (leashKnotEntity == null) {
+                    leashKnotEntity = LeashKnotEntity.getOrCreate(world, pos);
+                    leashKnotEntity.onPlace();
+                }
+
+                mobEntity.attachLeash(leashKnotEntity, true);
+                found = true;
+            }
+        }
+        return found;
+    }
+
 
     @Environment(EnvType.CLIENT)
-    public static void infoToolTip(ItemStack itemStack, Item.TooltipContext ignoredTooltipContext, TooltipType ignoredTooltipType, List<Text> texts) {
+    public static void infoToolTip(ItemStack itemStack, TooltipContext ignoredTooltipContext, List<Text> texts) {
         if (ConnectibleChains.runtimeConfig.doShowToolTip()) {
             if (itemStack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
                 if (Screen.hasShiftDown()) {
