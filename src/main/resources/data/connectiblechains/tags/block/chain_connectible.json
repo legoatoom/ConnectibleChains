@@ -7,6 +7,10 @@
     {
       "id": "supplementaries:rope_knot",
       "required": false
+    },
+    {
+      "id": "supplementaries:sign_post",
+      "required": false
     }
   ]
 }
