@@ -23,7 +23,6 @@ import com.github.legoatoom.connectiblechains.util.Helper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.resource.JsonDataLoader;
-import net.minecraft.resource.ResourceFinder;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
@@ -55,7 +54,7 @@ public class ChainTextureManager extends JsonDataLoader<CatenaryModel> implement
     }
 
     public ChainTextureManager() {
-        super(CatenaryModel.CODEC.codec(), ResourceFinder.json(MODEL_FILE_LOCATION));
+        super(CatenaryModel.CODEC.codec(), MODEL_FILE_LOCATION);
     }
 
     @Override
