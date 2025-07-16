@@ -23,10 +23,10 @@ import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.Leashable;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.LeadItem;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
@@ -68,7 +68,7 @@ public class ChainItemCallbacks {
         BlockState blockState = world.getBlockState(blockPos);
 
         if (blockState.isIn(ModTagRegistry.CHAIN_CONNECTIBLE)) {
-            if (!LeadItem.collectLeashablesAround(world, blockPos, entity -> entity.getLeashHolder() == player).isEmpty()) {
+            if (!Leashable.collectLeashablesAround(world, blockPos.toCenterPos(), entity -> entity.getLeashHolder() == player).isEmpty()) {
                 return ActionResult.PASS;
             }
             if (stack.isIn(ModTagRegistry.CATENARY_ITEMS)) {

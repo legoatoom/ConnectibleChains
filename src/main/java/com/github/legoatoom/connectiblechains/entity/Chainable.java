@@ -11,13 +11,12 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.item.LeadItem;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.storage.ReadView;
+import net.minecraft.storage.WriteView;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -44,45 +43,35 @@ public interface Chainable {
         return ConnectibleChains.runtimeConfig.getMaxChainRange();
     }
 
-    private static <E extends BlockAttachedEntity & Chainable> boolean canAttachTo(E entity, Entity potentialHolder) {
-        if (entity.getChainData(potentialHolder) != null) {
-            return false;
-        } else if (potentialHolder instanceof Chainable chainable) {
-            return !entity.equals(potentialHolder) && chainable.getChainData(entity) == null;
-        }
-        return false;
-    }
-
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    private static <E extends BlockAttachedEntity & Chainable> HashSet<ChainData> readChainDataSet(E entity, NbtCompound nbt) {
+    private static <E extends BlockAttachedEntity & Chainable> HashSet<ChainData> readChainDataSet(E entity, ReadView view) {
         HashSet<ChainData> result = new HashSet<>();
-        Optional<NbtList> optionalList = nbt.getList(CHAINS_NBT_KEY);
+        Optional<ReadView.ListReadView> optionalList = view.getOptionalListReadView(CHAINS_NBT_KEY);
         if (optionalList.isPresent()) {
-            NbtList list = optionalList.get();
-            for (NbtElement element : list) {
-                if (!(element instanceof NbtCompound compound)) continue;
+            ReadView.ListReadView list = optionalList.get();
+            for (ReadView element : list) {
 
                 ChainData newChainData = null;
-                Item source = compound.getString(SOURCE_ITEM_KEY).map(sourceKey -> Registries.ITEM.get(Identifier.tryParse(sourceKey))).orElse(Items.CHAIN);
+                Item source = element.getOptionalString(SOURCE_ITEM_KEY).map(sourceKey -> Registries.ITEM.get(Identifier.tryParse(sourceKey))).orElse(Items.CHAIN);
 
-                Optional<String> optionalUUID = compound.getString("UUID");
-                Optional<Integer> optionalDest = compound.getInt("DestX");
-                Optional<Integer> optionalRel = compound.getInt("RelX");
+                Optional<String> optionalUUID = element.getOptionalString("UUID");
+                Optional<Integer> optionalDest = element.getOptionalInt("DestX");
+                Optional<Integer> optionalRel = element.getOptionalInt("RelX");
                 if (optionalUUID.isPresent()) {
                     UUID uuid = UUID.fromString(optionalUUID.get());
                     newChainData = new ChainData(Either.left(uuid), source);
                 } else if (optionalDest.isPresent()) {
                     Integer destX = optionalDest.get();
-                    Integer destY = compound.getInt("DestY").get();
-                    Integer destZ = compound.getInt("DestZ").get();
+                    Integer destY = element.getOptionalInt("DestY").get();
+                    Integer destZ = element.getOptionalInt("DestZ").get();
                     // Vanilla uses an NbtIntArray, but changing it here means would have to create a data-fixer, probably.
                     Either<UUID, BlockPos> either = Either.right(new BlockPos(destX, destY, destZ));
                     newChainData = new ChainData(either, source);
                 } else if (optionalRel.isPresent()) {
                     // OLD DEPRECATED RELATIVE WAY OF STORING: Here for when people upgrade from previous versions. //
                     Integer relX = optionalRel.get();
-                    Integer relY = compound.getInt("RelY").get();
-                    Integer relZ = compound.getInt("RelZ").get();
+                    Integer relY = element.getOptionalInt("RelY").get();
+                    Integer relZ = element.getOptionalInt("RelZ").get();
                     BlockPos relPos = new BlockPos(relX, relY, relZ);
                     BlockPos desPos = relPos.add(entity.getAttachedBlockPos());
                     newChainData = new ChainData(Either.right(desPos), source);
@@ -149,6 +138,8 @@ public interface Chainable {
                     serverWorld.getChunkManager().sendToOtherNearbyPlayers(entity, new ChainAttachS2CPacket(entity, chainData.chainHolder, null, chainData.sourceItem).asPacket());
                 }
                 ChainCollisionEntity.destroyCollision(serverWorld, chainData);
+
+                // TODO: Minecraft removes knots that have no connections. Should we too?
             }
         }
     }
@@ -230,12 +221,13 @@ public interface Chainable {
     static BlockSoundGroup getSourceBlockSoundGroup(Item sourceItem) {
         return switch (sourceItem) {
             case BlockItem blockItem -> blockItem.getBlock().getDefaultState().getSoundGroup();
+            // Special case for leads
             case LeadItem ignored -> new BlockSoundGroup(
                     1.0f,
                     1.0f,
-                    SoundEvents.ENTITY_LEASH_KNOT_BREAK,
+                    SoundEvents.ITEM_LEAD_UNTIED,
                     BlockSoundGroup.WOOL.getStepSound(),
-                    SoundEvents.ENTITY_LEASH_KNOT_PLACE,
+                    SoundEvents.ITEM_LEAD_TIED,
                     BlockSoundGroup.WOOL.getHitSound(),
                     BlockSoundGroup.WOOL.getFallSound()
             );
@@ -244,7 +236,24 @@ public interface Chainable {
     }
 
     default boolean canAttachTo(Entity entity) {
-        return canAttachTo((BlockAttachedEntity & Chainable) this, entity);
+        if (this == entity) {
+            return false;
+        }
+        if (this.getChainData(entity) != null) {
+            return false;
+        }
+        if (!(entity instanceof Chainable chainable)) {
+            return false;
+        }
+        if (chainable.getChainData((Entity) this) != null) {
+            return false;
+        } else {
+            return this.getDistanceToCenter(entity) <= getMaxChainLength();
+        }
+    }
+
+    default double getDistanceToCenter(Entity entity) {
+        return entity.getBoundingBox().getCenter().distanceTo(((Entity) this).getBoundingBox().getCenter());
     }
 
     HashSet<ChainData> getChainDataSet();
@@ -274,11 +283,11 @@ public interface Chainable {
         this.replaceChainData(oldChainData, newChainData);
     }
 
-    default void readChainDataFromNbt(NbtCompound nbt) {
-        Item source = nbt.getString(SOURCE_ITEM_KEY).map(sourceKey -> Registries.ITEM.get(Identifier.tryParse(sourceKey))).orElse(Items.CHAIN);
+    default void readChainData(ReadView view) {
+        Item source = view.getOptionalString(SOURCE_ITEM_KEY).map(sourceKey -> Registries.ITEM.get(Identifier.tryParse(sourceKey))).orElse(Items.CHAIN);
         setSourceItem(source);
 
-        HashSet<ChainData> chainData = readChainDataSet((BlockAttachedEntity & Chainable) this, nbt);
+        HashSet<ChainData> chainData = readChainDataSet((BlockAttachedEntity & Chainable) this, view);
         if (!this.getChainDataSet().isEmpty() && chainData.isEmpty()) {
             this.detachAllChainsWithoutDrop();
         }
@@ -286,11 +295,12 @@ public interface Chainable {
         this.setChainData(chainData);
     }
 
-    default void writeChainDataSetToNbt(NbtCompound nbt, HashSet<ChainData> chainDataSet) {
-        nbt.putString(SOURCE_ITEM_KEY, Registries.ITEM.getId(getSourceItem()).toString());
+    default void writeChainData(WriteView view, HashSet<ChainData> chainDataSet) {
+        view.putString(SOURCE_ITEM_KEY, Registries.ITEM.getId(getSourceItem()).toString());
 
-        NbtList linksTag = new NbtList();
+        WriteView.ListView linksTag = view.getList(CHAINS_NBT_KEY);
         for (ChainData chainData : chainDataSet) {
+            String sourceItem = Registries.ITEM.getId(chainData.sourceItem).toString();
             Either<UUID, BlockPos> either = chainData.unresolvedChainData;
             if (chainData.chainHolder instanceof ChainKnotEntity chainKnotEntity) {
                 either = Either.right(chainKnotEntity.getAttachedBlockPos());
@@ -299,24 +309,17 @@ public interface Chainable {
             }
 
             if (either != null) {
-                String sourceItem = Registries.ITEM.getId(chainData.sourceItem).toString();
-                linksTag.add(either.map(uuid -> {
-                    NbtCompound nbtCompound = new NbtCompound();
-                    nbtCompound.putString("UUID", uuid.toString());
-                    nbtCompound.putString(SOURCE_ITEM_KEY, sourceItem);
-                    return nbtCompound;
-                }, blockPos -> {
-                    NbtCompound nbtCompound = new NbtCompound();
-                    nbtCompound.putInt("DestX", blockPos.getX());
-                    nbtCompound.putInt("DestY", blockPos.getY());
-                    nbtCompound.putInt("DestZ", blockPos.getZ());
-                    nbtCompound.putString(SOURCE_ITEM_KEY, sourceItem);
-                    return nbtCompound;
-                }));
+                WriteView tag = linksTag.add();
+
+                either.ifLeft(uuid -> {
+                    tag.putString("UUID", uuid.toString());
+                }).ifRight(blockPos -> {
+                    tag.putInt("DestX", blockPos.getX());
+                    tag.putInt("DestY", blockPos.getY());
+                    tag.putInt("DestZ", blockPos.getZ());
+                });
+                tag.putString(SOURCE_ITEM_KEY, sourceItem);
             }
-        }
-        if (!linksTag.isEmpty()) {
-            nbt.put(CHAINS_NBT_KEY, linksTag);
         }
     }
 

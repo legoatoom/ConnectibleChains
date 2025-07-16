@@ -23,9 +23,6 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.util.Identifier;
 
-/**
- * @see <a href="https://github.com/paulevsGitch/BCLib/blob/1.18.2/src/main/java/ru/bclib/api/tag/TagAPI.java">github.com/paulevsGitch/BCLib</>
- */
 public class ModTagRegistry {
     public static final TagKey<Block> CHAIN_CONNECTIBLE = makeTag(RegistryKeys.BLOCK, Helper.identifier("chain_connectible"));
     public static final TagKey<Item> CATENARY_ITEMS = makeTag(RegistryKeys.ITEM, Helper.identifier("catenary_items"));

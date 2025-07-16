@@ -31,7 +31,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
@@ -40,6 +39,8 @@ import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.network.EntityTrackerEntry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.storage.ReadView;
+import net.minecraft.storage.WriteView;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -246,13 +247,13 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
     }
 
     @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        this.writeChainDataSetToNbt(nbt, this.chainDataSet);
+    public void writeCustomData(WriteView view) {
+        this.writeChainData(view, this.chainDataSet);
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        this.readChainDataFromNbt(nbt);
+    public void readCustomData(ReadView view) {
+        this.readChainData(view);
     }
 
     /**
