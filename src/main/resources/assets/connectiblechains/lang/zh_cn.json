@@ -1,0 +1,19 @@
+{
+  "entity.connectiblechains.chain_knot" : "链条绳结",
+  "message.connectiblechains.connectible_chain" : "悬链线兼容 [Shift]",
+  "message.connectiblechains.connectible_chain_detailed" : "点击栅栏/墙壁创建悬链线！",
+  "entity.connectiblechains.chain_collision" : "链条碰撞箱",
+  "text.autoconfig.connectiblechains.option.chainHangAmount" : "链条垂度",
+  "text.autoconfig.connectiblechains.option.maxChainRange" : "最大链条距离",
+  "text.autoconfig.connectiblechains.option.quality" : "链条质量",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[0]" : "控制链条的下垂程度。",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[1]" : "数值越小，弯曲弧度越大。",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[2]" : "碰撞箱将在放置新链条或加载世界时更新。",
+  "text.autoconfig.connectiblechains.option.showToolTip" : "显示悬链线兼容性提示",
+  "text.autoconfig.connectiblechains.option.showToolTip.@Tooltip" : "显示与本模组兼容的链条物品的提示信息。",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[0]" : "决定链条的最大长度。",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[1]" : "§n警告§r：过长的链条有时会不可见！",
+  "text.autoconfig.connectiblechains.option.quality.@Tooltip" : "影响链条的视觉效果精细度。",
+  "text.autoconfig.connectiblechains.title": "可连接链条配置",
+  "tag.item.connectiblechains.catenary_items": "悬链线物品"
+}
