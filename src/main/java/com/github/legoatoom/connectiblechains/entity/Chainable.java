@@ -158,17 +158,20 @@ public interface Chainable {
         for (ChainData chainData : new HashSet<>(chainDataSet)) {
             Entity chainHolder = entity.getChainHolder(chainData);
             if (chainHolder != null) {
-                if (!entity.isAlive() || !chainHolder.isAlive()) {
-                    if (!entity.isAlive()) {
-                        ConnectibleChains.LOGGER.debug("Removing chain since chainReceiver ({}) is no longer alive, data: {}", entity, chainData);
-                    } else {
-                        ConnectibleChains.LOGGER.debug("Removing chain since chainHolder ({}) is no longer alive, data: {}", chainHolder, chainData);
-                    }
-
-                    if (world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
-                        entity.detachChain(chainData);
-                    } else {
-                        entity.detachChainWithoutDrop(chainData);
+                if (entity.isRemoved() || chainHolder.isRemoved()) {
+                    Entity.RemovalReason reason = entity.isRemoved() ? entity.getRemovalReason() : chainHolder.getRemovalReason();
+                    assert reason != null;
+                    if (reason.shouldDestroy()) {
+                        if (entity.isRemoved()) {
+                            ConnectibleChains.LOGGER.debug("Removing chain since chainReceiver ({}) is no longer alive, data: {}", entity, chainData);
+                        } else {
+                            ConnectibleChains.LOGGER.debug("Removing chain since chainHolder ({}) is no longer alive, data: {}", chainHolder, chainData);
+                        }
+                        if (world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
+                            entity.detachChain(chainData);
+                        } else {
+                            entity.detachChainWithoutDrop(chainData);
+                        }
                     }
                 }
 
