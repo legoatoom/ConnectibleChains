@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2025 legoatoom
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.github.legoatoom.connectiblechains.client.render.entity.catenary;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
@@ -109,8 +125,8 @@ public class SquareCatenaryRenderer extends CatenaryRenderer {
 
             rotAxis.set(segmentEnd.x() - segmentStart.x(), segmentEnd.y() - segmentStart.y(), segmentEnd.z() - segmentStart.z());
             rotAxis.normalize();
-            rotatorA = rotatorA.fromAxisAngleDeg(rotAxis, 45);
-            rotatorB = rotatorB.fromAxisAngleDeg(rotAxis, -45);
+            rotatorA = rotatorA.fromAxisAngleDeg(rotAxis, -45);
+            rotatorB = rotatorB.fromAxisAngleDeg(rotAxis, 45);
 
             // This normal is orthogonal to the face normal
             normal.set(-gradient, Math.abs(distanceXZ / distance), 0);
@@ -152,10 +168,10 @@ public class SquareCatenaryRenderer extends CatenaryRenderer {
     }
 
     private void build4Sides(ChainModel.Builder builder, float uvv0, float uvv1, Vector3f vert00A, Vector3f vert01A, Vector3f vert10A, Vector3f vert11A, Vector3f vert00B, Vector3f vert01B, Vector3f vert10B, Vector3f vert11B) {
-        builder.vertex(vert00A).uv(SIDE_A.x0() / 16f, uvv0).next();
-        builder.vertex(vert01B).uv(SIDE_A.x1() / 16f, uvv0).next();
-        builder.vertex(vert11B).uv(SIDE_A.x1() / 16f, uvv1).next();
-        builder.vertex(vert10A).uv(SIDE_A.x0() / 16f, uvv1).next();
+        builder.vertex(vert10A).uv(SIDE_A.x1() / 16f, uvv1).next();
+        builder.vertex(vert11B).uv(SIDE_A.x0() / 16f, uvv1).next();
+        builder.vertex(vert01B).uv(SIDE_A.x0() / 16f, uvv0).next();
+        builder.vertex(vert00A).uv(SIDE_A.x1() / 16f, uvv0).next();
 
         builder.vertex(vert00A).uv(SIDE_B.x0() / 16f, uvv0).next();
         builder.vertex(vert00B).uv(SIDE_B.x1() / 16f, uvv0).next();

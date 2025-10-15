@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2024 legoatoom.
+ * Copyright (C) 2025 legoatoom
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -15,6 +17,8 @@
 package com.github.legoatoom.connectiblechains.util;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Vector3f;
@@ -96,5 +100,10 @@ public class Helper {
         offset.normalize();
         offset.normalize(2 / 16f);
         return new Vec3d(offset);
+    }
+
+    public static boolean hasShiftDown() {
+        return InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow(), InputUtil.GLFW_KEY_LEFT_SHIFT)
+                || InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow(), InputUtil.GLFW_KEY_RIGHT_SHIFT);
     }
 }

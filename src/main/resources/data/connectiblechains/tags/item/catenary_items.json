@@ -1,7 +1,7 @@
 {
   "replace": false,
   "values": [
-    "#c:chains",
+    "#minecraft:chains",
     "minecraft:lead",
     {
       "id": "farmersdelight:rope",

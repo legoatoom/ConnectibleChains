@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2024 legoatoom.
+ * Copyright (C) 2025 legoatoom
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -38,15 +40,15 @@ public class ChainRenderer {
      * If a model is not present for the given key it will be built.
      *
      * @param buffer      The target vertex buffer
-     * @param matrices    The chain transformation
+     * @param matricesEntry    The chain transformation
      * @param key         The cache key for the {@code chainVec}
      * @param chainVec    The vector from the start position to the end position
      * @param blockLight0 The block light level at the start
      * @param blockLight1 The block light level at the end
-     * @param skyLight0   The sky light level at the start
-     * @param skyLight1   The sky light level at the end
+     * @param skyLight0   The skylight level at the start
+     * @param skyLight1   The skylight level at the end
      */
-    public void renderBaked(CatenaryRenderer renderer, VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
+    public void renderBaked(CatenaryRenderer renderer, VertexConsumer buffer, MatrixStack.Entry matricesEntry, BakeKey key, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model;
         if (models.containsKey(key)) {
             model = models.get(key);
@@ -57,19 +59,19 @@ public class ChainRenderer {
         if (FabricLoader.getInstance().isDevelopmentEnvironment() && models.size() > 10000) {
             ConnectibleChains.LOGGER.error("Chain model leak found!");
         }
-        model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
+        model.render(buffer, matricesEntry, blockLight0, blockLight1, skyLight0, skyLight1);
     }
 
 
     /**
      * Same as {@link #renderBaked but will not use
      * the model cache. This should be used when {@code chainVec} is changed very frequently.
-     *
+     * <p>
      * @see #renderBaked
      */
-    public void render(CatenaryRenderer renderer, VertexConsumer buffer, MatrixStack matrices, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
+    public void render(CatenaryRenderer renderer, VertexConsumer buffer, MatrixStack.Entry matricesEntry, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
         ChainModel model = renderer.buildModel(chainVec);
-        model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
+        model.render(buffer, matricesEntry, blockLight0, blockLight1, skyLight0, skyLight1);
     }
 
     /**

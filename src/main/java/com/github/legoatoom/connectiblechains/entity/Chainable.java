@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2025 legoatoom
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
@@ -52,7 +68,7 @@ public interface Chainable {
             for (ReadView element : list) {
 
                 ChainData newChainData = null;
-                Item source = element.getOptionalString(SOURCE_ITEM_KEY).map(sourceKey -> Registries.ITEM.get(Identifier.tryParse(sourceKey))).orElse(Items.CHAIN);
+                Item source = element.getOptionalString(SOURCE_ITEM_KEY).map(sourceKey -> Registries.ITEM.get(Identifier.tryParse(sourceKey))).orElse(Items.IRON_CHAIN);
 
                 Optional<String> optionalUUID = element.getOptionalString("UUID");
                 Optional<Integer> optionalDest = element.getOptionalInt("DestX");
@@ -90,7 +106,7 @@ public interface Chainable {
      */
     private static <E extends BlockAttachedEntity & Chainable> void resolveChainDataSet(E entity, HashSet<ChainData> chainDataSet) {
         // Sanity check for server world
-        if (!(entity.getWorld() instanceof ServerWorld serverWorld)) return;
+        if (!(entity.getEntityWorld() instanceof ServerWorld serverWorld)) return;
 
         for (ChainData chainData : new HashSet<>(chainDataSet)) {
             if (chainData.unresolvedChainData != null) {
@@ -128,7 +144,7 @@ public interface Chainable {
             chainData.kill();
             entity.replaceChainData(chainData, null);
             entity.onChainDetached(chainData);
-            if (entity.getWorld() instanceof ServerWorld serverWorld) {
+            if (entity.getEntityWorld() instanceof ServerWorld serverWorld) {
                 // SERVER-SIDE //
                 if (dropItem) {
                     entity.dropItem(serverWorld, chainData.sourceItem);
@@ -152,7 +168,7 @@ public interface Chainable {
         entity.replaceChainData(entity.getChainData(previousHolder), chainData);
         entity.onChainAttached(chainData);
 
-        if (sendPacket && entity.getWorld() instanceof ServerWorld serverWorld) {
+        if (sendPacket && entity.getEntityWorld() instanceof ServerWorld serverWorld) {
             serverWorld.getChunkManager().sendToOtherNearbyPlayers(entity, new ChainAttachS2CPacket(entity, previousHolder, chainData.chainHolder, chainData.sourceItem).asPacket());
             if (chainData.chainHolder instanceof Chainable) {
                 ChainCollisionEntity.createCollision(entity, chainData);
@@ -184,7 +200,7 @@ public interface Chainable {
 
                 // The holder might now be detached, so we refresh again.
                 chainHolder = entity.getChainHolder(chainData);
-                if (chainHolder != null && chainHolder.getWorld().equals(entity.getWorld())) {
+                if (chainHolder != null && chainHolder.getEntityWorld().equals(entity.getEntityWorld())) {
                     float distanceTo = entity.distanceTo(chainHolder);
                     if (!entity.beforeChainTick(chainHolder, distanceTo)) {
                         continue;
@@ -204,9 +220,9 @@ public interface Chainable {
             return null;
         }
 
-        if (chainData.unresolvedChainHolderId != 0 && entity.getWorld().isClient) {
+        if (chainData.unresolvedChainHolderId != 0 && entity.getEntityWorld().isClient()) {
             // CLIENT-SIDE //
-            Entity chainHolder = entity.getWorld().getEntityById(chainData.unresolvedChainHolderId);
+            Entity chainHolder = entity.getEntityWorld().getEntityById(chainData.unresolvedChainHolderId);
             if (chainHolder instanceof Entity) {
                 entity.replaceChainData(chainData, new ChainData(chainHolder, chainData.sourceItem));
             }
@@ -284,7 +300,7 @@ public interface Chainable {
     }
 
     default void readChainData(ReadView view) {
-        Item source = view.getOptionalString(SOURCE_ITEM_KEY).map(sourceKey -> Registries.ITEM.get(Identifier.tryParse(sourceKey))).orElse(Items.CHAIN);
+        Item source = view.getOptionalString(SOURCE_ITEM_KEY).map(sourceKey -> Registries.ITEM.get(Identifier.tryParse(sourceKey))).orElse(Items.IRON_CHAIN);
         setSourceItem(source);
 
         HashSet<ChainData> chainData = readChainDataSet((BlockAttachedEntity & Chainable) this, view);

@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2025 legoatoom
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.github.legoatoom.connectiblechains.client.render.entity.catenary;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
@@ -44,16 +60,26 @@ public class CrossCatenaryRenderer extends CatenaryRenderer {
         Vector3f normal = new Vector3f((float) Math.cos(Math.toRadians(angle)), 0F, (float) Math.sin(Math.toRadians(angle)));
         normal.normalize(chainWidth / 2);
 
+        // Create offset that is minuscule in order to display 2 bright sides.
+        Vector3f offset = new Vector3f(0.000_5F, 0, 0.000_5f);
+
+        offset = offset.rotateY(-angle);
+
         Vector3f vert00 = new Vector3f(-normal.x(), 0, -normal.z());
         Vector3f vert01 = new Vector3f(normal.x(), 0, normal.z());
         Vector3f vert10 = new Vector3f(-normal.x(), endPosition.y(), -normal.z());
         Vector3f vert11 = new Vector3f(normal.x(), endPosition.y(), normal.z());
 
         float uvv0 = 0F, uvv1 = Math.abs(endPosition.y()) / CHAIN_SCALE;
-        builder.vertex(vert00).uv(uv.x0() / 16f, uvv0).next();
-        builder.vertex(vert01).uv(uv.x1() / 16f, uvv0).next();
-        builder.vertex(vert11).uv(uv.x1() / 16f, uvv1).next();
-        builder.vertex(vert10).uv(uv.x0() / 16f, uvv1).next();
+        builder.vertex(vert00.add(offset)).uv(uv.x0() / 16f, uvv0).next();
+        builder.vertex(vert01.add(offset)).uv(uv.x1() / 16f, uvv0).next();
+        builder.vertex(vert11.add(offset)).uv(uv.x1() / 16f, uvv1).next();
+        builder.vertex(vert10.add(offset)).uv(uv.x0() / 16f, uvv1).next();
+
+        builder.vertex(vert10.sub(offset)).uv(uv.x0() / 16f, uvv1).next();
+        builder.vertex(vert11.sub(offset)).uv(uv.x1() / 16f, uvv1).next();
+        builder.vertex(vert01.sub(offset)).uv(uv.x1() / 16f, uvv0).next();
+        builder.vertex(vert00.sub(offset)).uv(uv.x0() / 16f, uvv0).next();
     }
 
     /**
@@ -125,11 +151,18 @@ public class CrossCatenaryRenderer extends CatenaryRenderer {
             uvv0 = uvv1;
             uvv1 = uvv0 + actualSegmentLength / CHAIN_SCALE;
 
-            builder.vertex(vert00).uv(uv.x0() / 16f, uvv0).next();
-            builder.vertex(vert01).uv(uv.x1() / 16f, uvv0).next();
-            builder.vertex(vert11).uv(uv.x1() / 16f, uvv1).next();
-            builder.vertex(vert10).uv(uv.x0() / 16f, uvv1).next();
-
+            if (angle > 0) {
+                builder.vertex(vert00).uv(uv.x0() / 16f, uvv0).next();
+                builder.vertex(vert01).uv(uv.x1() / 16f, uvv0).next();
+                builder.vertex(vert11).uv(uv.x1() / 16f, uvv1).next();
+                builder.vertex(vert10).uv(uv.x0() / 16f, uvv1).next();
+            } else {
+                // Reverse the order, in order to display the bright side up.
+                builder.vertex(vert10).uv(uv.x0() / 16f, uvv1).next();
+                builder.vertex(vert11).uv(uv.x1() / 16f, uvv1).next();
+                builder.vertex(vert01).uv(uv.x1() / 16f, uvv0).next();
+                builder.vertex(vert00).uv(uv.x0() / 16f, uvv0).next();
+            }
             if (x >= distanceXZ) {
                 break;
             }

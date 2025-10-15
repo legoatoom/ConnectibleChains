@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2024 legoatoom.
+ * Copyright (C) 2025 legoatoom
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -18,10 +20,10 @@ import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.Chainable;
 import com.github.legoatoom.connectiblechains.tag.ModTagRegistry;
+import com.github.legoatoom.connectiblechains.util.Helper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.Leashable;
 import net.minecraft.entity.player.PlayerEntity;
@@ -130,7 +132,7 @@ public class ChainItemCallbacks {
     public static void infoToolTip(ItemStack itemStack, Item.TooltipContext ignoredTooltipContext, TooltipType ignoredTooltipType, List<Text> texts) {
         if (ConnectibleChains.runtimeConfig.doShowToolTip()) {
             if (itemStack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
-                if (Screen.hasShiftDown()) {
+                if (Helper.hasShiftDown()) {
                     texts.add(1, Text.translatable("message.connectiblechains.connectible_chain_detailed").formatted(Formatting.AQUA));
                 } else {
                     texts.add(1, Text.translatable("message.connectiblechains.connectible_chain").formatted(Formatting.YELLOW));

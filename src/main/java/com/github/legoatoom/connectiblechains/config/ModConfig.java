@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2024 legoatoom.
+ * Copyright (C) 2025 legoatoom
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -71,7 +73,7 @@ public class ModConfig implements ConfigData {
     }
 
     public boolean doDebugDraw() {
-        return IS_DEBUG_ENV && MinecraftClient.getInstance().getDebugHud().shouldShowDebugHud();
+        return IS_DEBUG_ENV && MinecraftClient.getInstance().debugHudEntryList.isF3Enabled();
     }
 
     public void syncToClients(MinecraftServer server) {

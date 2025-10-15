@@ -1,7 +1,7 @@
 {
   "replace": false,
   "values": [
-    "#c:bars",
+    "#minecraft:bars",
     "#minecraft:walls",
     "#minecraft:fences",
     {

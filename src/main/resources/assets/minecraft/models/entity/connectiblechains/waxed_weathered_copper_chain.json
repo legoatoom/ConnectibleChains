@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "minecraft:block/weathered_copper_chain",
+    "knot": "minecraft:item/weathered_copper_chain"
+  }
+}

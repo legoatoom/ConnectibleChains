@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2024 legoatoom
+ * Copyright (C) 2025 legoatoom
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -21,7 +23,6 @@ import com.github.legoatoom.connectiblechains.client.render.entity.catenary.Cate
 import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CatenaryRenderer;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.resource.JsonDataLoader;
 import net.minecraft.resource.ResourceFinder;
 import net.minecraft.resource.ResourceManager;
@@ -37,7 +38,7 @@ import java.util.Optional;
  * The manager loads the chain models that contain the texture information for all chain types.
  * It looks for models at models/entity/chain/ within the same namespace as the chain type.
  */
-public class ChainTextureManager extends JsonDataLoader<CatenaryModel> implements IdentifiableResourceReloadListener {
+public class ChainModelReloader extends JsonDataLoader<CatenaryModel> {
     private static final String MODEL_FILE_LOCATION = "models/entity/" + ConnectibleChains.MODID;
     /**
      * How many different chain items do we expect?
@@ -48,13 +49,7 @@ public class ChainTextureManager extends JsonDataLoader<CatenaryModel> implement
 
     private Map<Identifier, CatenaryModel> models = new Object2ObjectOpenHashMap<>(EXPECTED_UNIQUE_CHAIN_COUNT);
 
-
-    @Override
-    public Identifier getFabricId() {
-        return Helper.identifier("chain_models");
-    }
-
-    public ChainTextureManager() {
+    public ChainModelReloader() {
         super(CatenaryModel.CODEC.codec(), ResourceFinder.json(MODEL_FILE_LOCATION));
     }
 

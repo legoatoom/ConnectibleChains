@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2024 legoatoom.
+ * Copyright (C) 2025 legoatoom
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -14,6 +16,7 @@
 
 package com.github.legoatoom.connectiblechains.client.render.entity.model;
 
+import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.client.render.entity.state.ChainKnotEntityRenderState;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -21,7 +24,7 @@ import net.minecraft.client.model.*;
 import net.minecraft.client.render.entity.model.EntityModel;
 
 /**
- * Model for the {@link com.github.legoatoom.connectiblechains.entity.ChainKnotEntity}.
+ * Model for the {@link ChainKnotEntity}.
  * Similar to the {@link net.minecraft.client.render.entity.model.LeashKnotEntityModel} code.
  * <p>
  * The model is 6x3x6 pixels big.

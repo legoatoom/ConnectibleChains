@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "minecraft:block/iron_chain",
+    "knot": "minecraft:item/iron_chain"
+  }
+}

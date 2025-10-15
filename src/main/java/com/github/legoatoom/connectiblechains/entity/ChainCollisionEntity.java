@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2024 legoatoom.
+ * Copyright (C) 2025 legoatoom
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -86,7 +88,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
 
     public static <E extends Entity & Chainable> void createCollision(E chainedEntity, Chainable.ChainData chainData) {
         if (!chainData.collisionStorage.isEmpty()) return;
-        if (chainedEntity.getWorld().isClient()) return;
+        if (chainedEntity.getEntityWorld().isClient()) return;
         // SERVER-SIDE //
         Entity chainHolder = chainedEntity.getChainHolder(chainData);
 
@@ -115,7 +117,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     }
 
     public static <E extends Entity & Chainable> ChainCollisionEntity spawnCollision(boolean reverse, E chainedEntity, Chainable.ChainData chainData, double distancePercentage) {
-        if (!(chainedEntity.getWorld() instanceof ServerWorld serverWorld)) {
+        if (!(chainedEntity.getEntityWorld() instanceof ServerWorld serverWorld)) {
             return null;
         }
         Entity chainHolder = chainedEntity.getChainHolder(chainData);

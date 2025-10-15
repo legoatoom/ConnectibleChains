@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2024 legoatoom.
+ * Copyright (C) 2025 legoatoom
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -70,7 +72,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
 
     protected ChainKnotEntity(EntityType<? extends BlockAttachedEntity> entityType, World world) {
         super(entityType, world);
-        sourceItem = Items.CHAIN; // Should be overwritten by spawn package.
+        sourceItem = Items.IRON_CHAIN; // Should be overwritten by spawn package.
     }
 
     public ChainKnotEntity(World world, BlockPos pos, @NotNull Item sourceItem) {
@@ -125,7 +127,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
     @Override
     public void tick() {
         super.tick();
-        if (this.getWorld() instanceof ServerWorld serverWorld) {
+        if (this.getEntityWorld() instanceof ServerWorld serverWorld) {
             Chainable.tickChain(serverWorld, this);
         }
     }
@@ -134,7 +136,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
     public ActionResult interact(PlayerEntity player, Hand hand) {
 
         ItemStack handStack = player.getStackInHand(hand);
-        if (getWorld().isClient()) {
+        if (getEntityWorld().isClient()) {
             // CLIENT-SIDE
             ChainData chainDataForPlayer = getChainData(player);
             if (chainDataForPlayer != null) {
@@ -157,10 +159,10 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
             return ActionResult.PASS;
         }
         // SERVER-SIDE
-        if (this.isAlive() && player.getWorld() instanceof ServerWorld serverWorld) {
+        if (this.isAlive() && player.getEntityWorld() instanceof ServerWorld serverWorld) {
             // CASE: Attempt to attach to this Knot.
             boolean hasConnectedFromPlayer = false;
-            List<Chainable> list = ChainItemCallbacks.collectChainablesAround(this.getWorld(), this.getAttachedBlockPos(), entity -> entity.getChainData(player) != null);
+            List<Chainable> list = ChainItemCallbacks.collectChainablesAround(this.getEntityWorld(), this.getAttachedBlockPos(), entity -> entity.getChainData(player) != null);
 
             for (Chainable chainable : list) {
                 // TODO: Kinda inefficient, perhaps return a list of pairs? Chainable+ChainData.
@@ -269,7 +271,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
 
     @Override
     public boolean shouldRender(double distance) {
-        if (getWorld().getBlockState(getAttachedBlockPos()).isIn(BlockTags.WALLS)) {
+        if (getEntityWorld().getBlockState(getAttachedBlockPos()).isIn(BlockTags.WALLS)) {
             return false;
         }
         return distance < 1024.0; //TODO: Determine if this needs to be changed, it used to be just true.
@@ -277,7 +279,7 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
 
     @Override
     public boolean canStayAttached() {
-        return this.getWorld().getBlockState(this.attachedBlockPos).isIn(ModTagRegistry.CHAIN_CONNECTIBLE);
+        return this.getEntityWorld().getBlockState(this.attachedBlockPos).isIn(ModTagRegistry.CHAIN_CONNECTIBLE);
     }
 
     @Override

@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2024 legoatoom.
+ * Copyright (C) 2025 legoatoom
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -20,7 +22,6 @@ import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -41,15 +42,13 @@ public record ChainModel(float[] vertices, float[] uvs) {
      * Writes the model data to {@code buffer} and applies lighting.
      *
      * @param buffer   The target buffer.
-     * @param matrices The transformation stack
+     * @param matricesEntry The transformation stack
      * @param bLight0  Block-light at the start.
      * @param bLight1  Block-light at the end.
      * @param sLight0  Sky-light at the start.
      * @param sLight1  Sky-light at the end.
      */
-    public void render(VertexConsumer buffer, MatrixStack matrices, int bLight0, int bLight1, int sLight0, int sLight1) {
-        Matrix4f modelMatrix = matrices.peek().getPositionMatrix();
-        Matrix3f normalMatrix = matrices.peek().getNormalMatrix();
+    public void render(VertexConsumer buffer, MatrixStack.Entry matricesEntry, int bLight0, int bLight1, int sLight0, int sLight1) {
         int count = vertices.length / 3;
         for (int i = 0; i < count; i++) {
             // divide by 2 because chain has 2 face sets
@@ -58,7 +57,7 @@ public record ChainModel(float[] vertices, float[] uvs) {
             int skyLight = (int) MathHelper.lerp(f, (float) sLight0, (float) sLight1);
             int light = LightmapTextureManager.pack(blockLight, skyLight);
             buffer
-                    .vertex(modelMatrix, vertices[i * 3], vertices[i * 3 + 1], vertices[i * 3 + 2])
+                    .vertex(matricesEntry, vertices[i * 3], vertices[i * 3 + 1], vertices[i * 3 + 2])
                     .color(255, 255, 255, 255)
                     .texture(uvs[i * 2], uvs[i * 2 + 1])
                     .overlay(OverlayTexture.DEFAULT_UV)
