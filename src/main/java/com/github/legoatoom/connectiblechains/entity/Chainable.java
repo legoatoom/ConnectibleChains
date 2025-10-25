@@ -15,6 +15,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -59,14 +60,14 @@ public interface Chainable {
                 if (compound.containsUuid("UUID")) {
                     newChainData = new ChainData(Either.left(compound.getUuid("UUID")), source);
                 } else if (compound.contains("DestX")) {
-                    // Vanilla uses an NbtIntArray, but changing it here means would have to create a data-fixer, probably.
-                    Either<UUID, BlockPos> either = Either.right(new BlockPos(compound.getInt("DestX"), compound.getInt("DestY"), compound.getInt("DestZ")));
+                    // OLD DEPRECATED WAY OF STORING: Here for when people upgrade from previous versions. //
+                    BlockPos desPos = new BlockPos(compound.getInt("DestX"), compound.getInt("DestY"), compound.getInt("DestZ"));
+                    BlockPos relPos = desPos.subtract(entity.getDecorationBlockPos());
+                    Either<UUID, BlockPos> either = Either.right(relPos);
                     newChainData = new ChainData(either, source);
                 } else if (compound.contains("RelX")) {
-                    // OLD DEPRECATED RELATIVE WAY OF STORING: Here for when people upgrade from previous versions. //
                     var relPos = new BlockPos(compound.getInt("RelX"), compound.getInt("RelY"), compound.getInt("RelZ"));
-                    var desPos = relPos.add(entity.getDecorationBlockPos());
-                    newChainData = new ChainData(Either.right(desPos), source);
+                    newChainData = new ChainData(Either.right(relPos), source);
                 }
 
                 if (newChainData != null) {
@@ -97,7 +98,7 @@ public interface Chainable {
                         continue;
                     }
                 } else if (optionalBlockPos.isPresent()) {
-                    ChainKnotEntity chainHolder = ChainKnotEntity.getOrNull(serverWorld, optionalBlockPos.get());
+                    ChainKnotEntity chainHolder = ChainKnotEntity.getOrNull(serverWorld, entity.getDecorationBlockPos().add(optionalBlockPos.get()));
                     if (chainHolder != null) {
                         ChainData newChainData = new ChainData(chainHolder, chainData.sourceItem);
                         entity.replaceChainData(chainData, null);
@@ -273,11 +274,13 @@ public interface Chainable {
     default void writeChainDataSetToNbt(NbtCompound nbt, HashSet<ChainData> chainDataSet) {
         nbt.putString(SOURCE_ITEM_KEY, Registries.ITEM.getId(getSourceItem()).toString());
 
+        BlockPos relativeTo = ((AbstractDecorationEntity) this).getDecorationBlockPos();
+
         NbtList linksTag = new NbtList();
         for (ChainData chainData : chainDataSet) {
             Either<UUID, BlockPos> either = chainData.unresolvedChainData;
             if (chainData.chainHolder instanceof ChainKnotEntity chainKnotEntity) {
-                either = Either.right(chainKnotEntity.getDecorationBlockPos());
+                either = Either.right(chainKnotEntity.getDecorationBlockPos().subtract(relativeTo));
             } else if (chainData.chainHolder != null) {
                 either = Either.left(chainData.chainHolder.getUuid());
             }
@@ -291,9 +294,9 @@ public interface Chainable {
                     return nbtCompound;
                 }, blockPos -> {
                     NbtCompound nbtCompound = new NbtCompound();
-                    nbtCompound.putInt("DestX", blockPos.getX());
-                    nbtCompound.putInt("DestY", blockPos.getY());
-                    nbtCompound.putInt("DestZ", blockPos.getZ());
+                    nbtCompound.putInt("RelX", blockPos.getX());
+                    nbtCompound.putInt("RelY", blockPos.getY());
+                    nbtCompound.putInt("RelZ", blockPos.getZ());
                     nbtCompound.putString(SOURCE_ITEM_KEY, sourceItem);
                     return nbtCompound;
                 }));
@@ -391,7 +394,7 @@ public interface Chainable {
          */
         public final ArrayList<Integer> collisionStorage = new ArrayList<>(16);
         @Nullable
-        public final Either<UUID, BlockPos> unresolvedChainData;
+        public Either<UUID, BlockPos> unresolvedChainData;
         @NotNull
         public final Item sourceItem;
         final int unresolvedChainHolderId;
@@ -459,6 +462,12 @@ public interface Chainable {
         @Override
         public int hashCode() {
             return Objects.hash(getHolderId());
+        }
+
+        public void applyRotation(BlockRotation rotation) {
+            if (unresolvedChainData != null) {
+                unresolvedChainData = unresolvedChainData.mapRight(blockPos -> blockPos.rotate(rotation));
+            }
         }
 
 

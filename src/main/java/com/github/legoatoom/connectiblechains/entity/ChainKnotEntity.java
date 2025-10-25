@@ -39,6 +39,8 @@ import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.BlockMirror;
+import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -330,6 +332,14 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements Chainab
         super.onSpawnPacket(packet);
         int rawChainItemSourceId = packet.getEntityData();
         this.sourceItem = Registries.ITEM.get(rawChainItemSourceId);
+    }
+
+    @Override
+    public float applyRotation(BlockRotation rotation) {
+        for (ChainData chainData : chainDataSet) {
+            chainData.applyRotation(rotation);
+        }
+        return super.applyRotation(rotation);
     }
 
     @Override
