@@ -16,6 +16,7 @@ package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.item.ChainItemCallbacks;
+import com.github.legoatoom.connectiblechains.migrator.ChainableMigrator;
 import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
 import com.github.legoatoom.connectiblechains.tag.ModTagRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -42,6 +43,8 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.storage.ReadView;
 import net.minecraft.storage.WriteView;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.BlockMirror;
+import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -62,6 +65,8 @@ import java.util.List;
  * @author legoatoom, Qendolin
  */
 public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, ChainLinkEntity {
+
+    public static final ChainableMigrator<ChainKnotEntity> CHAIN_KNOT_DATA_MIGRATOR = new ChainableMigrator<>();
 
     private HashSet<ChainData> chainDataSet = new HashSet<>();
 
@@ -99,6 +104,12 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
             world.spawnEntity(chainKnotEntity);
         }
         return chainKnotEntity;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public ChainableMigrator<ChainKnotEntity> getDataMigrator() {
+        return CHAIN_KNOT_DATA_MIGRATOR;
     }
 
     @Override
@@ -331,6 +342,16 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
         super.onSpawnPacket(packet);
         int rawChainItemSourceId = packet.getEntityData();
         this.sourceItem = Registries.ITEM.get(rawChainItemSourceId);
+    }
+
+
+    public float applyRotation(BlockRotation rotation) {
+        chainDataSet.forEach(chainData -> chainData.applyRotation(rotation));
+        return super.applyRotation(rotation);
+    }
+
+    public float applyMirror(BlockMirror mirror) {
+        return this.applyRotation(mirror.getRotation(this.getHorizontalFacing()));
     }
 
     @Override
