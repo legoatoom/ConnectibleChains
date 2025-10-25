@@ -16,8 +16,8 @@
 
 package com.github.legoatoom.connectiblechains.client.render.entity.model;
 
-import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.client.render.entity.state.ChainKnotEntityRenderState;
+import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.model.*;

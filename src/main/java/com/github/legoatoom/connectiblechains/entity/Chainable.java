@@ -17,6 +17,7 @@
 package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.migrator.ChainableMigrator;
 import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -33,9 +34,12 @@ import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.storage.ReadView;
 import net.minecraft.storage.WriteView;
+import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Uuids;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.GameRules;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,53 +56,11 @@ import java.util.UUID;
  * @see Leashable
  */
 public interface Chainable {
-    String CHAINS_NBT_KEY = "Chains";
-    String SOURCE_ITEM_KEY = "SourceItem";
+    String CHAINS_NBT_KEY = "%s_Chains".formatted(ConnectibleChains.MODID);
+    String SOURCE_ITEM_KEY = "%s_SourceItem".formatted(ConnectibleChains.MODID);
 
     static double getMaxChainLength() {
         return ConnectibleChains.runtimeConfig.getMaxChainRange();
-    }
-
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
-    private static <E extends BlockAttachedEntity & Chainable> HashSet<ChainData> readChainDataSet(E entity, ReadView view) {
-        HashSet<ChainData> result = new HashSet<>();
-        Optional<ReadView.ListReadView> optionalList = view.getOptionalListReadView(CHAINS_NBT_KEY);
-        if (optionalList.isPresent()) {
-            ReadView.ListReadView list = optionalList.get();
-            for (ReadView element : list) {
-
-                ChainData newChainData = null;
-                Item source = element.getOptionalString(SOURCE_ITEM_KEY).map(sourceKey -> Registries.ITEM.get(Identifier.tryParse(sourceKey))).orElse(Items.IRON_CHAIN);
-
-                Optional<String> optionalUUID = element.getOptionalString("UUID");
-                Optional<Integer> optionalDest = element.getOptionalInt("DestX");
-                Optional<Integer> optionalRel = element.getOptionalInt("RelX");
-                if (optionalUUID.isPresent()) {
-                    UUID uuid = UUID.fromString(optionalUUID.get());
-                    newChainData = new ChainData(Either.left(uuid), source);
-                } else if (optionalDest.isPresent()) {
-                    Integer destX = optionalDest.get();
-                    Integer destY = element.getOptionalInt("DestY").get();
-                    Integer destZ = element.getOptionalInt("DestZ").get();
-                    // Vanilla uses an NbtIntArray, but changing it here means would have to create a data-fixer, probably.
-                    Either<UUID, BlockPos> either = Either.right(new BlockPos(destX, destY, destZ));
-                    newChainData = new ChainData(either, source);
-                } else if (optionalRel.isPresent()) {
-                    // OLD DEPRECATED RELATIVE WAY OF STORING: Here for when people upgrade from previous versions. //
-                    Integer relX = optionalRel.get();
-                    Integer relY = element.getOptionalInt("RelY").get();
-                    Integer relZ = element.getOptionalInt("RelZ").get();
-                    BlockPos relPos = new BlockPos(relX, relY, relZ);
-                    BlockPos desPos = relPos.add(entity.getAttachedBlockPos());
-                    newChainData = new ChainData(Either.right(desPos), source);
-                }
-
-                if (newChainData != null) {
-                    result.add(newChainData);
-                }
-            }
-        }
-        return result;
     }
 
     /**
@@ -111,7 +73,7 @@ public interface Chainable {
         for (ChainData chainData : new HashSet<>(chainDataSet)) {
             if (chainData.unresolvedChainData != null) {
                 Optional<UUID> optionalUUID = chainData.unresolvedChainData.left();
-                Optional<BlockPos> optionalBlockPos = chainData.unresolvedChainData.right();
+                Optional<BlockPos> optionalRelPos = chainData.unresolvedChainData.right();
                 if (optionalUUID.isPresent()) {
                     Entity chainHolder = serverWorld.getEntity(optionalUUID.get());
                     if (chainHolder != null) {
@@ -120,8 +82,8 @@ public interface Chainable {
                         attachChain(entity, newChainData, null, true); // TODO: Do it in one bulk action instead of separate.
                         continue;
                     }
-                } else if (optionalBlockPos.isPresent()) {
-                    ChainKnotEntity chainHolder = ChainKnotEntity.getOrNull(serverWorld, optionalBlockPos.get());
+                } else if (optionalRelPos.isPresent()) {
+                    ChainKnotEntity chainHolder = ChainKnotEntity.getOrNull(serverWorld, entity.getAttachedBlockPos().add(optionalRelPos.get()));
                     if (chainHolder != null) {
                         ChainData newChainData = new ChainData(chainHolder, chainData.sourceItem);
                         entity.replaceChainData(chainData, null);
@@ -275,6 +237,8 @@ public interface Chainable {
         return entity.getBoundingBox().getCenter().distanceTo(((Entity) this).getBoundingBox().getCenter());
     }
 
+    <E extends BlockAttachedEntity & Chainable> ChainableMigrator<E> getDataMigrator();
+
     HashSet<ChainData> getChainDataSet();
 
     /**
@@ -303,10 +267,12 @@ public interface Chainable {
     }
 
     default void readChainData(ReadView view) {
+        view = this.getDataMigrator().migrate(view, (BlockAttachedEntity & Chainable) this);
+
         Item source = view.getOptionalString(SOURCE_ITEM_KEY).map(sourceKey -> Registries.ITEM.get(Identifier.tryParse(sourceKey))).orElse(Items.IRON_CHAIN);
         setSourceItem(source);
 
-        HashSet<ChainData> chainData = readChainDataSet((BlockAttachedEntity & Chainable) this, view);
+        HashSet<ChainData> chainData = readChainDataSet(view);
         if (!this.getChainDataSet().isEmpty() && chainData.isEmpty()) {
             this.detachAllChainsWithoutDrop();
         }
@@ -315,29 +281,54 @@ public interface Chainable {
     }
 
     default void writeChainData(WriteView view, HashSet<ChainData> chainDataSet) {
-        view.putString(SOURCE_ITEM_KEY, Registries.ITEM.getId(getSourceItem()).toString());
+        getDataMigrator().addVersionTag(view);
+        view.put(SOURCE_ITEM_KEY, Registries.ITEM.getCodec(), getSourceItem());
 
-        WriteView.ListView linksTag = view.getList(CHAINS_NBT_KEY);
+        writeChainDataSet((BlockAttachedEntity & Chainable) this, chainDataSet, view);
+    }
+
+    private static <E extends BlockAttachedEntity & Chainable> HashSet<ChainData> readChainDataSet(ReadView view) {
+        HashSet<ChainData> result = new HashSet<>();
+        Optional<ReadView.ListReadView> optionalList = view.getOptionalListReadView(CHAINS_NBT_KEY);
+        if (optionalList.isPresent()) {
+            ReadView.ListReadView list = optionalList.get();
+            for (ReadView element : list) {
+                Item source = element.read(SOURCE_ITEM_KEY, Registries.ITEM.getCodec()).orElse(Items.IRON_CHAIN);
+
+                element.read("UUID", Uuids.CODEC).ifPresent(uuid -> {
+                    result.add(new ChainData(Either.left(uuid), source));
+                });
+
+                element.read("RelativePos", BlockPos.CODEC).ifPresent(vec3i -> {
+                    result.add(new ChainData(Either.right(vec3i), source));
+                });
+            }
+        }
+        return result;
+    }
+
+    private static <E extends BlockAttachedEntity & Chainable> void writeChainDataSet(E entity, HashSet<ChainData> chainDataSet, WriteView writeView) {
+        WriteView.ListView linksTag = writeView.getList(CHAINS_NBT_KEY);
+
         for (ChainData chainData : chainDataSet) {
-            String sourceItem = Registries.ITEM.getId(chainData.sourceItem).toString();
-            Either<UUID, BlockPos> either = chainData.unresolvedChainData;
+            Either<UUID, BlockPos> either;
             if (chainData.chainHolder instanceof ChainKnotEntity chainKnotEntity) {
-                either = Either.right(chainKnotEntity.getAttachedBlockPos());
+                either = Either.right(chainKnotEntity.getAttachedBlockPos().subtract(entity.getAttachedBlockPos()));
             } else if (chainData.chainHolder != null) {
                 either = Either.left(chainData.chainHolder.getUuid());
+            } else {
+                either = chainData.unresolvedChainData;
             }
 
             if (either != null) {
                 WriteView tag = linksTag.add();
 
                 either.ifLeft(uuid -> {
-                    tag.putString("UUID", uuid.toString());
-                }).ifRight(blockPos -> {
-                    tag.putInt("DestX", blockPos.getX());
-                    tag.putInt("DestY", blockPos.getY());
-                    tag.putInt("DestZ", blockPos.getZ());
+                    tag.put("UUID", Uuids.CODEC, uuid);
+                }).ifRight(relPos -> {
+                    tag.put("RelativePos", BlockPos.CODEC, relPos);
                 });
-                tag.putString(SOURCE_ITEM_KEY, sourceItem);
+                tag.put(SOURCE_ITEM_KEY, Registries.ITEM.getCodec(), chainData.sourceItem);
             }
         }
     }
@@ -428,8 +419,9 @@ public interface Chainable {
          * A list of collision entity ids, only used in the server.
          */
         public final IntArrayList collisionStorage = new IntArrayList(16);
+        /** Either the UUID of the holder, or the <b>relative</b> position of another chain. **/
         @Nullable
-        public final Either<UUID, BlockPos> unresolvedChainData;
+        public Either<UUID, BlockPos> unresolvedChainData;
         @NotNull
         public final Item sourceItem;
         final int unresolvedChainHolderId;
@@ -497,6 +489,12 @@ public interface Chainable {
         @Override
         public int hashCode() {
             return Objects.hash(getHolderId());
+        }
+
+        public void applyRotation(BlockRotation rotation) {
+            if (unresolvedChainData != null) {
+                unresolvedChainData = unresolvedChainData.mapRight(blockPos -> blockPos.rotate(rotation));
+            }
         }
 
 

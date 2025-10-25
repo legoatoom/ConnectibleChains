@@ -16,8 +16,6 @@
 
 package com.github.legoatoom.connectiblechains.client;
 
-import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
-import com.github.legoatoom.connectiblechains.networking.packet.ConfigSyncPayload;
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainCollisionEntityRenderer;
 import com.github.legoatoom.connectiblechains.client.render.entity.ChainKnotEntityRenderer;
@@ -30,6 +28,8 @@ import com.github.legoatoom.connectiblechains.client.render.entity.texture.Chain
 import com.github.legoatoom.connectiblechains.config.ModConfig;
 import com.github.legoatoom.connectiblechains.entity.ModEntityTypes;
 import com.github.legoatoom.connectiblechains.item.ChainItemCallbacks;
+import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
+import com.github.legoatoom.connectiblechains.networking.packet.ConfigSyncPayload;
 import com.github.legoatoom.connectiblechains.util.Helper;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
