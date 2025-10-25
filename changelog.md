@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
-## [2.5.4] - 12025-06-04
+## [2.5.5] - 12025-10-25
 
-- Fixed issue when chain is broken by TNT explosion [#86](https://github.com/legoatoom/ConnectibleChains/issues/86)
+- Added `zh_cn` translation by courtesy of [A012pyshjs210](https://github.com/A012pyshjs210)
+- Fixed issue when chains removed when one end was unloaded.
+- Fixed issue when catenaries did not work with structure blocks [#101](https://github.com/legoatoom/ConnectibleChains/issues/101)
 
 ## [2.5.3] - 12025-05-07
 
