@@ -1,0 +1,20 @@
+{
+  "entity.connectiblechains.chain_knot" : "鎖の結び目",
+  "message.connectiblechains.connectible_chain" : "カテナリー曲線対応 [Shift]",
+  "message.connectiblechains.connectible_chain_detailed" : "フェンスまたは塀をクリックしてカテナリー曲線を作ることができます！",
+  "entity.connectiblechains.chain_collision" : "鎖の衝突判定",
+  "text.autoconfig.connectiblechains.option.chainHangAmount" : "鎖の垂れ下がり",
+  "text.autoconfig.connectiblechains.option.maxChainRange" : "鎖の最大距離",
+  "text.autoconfig.connectiblechains.option.quality" : "鎖の品質",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[0]" : "鎖がどの程度垂れ下がるかを設定します。",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[1]" : "数字が小さくなるほど曲線が大きくなります。",
+  "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[2]" : "衝突判定は新しく設置する鎖に適用され、ワールドの読み込み時に更新されます。",
+  "text.autoconfig.connectiblechains.option.showToolTip" : "カテナリー曲線の互換性をツールチップに表示",
+  "text.autoconfig.connectiblechains.option.showToolTip.@Tooltip" : "このMODと互換性のあるチェーン系アイテムの場合、ツールチップに表示します。",
+
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[0]" : "鎖の長さを設定します。",
+  "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[1]" : "§n警告§r：鎖が長すぎると表示されなくなる場合があります！",
+  "text.autoconfig.connectiblechains.option.quality.@Tooltip" : "鎖の見た目の品質を設定します。",
+  "text.autoconfig.connectiblechains.title": "Connectible Chainsの設定",
+  "tag.item.connectiblechains.catenary_items": "カテナリー曲線対応アイテム"
+}
