@@ -175,9 +175,11 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
         Vec3d normal = vec.normalize();
         buffer.vertex(modelMat, 0, 0, 0)
                 .color(0, 255, 0, 255)
+                .lineWidth(1F)
                 .normal((float) normal.x, (float) normal.y, (float) normal.z);
         buffer.vertex(modelMat, (float) vec.x, (float) vec.y, (float) vec.z)
                 .color(255, 0, 0, 255)
+                .lineWidth(1F)
                 .normal((float) normal.x, (float) normal.y, (float) normal.z);
     }
 
