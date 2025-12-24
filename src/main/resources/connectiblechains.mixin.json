@@ -1,0 +1,12 @@
+{
+  "plugin": "com.moulberry.mixinconstraints.ConstraintsMixinPlugin",
+  "client": [
+    "flashback.playback.ReplayGamePacketHandlerMixin",
+    "flashback.record.RecorderMixin"
+  ],
+  "package": "com.github.legoatoom.connectiblechains.mixin",
+  "mixinextras": {
+    "minVersion": "0.5.0"
+  },
+  "mixins": []
+}
