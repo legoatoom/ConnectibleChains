@@ -40,7 +40,7 @@ import net.minecraft.util.Uuids;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
-import net.minecraft.world.GameRules;
+import net.minecraft.world.rule.GameRules;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -155,7 +155,7 @@ public interface Chainable {
                         } else {
                             ConnectibleChains.LOGGER.debug("Removing chain since chainHolder ({}) is no longer alive, data: {}", chainHolder, chainData);
                         }
-                        if (world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
+                        if (world.getGameRules().getValue(GameRules.ENTITY_DROPS)) {
                             entity.detachChain(chainData);
                         } else {
                             entity.detachChainWithoutDrop(chainData);
