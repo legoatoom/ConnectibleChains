@@ -32,6 +32,9 @@
       "com.github.legoatoom.connectiblechains.config.ModMenuIntegration"
     ]
   },
+  "mixins": [
+    "connectiblechains.mixin.json"
+  ],
 
   "depends": {
     "fabricloader": ">=0.17.3",
