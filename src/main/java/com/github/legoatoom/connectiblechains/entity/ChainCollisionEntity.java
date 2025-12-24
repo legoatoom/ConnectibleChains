@@ -25,11 +25,13 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LightningEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
@@ -45,6 +47,8 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 import static com.github.legoatoom.connectiblechains.entity.Chainable.getSourceBlockSoundGroup;
 
@@ -66,24 +70,48 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
      * Only available in the server.
      */
     @Nullable
-    private Chainable.ChainData link;
+    private final Chainable.ChainData link;
 
     private Entity chainedEntity;
 
     @NotNull
     private Item linkSourceItem;
 
+    @Nullable
+    private EntityOxidationHandler<ChainCollisionEntity> oxidationHandler;
+
+    /**
+     * Main collision entity of all collision, if empty, it is the captain.
+     */
+    @Nullable
+    private ChainCollisionEntity captain;
 
     public ChainCollisionEntity(World world, double x, double y, double z, Entity chainedEntity, @NotNull Chainable.ChainData link) {
-        this(ModEntityTypes.CHAIN_COLLISION, world);
+        super(ModEntityTypes.CHAIN_COLLISION, world);
         this.link = link;
         this.setPosition(x, y, z);
-        this.linkSourceItem = link.sourceItem;
         this.chainedEntity = chainedEntity;
+        this.linkSourceItem = link.sourceItem;
+        if (Helper.isOxidizableSourceItem(linkSourceItem)) {
+            this.oxidationHandler = new EntityOxidationHandler<>(this);
+        }
     }
 
     public ChainCollisionEntity(EntityType<? extends ChainCollisionEntity> entityType, World world) {
         super(entityType, world);
+        this.link = new Chainable.ChainData(0, Items.IRON_CHAIN);
+        this.linkSourceItem = Items.IRON_CHAIN;
+    }
+
+    public boolean isCaptain() {
+        return captain == null;
+    }
+
+    public void setCaptain(ChainCollisionEntity captain) {
+        assert !captain.equals(this);
+
+        this.captain = captain;
+        this.oxidationHandler = captain.oxidationHandler; // Captain takes this over.
     }
 
     public static <E extends Entity & Chainable> void createCollision(E chainedEntity, Chainable.ChainData chainData) {
@@ -103,17 +131,28 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
         // reserve space for the center collider
         double centerHoldout = ModEntityTypes.CHAIN_COLLISION.getWidth() / distance;
 
+        ChainCollisionEntity captainCollision = spawnCollision(false, chainedEntity, chainData, 0.5);
+        if (captainCollision == null) {
+            ConnectibleChains.LOGGER.warn("Was unable to create collisions for {}", chainData);
+            return;
+        }
+        // This means first in storage is the captain, which is center.
+        chainData.collisionStorage.add(captainCollision.getId());
+
         while (v < 0.5 - centerHoldout) {
-            Entity collider1 = spawnCollision(false, chainedEntity, chainData, v);
-            if (collider1 != null) chainData.collisionStorage.add(collider1.getId());
-            Entity collider2 = spawnCollision(true, chainedEntity, chainData, v);
-            if (collider2 != null) chainData.collisionStorage.add(collider2.getId());
+            ChainCollisionEntity collider1 = spawnCollision(false, chainedEntity, chainData, v);
+            if (collider1 != null) {
+                chainData.collisionStorage.add(collider1.getId());
+                collider1.setCaptain(captainCollision);
+            }
+            ChainCollisionEntity collider2 = spawnCollision(true, chainedEntity, chainData, v);
+            if (collider2 != null) {
+                chainData.collisionStorage.add(collider2.getId());
+                collider2.setCaptain(captainCollision);
+            }
 
             v += step;
         }
-
-        Entity centerCollider = spawnCollision(false, chainedEntity, chainData, 0.5);
-        if (centerCollider != null) chainData.collisionStorage.add(centerCollider.getId());
     }
 
     public static <E extends Entity & Chainable> ChainCollisionEntity spawnCollision(boolean reverse, E chainedEntity, Chainable.ChainData chainData, double distancePercentage) {
@@ -171,11 +210,6 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
         return link;
     }
 
-    public @NotNull Item getLinkSourceItem() {
-        // Always available.
-        return linkSourceItem;
-    }
-
     @Override
     public boolean canHit() {
         return !isRemoved();
@@ -210,11 +244,25 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if (isCaptain() && getEntityWorld() instanceof ServerWorld serverWorld) {
+            getOxidationHandler().ifPresent(handler -> handler.updateWeathering(serverWorld.getRandom(), serverWorld.getTime()));
+        }
+    }
+
+    public Optional<EntityOxidationHandler<ChainCollisionEntity>> getOxidationHandler() {
+        return Optional.ofNullable(oxidationHandler);
+    }
+
+    @Override
     protected void readCustomData(ReadView view) {
+        getOxidationHandler().ifPresent(handler -> handler.readCustomData(view));
     }
 
     @Override
     protected void writeCustomData(WriteView view) {
+        getOxidationHandler().ifPresent(handler -> handler.writeCustomData(view));
     }
 
     /**
@@ -233,7 +281,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Override
     public boolean handleAttack(Entity attacker) {
         if (!super.handleAttack(attacker))
-            playSound(getSourceBlockSoundGroup(getLinkSourceItem()).getHitSound(), 0.5F, 1.0F);
+            playSound(getSourceBlockSoundGroup(getSourceItem()).getHitSound(), 0.5F, 1.0F);
         return false;
     }
 
@@ -244,7 +292,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     public boolean damage(ServerWorld world, DamageSource source, float amount) {
         // SEVER-SIDE //
         assert getLink() != null;
-        ActionResult result = onDamageFrom(source, getSourceBlockSoundGroup(getLinkSourceItem()).getHitSound());
+        ActionResult result = onDamageFrom(source, getSourceBlockSoundGroup(getSourceItem()).getHitSound());
 
         if (!result.isAccepted()) {
             return false;
@@ -268,8 +316,12 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
      */
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
-        if (player.getStackInHand(hand).isIn(ConventionalItemTags.SHEAR_TOOLS)) {
+        if (getOxidationHandler().isPresent() && this.getEntityWorld() instanceof ServerWorld) {
+            var result = getOxidationHandler().get().interact(player, hand);
+            if (result != null) return result;
+        }
 
+        if (player.getStackInHand(hand).isIn(ConventionalItemTags.SHEAR_TOOLS)) {
             return ActionResult.SUCCESS;
         }
         return ActionResult.PASS;
@@ -289,11 +341,35 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     public void onSpawnPacket(EntitySpawnS2CPacket packet) {
         super.onSpawnPacket(packet);
         int rawChainItemSourceId = packet.getEntityData();
-        linkSourceItem = Registries.ITEM.get(rawChainItemSourceId);
+        setSourceItem(Registries.ITEM.get(rawChainItemSourceId));
+    }
+
+    @Override
+    public void onStruckByLightning(ServerWorld world, LightningEntity lightning) {
+        super.onStruckByLightning(world, lightning);
+        getOxidationHandler().ifPresent(handler -> handler.onStruckByLightning(lightning));
     }
 
     @Override
     public @Nullable ItemStack getPickBlockStack() {
         return new ItemStack(linkSourceItem);
+    }
+
+    @Override
+    public void setSourceItem(Item sourceItem) {
+        var hasNewItem = this.linkSourceItem != sourceItem;
+        this.linkSourceItem = sourceItem;
+        if (isCaptain() && this.getEntityWorld() instanceof ServerWorld
+                && getLink() != null && hasNewItem && chainedEntity instanceof Chainable chainable) {
+            // This will replace the current chain with a new chain that has the new item.
+            // This is not that efficient, but is easier than setting up a new way to handle syncing of the source item.
+            chainable.detachChain(getLink(), false, false);
+            chainable.attachChain(getLink().copyWithSource(sourceItem), null, true, false);
+        }
+    }
+
+    @Override
+    public Item getSourceItem() {
+        return linkSourceItem;
     }
 }

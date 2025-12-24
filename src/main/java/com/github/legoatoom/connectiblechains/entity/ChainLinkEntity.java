@@ -19,6 +19,7 @@ package com.github.legoatoom.connectiblechains.entity;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.item.Item;
 import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.ActionResult;
@@ -70,4 +71,8 @@ public interface ChainLinkEntity {
     default ActionResult onDamageFrom(DamageSource source, SoundEvent hitSound) {
         return onDamageFrom((Entity & ChainLinkEntity) this, source, hitSound);
     }
+
+    void setSourceItem(Item souceItem);
+
+    Item getSourceItem();
 }
