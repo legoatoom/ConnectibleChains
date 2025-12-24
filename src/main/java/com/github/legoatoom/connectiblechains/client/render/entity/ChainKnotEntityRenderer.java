@@ -29,6 +29,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.render.Frustum;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.entity.EntityRenderer;
@@ -111,7 +112,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
 
         HashSet<ChainKnotEntityRenderState.ChainData> chainDataSet = state.chainDataSet;
         for (ChainKnotEntityRenderState.ChainData chainData : chainDataSet) {
-            RenderLayer catenaryRenderLayer = doDebugDraw ? RenderLayer.LINES : RenderLayer.getEntityCutoutNoCull(getChainTexture(chainData.sourceItem));
+            RenderLayer catenaryRenderLayer = doDebugDraw ? RenderLayers.LINES : RenderLayers.entityCutoutNoCull(getChainTexture(chainData.sourceItem));
             matrices.push();
             queue.submitCustom(
                     matrices,
