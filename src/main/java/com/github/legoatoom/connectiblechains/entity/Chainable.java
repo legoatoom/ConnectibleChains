@@ -410,6 +410,11 @@ public interface Chainable {
         @NotNull
         public final Item sourceItem;
         final int unresolvedChainHolderId;
+
+        public @Nullable Entity getChainHolder() {
+            return chainHolder;
+        }
+
         /**
          * The Holder is the entity that gets/receives the chain.
          * Either a ChainKnotEntity or a Player.
