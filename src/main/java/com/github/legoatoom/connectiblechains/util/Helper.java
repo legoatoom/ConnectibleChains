@@ -17,13 +17,25 @@
 package com.github.legoatoom.connectiblechains.util;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import net.minecraft.block.Oxidizable;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.HoneycombItem;
+import net.minecraft.item.Item;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Vector3f;
 
 public class Helper {
+
+    public static boolean isOxidizableSourceItem(Item item) {
+        if (item instanceof BlockItem blockItem) {
+            var block = blockItem.getBlock();
+            return block instanceof Oxidizable || HoneycombItem.WAXED_TO_UNWAXED_BLOCKS.get().containsKey(block);
+        }
+        return false;
+    }
 
     public static Identifier identifier(String name) {
         return Identifier.of(ConnectibleChains.MODID, name);
@@ -77,13 +89,6 @@ public class Helper {
         double a = ConnectibleChains.runtimeConfig.getChainHangAmount();
         double p1 = a * asinh((h / (2D * a)) * (1D / Math.sinh(d / (2D * a))));
         return Math.sinh((2 * x + 2 * p1 - d) / (2 * a));
-    }
-
-    public static Vec3d middleOf(Vec3d a, Vec3d b) {
-        double x = (a.getX() - b.getX()) / 2d + b.getX();
-        double y = (a.getY() - b.getY()) / 2d + b.getY();
-        double z = (a.getZ() - b.getZ()) / 2d + b.getZ();
-        return new Vec3d(x, y, z);
     }
 
     /**

@@ -24,6 +24,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.Leashable;
 import net.minecraft.entity.decoration.BlockAttachedEntity;
+import net.minecraft.entity.passive.CopperGolemEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
@@ -39,7 +40,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.Uuids;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.rule.GameRules;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +54,7 @@ import java.util.UUID;
  * Inspired by Leashable, but this allows for multiple connections.
  *
  * @see Leashable
+ * @see CopperGolemEntity
  */
 public interface Chainable {
     String CHAINS_NBT_KEY = "%s_Chains".formatted(ConnectibleChains.MODID);
@@ -79,7 +80,7 @@ public interface Chainable {
                     if (chainHolder != null) {
                         ChainData newChainData = new ChainData(chainHolder, chainData.sourceItem);
                         entity.replaceChainData(chainData, null);
-                        attachChain(entity, newChainData, null, true); // TODO: Do it in one bulk action instead of separate.
+                        attachChain(entity, newChainData, null, true, true); // TODO: Do it in one bulk action instead of separate.
                         continue;
                     }
                 } else if (optionalRelPos.isPresent()) {
@@ -87,7 +88,7 @@ public interface Chainable {
                     if (chainHolder != null) {
                         ChainData newChainData = new ChainData(chainHolder, chainData.sourceItem);
                         entity.replaceChainData(chainData, null);
-                        attachChain(entity, newChainData, null, true);
+                        attachChain(entity, newChainData, null, true, true);
                         continue;
                     }
                 }
@@ -101,11 +102,13 @@ public interface Chainable {
         }
     }
 
-    private static <E extends BlockAttachedEntity & Chainable> void detachChain(E entity, ChainData chainData, boolean sendPacket, boolean dropItem) {
+    private static <E extends BlockAttachedEntity & Chainable> void detachChain(E entity, ChainData chainData, boolean sendPacket, boolean dropItem, boolean playSound) {
         if (chainData.chainHolder != null && chainData.isAlive()) {
             chainData.kill();
             entity.replaceChainData(chainData, null);
-            entity.onChainDetached(chainData);
+            if (playSound) {
+                entity.playSound(chainData.getSourceBlockSoundGroup().getBreakSound(), 1.0F, 1.0F);
+            }
             if (entity.getEntityWorld() instanceof ServerWorld serverWorld) {
                 // SERVER-SIDE //
                 if (dropItem) {
@@ -122,13 +125,15 @@ public interface Chainable {
         }
     }
 
-    private static <E extends BlockAttachedEntity & Chainable> void attachChain(E entity, ChainData chainData, @Nullable Entity previousHolder, boolean sendPacket) {
+    private static <E extends BlockAttachedEntity & Chainable> void attachChain(E entity, ChainData chainData, @Nullable Entity previousHolder, boolean sendPacket, boolean playSound) {
         if (chainData.chainHolder == null) {
             throw new IllegalArgumentException("Given chainData has empty holder");
         }
 
         entity.replaceChainData(entity.getChainData(previousHolder), chainData);
-        entity.onChainAttached(chainData);
+        if (playSound) {
+            entity.playSound(chainData.getSourceBlockSoundGroup().getBreakSound(), 1.0F, 1.0F);
+        }
 
         if (sendPacket && entity.getEntityWorld() instanceof ServerWorld serverWorld) {
             serverWorld.getChunkManager().sendToOtherNearbyPlayers(entity, new ChainAttachS2CPacket(entity, previousHolder, chainData.chainHolder, chainData.sourceItem).asPacket());
@@ -155,11 +160,7 @@ public interface Chainable {
                         } else {
                             ConnectibleChains.LOGGER.debug("Removing chain since chainHolder ({}) is no longer alive, data: {}", chainHolder, chainData);
                         }
-                        if (world.getGameRules().getValue(GameRules.ENTITY_DROPS)) {
-                            entity.detachChain(chainData);
-                        } else {
-                            entity.detachChainWithoutDrop(chainData);
-                        }
+                        entity.detachChain(chainData, world.getGameRules().getValue(GameRules.ENTITY_DROPS), true);
                     }
                 }
 
@@ -274,7 +275,7 @@ public interface Chainable {
 
         HashSet<ChainData> chainData = readChainDataSet(view);
         if (!this.getChainDataSet().isEmpty() && chainData.isEmpty()) {
-            this.detachAllChainsWithoutDrop();
+            this.detachAllChains(false);
         }
 
         this.setChainData(chainData);
@@ -334,26 +335,17 @@ public interface Chainable {
     }
 
     default void detachChain(ChainData chainData) {
-        detachChain((BlockAttachedEntity & Chainable) this, chainData, true, true);
+        detachChain(chainData, true, true);
     }
 
-    default void detachChainWithoutDrop(ChainData chainData) {
-        detachChain((BlockAttachedEntity & Chainable) this, chainData, true, false);
+    default void detachChain(ChainData chainData, boolean dropItem, boolean playSound) {
+        detachChain((BlockAttachedEntity & Chainable) this, chainData, true, dropItem, playSound);
     }
 
-    default void detachAllChains() {
+    default void detachAllChains(boolean dropItems) {
         for (ChainData chainData : new HashSet<>(this.getChainDataSet())) {
-            detachChain(chainData);
+            detachChain(chainData, dropItems, true);
         }
-    }
-
-    default void detachAllChainsWithoutDrop() {
-        for (ChainData chainData : new HashSet<>(this.getChainDataSet())) {
-            detachChainWithoutDrop(chainData);
-        }
-    }
-
-    default void onChainDetached(ChainData removedChainData) {
     }
 
     /**
@@ -374,10 +366,11 @@ public interface Chainable {
     }
 
     default void attachChain(ChainData chainData, @Nullable Entity previousHolder, boolean sendPacket) {
-        attachChain((BlockAttachedEntity & Chainable) this, chainData, previousHolder, sendPacket);
+        attachChain(chainData, previousHolder, sendPacket, true);
     }
 
-    default void onChainAttached(ChainData newChainData) {
+    default void attachChain(ChainData chainData, @Nullable Entity previousHolder, boolean sendPacket, boolean playSound) {
+        attachChain((BlockAttachedEntity & Chainable) this, chainData, previousHolder, sendPacket, playSound);
     }
 
     @Nullable
@@ -497,7 +490,6 @@ public interface Chainable {
             }
         }
 
-
         @Override
         public String toString() {
             return "ChainData{" +
@@ -507,6 +499,16 @@ public interface Chainable {
                     ", unresolvedChainHolderId=" + unresolvedChainHolderId +
                     ", chainHolder=" + chainHolder +
                     '}';
+        }
+
+        public ChainData copyWithSource(Item sourceItem) {
+            if (chainHolder != null) {
+                return new ChainData(chainHolder, sourceItem);
+            } else if (unresolvedChainData != null) {
+                return new ChainData(unresolvedChainData, sourceItem);
+            } else {
+                return new ChainData(unresolvedChainHolderId, sourceItem);
+            }
         }
     }
 }
