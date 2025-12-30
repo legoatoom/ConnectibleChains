@@ -1,6 +1,14 @@
 {
   "replace": false,
   "values": [
-    "minecraft:chain"
+    "minecraft:chain",
+    {
+      "id": "mcwlights:copper_chain",
+      "required": false
+    },
+    {
+      "id": "mcwlights:golden_chain",
+      "required": false
+    }
   ]
 }
