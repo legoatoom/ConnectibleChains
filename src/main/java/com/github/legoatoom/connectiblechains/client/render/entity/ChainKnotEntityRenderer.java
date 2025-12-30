@@ -24,7 +24,10 @@ import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.Chainable;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
@@ -67,22 +70,6 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity> {
 
     public ChainRenderer getChainRenderer() {
         return chainRenderer;
-    }
-
-    @Override
-    public boolean shouldRender(ChainKnotEntity entity, Frustum frustum, double x, double y, double z) {
-        if (super.shouldRender(entity, frustum, x, y, z)) {
-            return true;
-        }
-        for (Chainable.ChainData chainData : new HashSet<>(entity.getChainDataSet())) {
-            Entity chainHolder = entity.getChainHolder(chainData);
-            if (chainHolder != null) {
-                if (frustum.isVisible(chainHolder.getBoundingBox().expand(entity.distanceTo(chainHolder)))) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     @Override

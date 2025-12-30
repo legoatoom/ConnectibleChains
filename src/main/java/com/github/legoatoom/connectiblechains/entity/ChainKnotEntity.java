@@ -39,7 +39,6 @@ import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.BlockMirror;
 import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -278,6 +277,18 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements Chainab
             return false;
         }
         return distance < 1024.0; //TODO: Determine if this needs to be changed, it used to be just true.
+    }
+
+    @Override
+    public Box getVisibilityBoundingBox() {
+        Box result = super.getVisibilityBoundingBox();
+        for (ChainData chainData : getChainDataSet()) {
+            Entity entity = this.getChainHolder(chainData);
+            if (entity == null) continue;
+
+            result = result.union(entity.getBoundingBox()); // Not visible otherwise it would also get its chains.
+        }
+        return result;
     }
 
     @Override
