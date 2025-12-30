@@ -26,7 +26,6 @@ import com.github.legoatoom.connectiblechains.entity.ChainKnotEntity;
 import com.github.legoatoom.connectiblechains.entity.Chainable;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.render.Frustum;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderLayers;
@@ -44,6 +43,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
@@ -79,19 +79,15 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
     }
 
     @Override
-    public boolean shouldRender(ChainKnotEntity entity, Frustum frustum, double x, double y, double z) {
-        if (super.shouldRender(entity, frustum, x, y, z)) {
-            return true;
-        }
+    protected Box getBoundingBox(ChainKnotEntity entity) {
+        var result = entity.getBoundingBox();
         for (Chainable.ChainData chainData : new HashSet<>(entity.getChainDataSet())) {
             Entity chainHolder = entity.getChainHolder(chainData);
-            if (chainHolder != null) {
-                if (frustum.isVisible(chainHolder.getBoundingBox().expand(entity.distanceTo(chainHolder)))) {
-                    return true;
-                }
-            }
+            if (chainHolder == null) continue;
+
+            result = result.union(chainHolder.getBoundingBox());
         }
-        return false;
+        return result;
     }
 
     @Override
