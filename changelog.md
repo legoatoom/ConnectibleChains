@@ -15,6 +15,8 @@ Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene
 * Prevent mixing and matching different catenary types on a single knot.
 * Fix collision entities persisting on servers.
 * Add additional check for knots across unloaded chunks. [#73](https://github.com/legoatoom/ConnectibleChains/issues/73)
+* Optimized chain rendering performance and fixed a potential memory leak in the model cache.
+* Prevent chains from snapping when attached to entities in unloaded chunks.
 
 ## [2.5.7] - 12026-01-07
 

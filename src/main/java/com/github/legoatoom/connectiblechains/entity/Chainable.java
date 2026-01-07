@@ -98,7 +98,6 @@ public interface Chainable {
                         ChainData newChainData = new ChainData(chainHolder, chainData.sourceItem);
                         entity.replaceChainData(chainData, null);
                         attachChain(entity, newChainData, null, true); // TODO: Do it in one bulk action instead of separate.
-                        continue;
                     }
                 } else if (optionalBlockPos.isPresent()) {
                     BlockPos targetPos = entity.getDecorationBlockPos().add(optionalBlockPos.get());
@@ -112,15 +111,9 @@ public interface Chainable {
                         ChainData newChainData = new ChainData(chainHolder, chainData.sourceItem);
                         entity.replaceChainData(chainData, null);
                         attachChain(entity, newChainData, null, true);
-                        continue;
                     }
                 }
 
-                if (entity.age > 100) {
-                    ConnectibleChains.LOGGER.debug("Dropping chain connection as we have not been able to find chainholder for {}", chainData);
-                    entity.dropItem(chainData.sourceItem);
-                    entity.replaceChainData(chainData, null);
-                }
             }
         }
     }
@@ -219,6 +212,10 @@ public interface Chainable {
                     float distanceTo = entity.distanceTo(chainHolder);
                     if (!entity.beforeChainTick(chainHolder, distanceTo)) {
                         continue;
+                    }
+
+                    if (chainHolder instanceof Chainable) {
+                        ChainCollisionEntity.createCollision(entity, chainData);
                     }
 
                     if (distanceTo > getMaxChainLength()) {
@@ -422,7 +419,7 @@ public interface Chainable {
 
     Vec3d getChainPos(float delta);
 
-    public static final class ChainData {
+    final class ChainData {
         /**
          * Boolean to check if the chain link is already dead
          */

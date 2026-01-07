@@ -82,8 +82,13 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     }
 
     public static <E extends Entity & Chainable> void createCollision(E chainedEntity, Chainable.ChainData chainData) {
-        if (!chainData.collisionStorage.isEmpty()) return;
         if (chainedEntity.getWorld().isClient()) return;
+
+        ServerWorld serverWorld = (ServerWorld) chainedEntity.getWorld();
+        chainData.collisionStorage.removeIf(id -> serverWorld.getEntityById(id) == null);
+
+        if (!chainData.collisionStorage.isEmpty()) return;
+
         // SERVER-SIDE //
         Entity chainHolder = chainedEntity.getChainHolder(chainData);
 
@@ -159,6 +164,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
                 ConnectibleChains.LOGGER.warn("Collision storage contained reference to {} (#{}) which is not a collision entity.", e, entityId);
             }
         }
+        chainData.collisionStorage.clear();
     }
 
     public @Nullable Chainable.ChainData getLink() {
@@ -253,6 +259,14 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Override
     public boolean damage(DamageSource source, float amount) {
         if (getWorld().isClient) return false;
+
+        if (source.getAttacker() instanceof PlayerEntity player) {
+            boolean isCreative = player.isCreative();
+            boolean hasShears = player.getMainHandStack().isIn(ConventionalItemTags.SHEARS);
+            if (!isCreative && !hasShears) {
+                return false;
+            }
+        }
 
         // SEVER-SIDE //
         if (getLink() == null) {
