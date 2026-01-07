@@ -14,6 +14,7 @@ Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene
 * Fix using shears to break knots not reducing its durability.
 * Prevent mixing and matching different catenary types on a single knot.
 * Fix collision entities persisting on servers.
+* Add additional check for knots across unloaded chunks. [#73](https://github.com/legoatoom/ConnectibleChains/issues/73)
 
 ## [2.5.7] - 12026-01-07
 
