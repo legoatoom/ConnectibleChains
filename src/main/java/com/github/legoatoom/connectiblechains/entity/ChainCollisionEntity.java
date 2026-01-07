@@ -205,11 +205,26 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if (getWorld().isClient) return;
+
+        if (this.link == null || !this.link.isAlive()) {
+            this.discard();
+        }
+    }
+
+    @Override
     protected void readCustomDataFromNbt(NbtCompound nbt) {
     }
 
     @Override
     protected void writeCustomDataToNbt(NbtCompound nbt) {
+    }
+
+    @Override
+    public boolean shouldSave() {
+        return false;
     }
 
     /**
@@ -240,7 +255,11 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
         if (getWorld().isClient) return false;
 
         // SEVER-SIDE //
-        assert getLink() != null;
+        if (getLink() == null) {
+            this.discard();
+            return false;
+        }
+
         ActionResult result = onDamageFrom(source, getSourceBlockSoundGroup(getLinkSourceItem()).getHitSound());
 
         if (!result.isAccepted()) {
@@ -266,8 +285,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
         if (player.getStackInHand(hand).isIn(ConventionalItemTags.SHEARS)) {
-
-            return ActionResult.SUCCESS;
+            return ActionResult.PASS;
         }
         return ActionResult.PASS;
     }
