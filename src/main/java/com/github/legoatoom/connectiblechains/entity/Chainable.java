@@ -3,6 +3,7 @@ package com.github.legoatoom.connectiblechains.entity;
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.migrator.ChainableMigrator;
 import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
+import com.github.legoatoom.connectiblechains.tag.ModTagRegistry;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.entity.Entity;
@@ -10,8 +11,8 @@ import net.minecraft.entity.Leashable;
 import net.minecraft.entity.decoration.BlockAttachedEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.item.LeadItem;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
@@ -183,10 +184,11 @@ public interface Chainable {
      * Get the sound used for the source item, this way the sound is consistent.
      */
     static BlockSoundGroup getSourceBlockSoundGroup(Item sourceItem) {
-        return switch (sourceItem) {
-            case BlockItem blockItem -> blockItem.getBlock().getDefaultState().getSoundGroup();
-            // Special case for leads
-            case LeadItem ignored -> new BlockSoundGroup(
+        if (sourceItem instanceof BlockItem blockItem) {
+            return blockItem.getBlock().getDefaultState().getSoundGroup();
+        } else if (new ItemStack(sourceItem).isIn(ModTagRegistry.ROPES)) {
+            // Not perfect, but it is better than making things that look like ropes/leads sound like chains.
+            return new BlockSoundGroup(
                     1.0f,
                     1.0f,
                     SoundEvents.ITEM_LEAD_UNTIED,
@@ -195,8 +197,8 @@ public interface Chainable {
                     BlockSoundGroup.WOOL.getHitSound(),
                     BlockSoundGroup.WOOL.getFallSound()
             );
-            case null, default -> BlockSoundGroup.CHAIN;
-        };
+        }
+        return BlockSoundGroup.CHAIN;
     }
 
     default boolean canAttachTo(Entity entity) {
