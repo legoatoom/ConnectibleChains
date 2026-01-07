@@ -121,6 +121,10 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements Chainab
 
     @Override
     public void tick() {
+        if (!this.getWorld().isClient && !this.canStayAttached()) {
+            this.discard();
+            this.onBreak(null);
+        }
         super.tick();
         if (this.getWorld() instanceof ServerWorld serverWorld) {
             Chainable.tickChain(serverWorld, this);
@@ -143,6 +147,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements Chainab
 
             // Client handle attach.
             if (handStack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
+                if (handStack.getItem() != this.sourceItem) return ActionResult.PASS;
+
                 if (!player.isCreative()) {
                     handStack.decrement(1);
                 }
@@ -165,6 +171,9 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements Chainab
                 // TODO: Kinda inefficient, perhaps return a list of pairs? Chainable+ChainData.
                 ChainData chainData = chainable.getChainData(player);
                 if (chainData == null || !chainable.canAttachTo(this)) continue;
+
+                if (chainData.sourceItem != this.sourceItem) continue;
+
                 chainable.attachChain(new ChainData(this, chainData.sourceItem), player, true);
                 hasConnectedFromPlayer = true;
             }
@@ -194,6 +203,8 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements Chainab
 
             // CASE: Player interacts with knot that they are currently NOT attached to. Make a new connection.
             if (handStack.isIn(ModTagRegistry.CATENARY_ITEMS)) {
+                if (handStack.getItem() != this.sourceItem) return ActionResult.PASS;
+
                 onPlace();
                 attachChain(new ChainData(player, handStack.getItem()), null, true);
                 if (!player.isCreative()) {
