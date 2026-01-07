@@ -2,12 +2,13 @@ package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
+import com.github.legoatoom.connectiblechains.tag.ModTagRegistry;
 import com.mojang.datafixers.util.Either;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
-import net.minecraft.item.LeadItem;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -215,7 +216,8 @@ public interface Chainable {
     static BlockSoundGroup getSourceBlockSoundGroup(Item sourceItem) {
         if (sourceItem instanceof BlockItem blockItem) {
             return blockItem.getBlock().getDefaultState().getSoundGroup();
-        } else if (sourceItem instanceof LeadItem) {
+        } else if (new ItemStack(sourceItem).isIn(ModTagRegistry.ROPES)) {
+            // Not perfect, but it is better than making things that look like ropes/leads sound like chains.
             return new BlockSoundGroup(
                     1.0f,
                     1.0f,

@@ -29,6 +29,7 @@ import net.minecraft.util.Identifier;
 public class ModTagRegistry {
     public static final TagKey<Block> CHAIN_CONNECTIBLE = makeTag(RegistryKeys.BLOCK, Helper.identifier("chain_connectible"));
     public static final TagKey<Item> CATENARY_ITEMS = makeTag(RegistryKeys.ITEM, Helper.identifier("catenary_items"));
+    public static final TagKey<Item> ROPES = makeTag(RegistryKeys.ITEM, Helper.identifier("ropes"));
 
     /**
      * Get or create {@link TagKey}.

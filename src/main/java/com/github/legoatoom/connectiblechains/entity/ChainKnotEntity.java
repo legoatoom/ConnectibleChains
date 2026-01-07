@@ -273,7 +273,7 @@ public class ChainKnotEntity extends AbstractDecorationEntity implements Chainab
     @Override
     public Box getVisibilityBoundingBox() {
         Box result = super.getVisibilityBoundingBox();
-        for (ChainData chainData : getChainDataSet()) {
+        for (ChainData chainData : new HashSet<>(this.getChainDataSet())) {
             Entity entity = this.getChainHolder(chainData);
             if (entity == null) continue;
 
