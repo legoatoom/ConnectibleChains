@@ -91,6 +91,7 @@ public interface Chainable {
             if (chainData.unresolvedChainData != null) {
                 Optional<UUID> optionalUUID = chainData.unresolvedChainData.left();
                 Optional<BlockPos> optionalBlockPos = chainData.unresolvedChainData.right();
+
                 if (optionalUUID.isPresent()) {
                     Entity chainHolder = serverWorld.getEntity(optionalUUID.get());
                     if (chainHolder != null) {
@@ -100,7 +101,13 @@ public interface Chainable {
                         continue;
                     }
                 } else if (optionalBlockPos.isPresent()) {
-                    ChainKnotEntity chainHolder = ChainKnotEntity.getOrNull(serverWorld, entity.getDecorationBlockPos().add(optionalBlockPos.get()));
+                    BlockPos targetPos = entity.getDecorationBlockPos().add(optionalBlockPos.get());
+
+                    if (!serverWorld.isChunkLoaded(targetPos)) {
+                        continue;
+                    }
+
+                    ChainKnotEntity chainHolder = ChainKnotEntity.getOrNull(serverWorld, targetPos);
                     if (chainHolder != null) {
                         ChainData newChainData = new ChainData(chainHolder, chainData.sourceItem);
                         entity.replaceChainData(chainData, null);
