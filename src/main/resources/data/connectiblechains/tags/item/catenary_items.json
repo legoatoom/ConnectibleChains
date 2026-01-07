@@ -2,14 +2,6 @@
   "replace": false,
   "values": [
     "#minecraft:chains",
-    "minecraft:lead",
-    {
-      "id": "farmersdelight:rope",
-      "required": false
-    },
-    {
-      "id": "supplementaries:rope",
-      "required": false
-    }
+    "#connectiblechains:ropes"
   ]
 }

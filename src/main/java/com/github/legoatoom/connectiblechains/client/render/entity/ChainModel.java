@@ -57,12 +57,11 @@ public record ChainModel(float[] vertices, float[] uvs) {
             int light = LightmapTextureManager.pack(blockLight, skyLight);
             buffer
                     .vertex(matricesEntry, vertices[i * 3], vertices[i * 3 + 1], vertices[i * 3 + 2])
-                    .color(255, 255, 255, 255)
+                    .color(0.8f, 0.8f, 0.8f, 1f)
                     .texture(uvs[i * 2], uvs[i * 2 + 1])
                     .overlay(OverlayTexture.DEFAULT_UV)
                     .light(light)
-                    // trial and error magic values that change the overall brightness of the chain
-                    .normal(1, 0.35f, 0);
+                    .normal(1, 1, 1);
         }
     }
 
