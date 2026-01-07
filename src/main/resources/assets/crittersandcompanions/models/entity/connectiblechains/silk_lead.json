@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "chain": "crittersandcompanions:entity/silk_lead_rope",
+    "knot": "crittersandcompanions:entity/silk_lead_knot"
+  }
+}

@@ -2,13 +2,14 @@ package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
+import com.github.legoatoom.connectiblechains.tag.ModTagRegistry;
 import com.mojang.datafixers.util.Either;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.Leashable;
 import net.minecraft.entity.decoration.BlockAttachedEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
-import net.minecraft.item.LeadItem;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -215,9 +216,11 @@ public interface Chainable {
      * Get the sound used for the source item, this way the sound is consistent.
      */
     static BlockSoundGroup getSourceBlockSoundGroup(Item sourceItem) {
-        return switch (sourceItem) {
-            case BlockItem blockItem -> blockItem.getBlock().getDefaultState().getSoundGroup();
-            case LeadItem ignored -> new BlockSoundGroup(
+        if (sourceItem instanceof BlockItem blockItem) {
+            return blockItem.getBlock().getDefaultState().getSoundGroup();
+        } else if (new ItemStack(sourceItem).isIn(ModTagRegistry.ROPES)) {
+            // Not perfect, but it is better than making things that look like ropes/leads sound like chains.
+            return new BlockSoundGroup(
                     1.0f,
                     1.0f,
                     SoundEvents.ENTITY_LEASH_KNOT_BREAK,
@@ -226,8 +229,8 @@ public interface Chainable {
                     BlockSoundGroup.WOOL.getHitSound(),
                     BlockSoundGroup.WOOL.getFallSound()
             );
-            case null, default -> BlockSoundGroup.CHAIN;
-        };
+        }
+        return BlockSoundGroup.CHAIN;
     }
 
     default boolean canAttachTo(Entity entity) {

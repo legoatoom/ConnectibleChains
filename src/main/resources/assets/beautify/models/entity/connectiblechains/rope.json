@@ -1,0 +1,13 @@
+{
+  "textures": {
+    "chain": "beautify:entity/rope_rope",
+    "knot": "beautify:entity/rope_knot"
+  },
+  "model": "connectiblechains:square",
+  "uv": [
+    0,
+    2,
+    2,
+    4
+  ]
+}
