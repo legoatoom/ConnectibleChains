@@ -1,0 +1,22 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:lead",
+    {
+      "id": "farmersdelight:rope",
+      "required": false
+    },
+    {
+      "id": "supplementaries:rope",
+      "required": false
+    },
+    {
+      "id": "beautify:rope",
+      "required": false
+    },
+    {
+      "id": "crittersandcompanions:silk_lead",
+      "required": false
+    }
+  ]
+}
