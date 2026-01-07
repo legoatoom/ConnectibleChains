@@ -107,7 +107,7 @@ public class ChainKnotEntityRenderer extends EntityRenderer<ChainKnotEntity, Cha
 
         HashSet<ChainKnotEntityRenderState.ChainData> chainDataSet = state.chainDataSet;
         for (ChainKnotEntityRenderState.ChainData chainData : chainDataSet) {
-            RenderLayer catenaryRenderLayer = doDebugDraw ? RenderLayer.LINES : RenderLayer.getEntityCutoutNoCull(getChainTexture(chainData.sourceItem));
+            RenderLayer catenaryRenderLayer = doDebugDraw ? RenderLayer.LINES : RenderLayer.getEntitySmoothCutout(getChainTexture(chainData.sourceItem));
             matrices.push();
             queue.submitCustom(
                     matrices,
