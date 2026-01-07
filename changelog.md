@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.5.7] - 12026-01-07
+
+- Support Beautify ropes [#94](https://github.com/legoatoom/ConnectibleChains/issues/94)
+- Support Critters & Companions's silk lead [#108](https://github.com/legoatoom/ConnectibleChains/issues/108)
+- Fix invisible chains on walls [#109](https://github.com/legoatoom/ConnectibleChains/issues/109)
+
 ## [2.5.6] - 12025-12-30
 
 - Added `ja-jp` translation by courtesy of [Maeko802](https://github.com/maeko802).
