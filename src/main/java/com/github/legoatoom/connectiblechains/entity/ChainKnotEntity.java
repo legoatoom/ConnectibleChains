@@ -130,6 +130,18 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
     }
 
     @Override
+    public Box getVisibilityBoundingBox() {
+        Box result = super.getVisibilityBoundingBox();
+        for (ChainData chainData : new HashSet<>(getChainDataSet())) {
+            Entity entity = this.getChainHolder(chainData);
+            if (entity == null) continue;
+
+            result = result.union(entity.getBoundingBox()); // Not visible otherwise it would also get its chains.
+        }
+        return result;
+    }
+
+    @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
 
         ItemStack handStack = player.getStackInHand(hand);
