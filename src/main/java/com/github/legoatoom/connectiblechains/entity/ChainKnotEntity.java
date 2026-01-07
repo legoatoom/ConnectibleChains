@@ -38,7 +38,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.storage.ReadView;
@@ -302,14 +301,6 @@ public class ChainKnotEntity extends BlockAttachedEntity implements Chainable, C
         double width = getType().getWidth() / 2.0;
         double height = getType().getHeight();
         setBoundingBox(new Box(getX() - width, getY(), getZ() - width, getX() + width, getY() + height, getZ() + width));
-    }
-
-    @Override
-    public boolean shouldRender(double distance) {
-        if (getEntityWorld().getBlockState(getAttachedBlockPos()).isIn(BlockTags.WALLS)) {
-            return false;
-        }
-        return distance < 1024.0; //TODO: Determine if this needs to be changed, it used to be just true.
     }
 
     @Override
