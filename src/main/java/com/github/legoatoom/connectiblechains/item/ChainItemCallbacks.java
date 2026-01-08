@@ -75,6 +75,8 @@ public class ChainItemCallbacks {
                 if (world instanceof ServerWorld serverWorld) {
                     ChainKnotEntity knot = ChainKnotEntity.getOrCreate(serverWorld, blockPos, stack.getItem());
 
+                    if (knot.getSourceItem() != stack.getItem()) return ActionResult.PASS;
+
                     return knot.interact(player, hand);
                 }
                 return ActionResult.SUCCESS;
@@ -102,6 +104,8 @@ public class ChainItemCallbacks {
                 chainKnotEntity = ChainKnotEntity.getOrCreate(world, pos, chainable.getSourceItem());
                 chainKnotEntity.onPlace();
             }
+
+            if (chainable.getSourceItem() != chainKnotEntity.getSourceItem()) continue;
 
             if (chainable.canAttachTo(chainKnotEntity)) {
                 Chainable.ChainData chainData = chainable.getChainData(player);

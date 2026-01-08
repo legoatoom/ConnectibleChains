@@ -16,22 +16,26 @@ package com.github.legoatoom.connectiblechains.client.render.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
 import com.github.legoatoom.connectiblechains.client.render.entity.catenary.CatenaryRenderer;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Vector3f;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class ChainRenderer {
 
-    /**
-     * The geometry of a chain only depends on the vector from the source to the destination.
-     * The rotation/direction and translation of the chain do not matter as they are accounted for during rendering.
-     */
-    private final Object2ObjectOpenHashMap<BakeKey, ChainModel> models = new Object2ObjectOpenHashMap<>(256);
+    private static final int MAX_CACHE_SIZE = 1000;
+
+    private final Map<BakeKey, ChainModel> models = new LinkedHashMap<>(MAX_CACHE_SIZE, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<BakeKey, ChainModel> eldest) {
+            return size() > MAX_CACHE_SIZE;
+        }
+    };
 
     /**
      * Renders the cached model for the given {@code key}.
@@ -39,14 +43,15 @@ public class ChainRenderer {
      *
      * @param buffer      The target vertex buffer
      * @param matrices    The chain transformation
-     * @param key         The cache key for the {@code chainVec}
      * @param chainVec    The vector from the start position to the end position
      * @param blockLight0 The block light level at the start
      * @param blockLight1 The block light level at the end
      * @param skyLight0   The sky light level at the start
      * @param skyLight1   The sky light level at the end
      */
-    public void renderBaked(CatenaryRenderer renderer, VertexConsumer buffer, MatrixStack matrices, BakeKey key, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
+    public void renderBaked(CatenaryRenderer renderer, VertexConsumer buffer, MatrixStack matrices, BakeKey ignoredOldKey, Vector3f chainVec, int blockLight0, int blockLight1, int skyLight0, int skyLight1) {
+        BakeKey key = new BakeKey(chainVec);
+
         ChainModel model;
         if (models.containsKey(key)) {
             model = models.get(key);
@@ -54,9 +59,11 @@ public class ChainRenderer {
             model = renderer.buildModel(chainVec);
             models.put(key, model);
         }
-        if (FabricLoader.getInstance().isDevelopmentEnvironment() && models.size() > 10000) {
-            ConnectibleChains.LOGGER.error("Chain model leak found!");
+
+        if (FabricLoader.getInstance().isDevelopmentEnvironment() && models.size() > MAX_CACHE_SIZE) {
+            ConnectibleChains.LOGGER.warn("Chain model cache full, evicting...");
         }
+
         model.render(buffer, matrices, blockLight0, blockLight1, skyLight0, skyLight1);
     }
 
@@ -84,23 +91,26 @@ public class ChainRenderer {
      * Chains that have an identical bake key can use the same model as the geometry is the same.
      */
     public static class BakeKey {
-        private final Vec3d srcPos;
-        private final Vec3d dstPos;
+        private final Vector3f chainVec;
+
+        public BakeKey(Vector3f chainVec) {
+            this.chainVec = new Vector3f(chainVec);
+        }
 
         public BakeKey(Vec3d srcPos, Vec3d dstPos) {
-            this.srcPos = srcPos;
-            this.dstPos = dstPos;
+            this.chainVec = new Vector3f((float)(dstPos.x - srcPos.x), (float)(dstPos.y - srcPos.y), (float)(dstPos.z - srcPos.z));
         }
 
         @Override
         public boolean equals(Object o) {
+            if (this == o) return true;
             if (!(o instanceof BakeKey bakeKey)) return false;
-            return Objects.equals(srcPos, bakeKey.srcPos) && Objects.equals(dstPos, bakeKey.dstPos);
+            return Objects.equals(chainVec, bakeKey.chainVec);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(srcPos, dstPos);
+            return Objects.hash(chainVec);
         }
     }
 }

@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Time is following the [Holocene Calendar](https://en.wikipedia.org/wiki/Holocene_calendar).
 
+## [2.5.8] - 12026-01-07
+
+- Add logic to automatically discard empty knots.
+- Knots now check for a valid attachment block and are discarded immediately if the supporting fence or block is removed.
+- Add ability to punch knots to break them.
+- Fix using shears to break knots not reducing its durability.
+- Prevent mixing and matching different catenary types on a single knot.
+- Fix collision entities persisting on servers.
+- Add additional check for knots across unloaded chunks. [#73](https://github.com/legoatoom/ConnectibleChains/issues/73)
+- Optimized chain rendering performance and fixed a potential memory leak in the model cache.
+- Prevent chains from snapping when attached to entities in unloaded chunks.
+- Add config option to disable chain collision.
+
 ## [2.5.7] - 12026-01-07
 
 - Support Beautify ropes [#94](https://github.com/legoatoom/ConnectibleChains/issues/94)

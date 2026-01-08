@@ -21,6 +21,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
 
 /**
  * ChainLinkEntity implements common functionality between {@link ChainCollisionEntity} and {@link ChainKnotEntity}.
@@ -41,8 +42,12 @@ public interface ChainLinkEntity {
 
         if (source.getAttacker() instanceof PlayerEntity player) {
             if (player.getMainHandStack().isIn(ConventionalItemTags.SHEARS)) {
+                if (!player.isCreative()) {
+                    player.getMainHandStack().damage(1, player, (p) -> p.sendToolBreakStatus(Hand.MAIN_HAND));
+                }
                 return ActionResult.SUCCESS;
             }
+            return ActionResult.SUCCESS;
         }
 
         if (!source.isIn(DamageTypeTags.IS_PROJECTILE)) {

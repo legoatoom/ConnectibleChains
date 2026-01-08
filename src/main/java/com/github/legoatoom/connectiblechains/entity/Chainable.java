@@ -1,6 +1,7 @@
 package com.github.legoatoom.connectiblechains.entity;
 
 import com.github.legoatoom.connectiblechains.ConnectibleChains;
+import com.github.legoatoom.connectiblechains.item.ChainItemCallbacks;
 import com.github.legoatoom.connectiblechains.networking.packet.ChainAttachS2CPacket;
 import com.github.legoatoom.connectiblechains.tag.ModTagRegistry;
 import com.mojang.datafixers.util.Either;
@@ -90,35 +91,37 @@ public interface Chainable {
             if (chainData.unresolvedChainData != null) {
                 Optional<UUID> optionalUUID = chainData.unresolvedChainData.left();
                 Optional<BlockPos> optionalBlockPos = chainData.unresolvedChainData.right();
+
                 if (optionalUUID.isPresent()) {
                     Entity chainHolder = serverWorld.getEntity(optionalUUID.get());
                     if (chainHolder != null) {
                         ChainData newChainData = new ChainData(chainHolder, chainData.sourceItem);
                         entity.replaceChainData(chainData, null);
                         attachChain(entity, newChainData, null, true); // TODO: Do it in one bulk action instead of separate.
-                        continue;
                     }
                 } else if (optionalBlockPos.isPresent()) {
-                    ChainKnotEntity chainHolder = ChainKnotEntity.getOrNull(serverWorld, entity.getDecorationBlockPos().add(optionalBlockPos.get()));
+                    BlockPos targetPos = entity.getDecorationBlockPos().add(optionalBlockPos.get());
+
+                    if (!serverWorld.isChunkLoaded(targetPos)) {
+                        continue;
+                    }
+
+                    ChainKnotEntity chainHolder = ChainKnotEntity.getOrNull(serverWorld, targetPos);
                     if (chainHolder != null) {
                         ChainData newChainData = new ChainData(chainHolder, chainData.sourceItem);
                         entity.replaceChainData(chainData, null);
                         attachChain(entity, newChainData, null, true);
-                        continue;
                     }
                 }
 
-                if (entity.age > 100) {
-                    ConnectibleChains.LOGGER.debug("Dropping chain connection as we have not been able to find chainholder for {}", chainData);
-                    entity.dropItem(chainData.sourceItem);
-                    entity.replaceChainData(chainData, null);
-                }
             }
         }
     }
 
     private static <E extends AbstractDecorationEntity & Chainable> void detachChain(E entity, ChainData chainData, boolean sendPacket, boolean dropItem) {
         if (chainData.chainHolder != null && chainData.isAlive()) {
+            Entity holder = chainData.chainHolder;
+
             chainData.kill();
             entity.replaceChainData(chainData, null);
             entity.onChainDetached(chainData);
@@ -129,10 +132,36 @@ public interface Chainable {
                 }
 
                 if (sendPacket) {
-                    serverWorld.getChunkManager().sendToOtherNearbyPlayers(entity, new ChainAttachS2CPacket(entity, chainData.chainHolder, null, chainData.sourceItem).asPacket());
+                    serverWorld.getChunkManager().sendToOtherNearbyPlayers(entity, new ChainAttachS2CPacket(entity, holder, null, chainData.sourceItem).asPacket());
                 }
                 ChainCollisionEntity.destroyCollision(serverWorld, chainData);
+
+                // Check Holder (The other end)
+                if (holder instanceof ChainKnotEntity knot) {
+                    checkAndDiscardKnot(serverWorld, knot);
+                }
+
+                // Check Entity (The one detaching)
+                if (entity instanceof ChainKnotEntity knot) {
+                    checkAndDiscardKnot(serverWorld, knot);
+                }
             }
+        }
+    }
+
+    private static void checkAndDiscardKnot(ServerWorld world, ChainKnotEntity knot) {
+        if (!knot.getChainDataSet().isEmpty()) return;
+
+        // Check incoming
+        List<Chainable> incoming = ChainItemCallbacks.collectChainablesAround(
+                world,
+                knot.getDecorationBlockPos(),
+                c -> c.getChainData(knot) != null
+        );
+
+        if (incoming.isEmpty()) {
+            knot.discard();
+            knot.onBreak(null);
         }
     }
 
@@ -183,6 +212,10 @@ public interface Chainable {
                     float distanceTo = entity.distanceTo(chainHolder);
                     if (!entity.beforeChainTick(chainHolder, distanceTo)) {
                         continue;
+                    }
+
+                    if (chainHolder instanceof Chainable) {
+                        ChainCollisionEntity.createCollision(entity, chainData);
                     }
 
                     if (distanceTo > getMaxChainLength()) {
@@ -386,7 +419,7 @@ public interface Chainable {
 
     Vec3d getChainPos(float delta);
 
-    public static final class ChainData {
+    final class ChainData {
         /**
          * Boolean to check if the chain link is already dead
          */

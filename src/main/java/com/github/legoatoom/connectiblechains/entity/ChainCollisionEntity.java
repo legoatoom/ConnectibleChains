@@ -82,8 +82,19 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     }
 
     public static <E extends Entity & Chainable> void createCollision(E chainedEntity, Chainable.ChainData chainData) {
-        if (!chainData.collisionStorage.isEmpty()) return;
         if (chainedEntity.getWorld().isClient()) return;
+
+        ServerWorld serverWorld = (ServerWorld) chainedEntity.getWorld();
+
+        if (!ConnectibleChains.runtimeConfig.isCollisionsEnabled()) {
+            destroyCollision(serverWorld, chainData);
+            return;
+        }
+
+        chainData.collisionStorage.removeIf(id -> serverWorld.getEntityById(id) == null);
+
+        if (!chainData.collisionStorage.isEmpty()) return;
+
         // SERVER-SIDE //
         Entity chainHolder = chainedEntity.getChainHolder(chainData);
 
@@ -159,6 +170,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
                 ConnectibleChains.LOGGER.warn("Collision storage contained reference to {} (#{}) which is not a collision entity.", e, entityId);
             }
         }
+        chainData.collisionStorage.clear();
     }
 
     public @Nullable Chainable.ChainData getLink() {
@@ -205,11 +217,26 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if (getWorld().isClient) return;
+
+        if (this.link == null || !this.link.isAlive()) {
+            this.discard();
+        }
+    }
+
+    @Override
     protected void readCustomDataFromNbt(NbtCompound nbt) {
     }
 
     @Override
     protected void writeCustomDataToNbt(NbtCompound nbt) {
+    }
+
+    @Override
+    public boolean shouldSave() {
+        return false;
     }
 
     /**
@@ -239,8 +266,20 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     public boolean damage(DamageSource source, float amount) {
         if (getWorld().isClient) return false;
 
+        if (source.getAttacker() instanceof PlayerEntity player) {
+            boolean isCreative = player.isCreative();
+            boolean hasShears = player.getMainHandStack().isIn(ConventionalItemTags.SHEARS);
+            if (!isCreative && !hasShears) {
+                return false;
+            }
+        }
+
         // SEVER-SIDE //
-        assert getLink() != null;
+        if (getLink() == null) {
+            this.discard();
+            return false;
+        }
+
         ActionResult result = onDamageFrom(source, getSourceBlockSoundGroup(getLinkSourceItem()).getHitSound());
 
         if (!result.isAccepted()) {
@@ -266,8 +305,7 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
         if (player.getStackInHand(hand).isIn(ConventionalItemTags.SHEARS)) {
-
-            return ActionResult.SUCCESS;
+            return ActionResult.PASS;
         }
         return ActionResult.PASS;
     }
