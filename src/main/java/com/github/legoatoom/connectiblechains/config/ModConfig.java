@@ -43,6 +43,10 @@ public class ModConfig implements ConfigData {
 
     @ConfigEntry.Gui.Tooltip()
     private boolean showToolTip = true;
+
+    @ConfigEntry.Gui.Tooltip()
+    private boolean collisionsEnabled = true;
+
     public float getChainHangAmount() {
         return chainHangAmount;
     }
@@ -74,6 +78,14 @@ public class ModConfig implements ConfigData {
         return IS_DEBUG_ENV && MinecraftClient.getInstance().options.debugEnabled;
     }
 
+    public boolean isCollisionsEnabled() {
+        return collisionsEnabled;
+    }
+
+    public void setCollisionsEnabled(boolean collisionsEnabled) {
+        this.collisionsEnabled = collisionsEnabled;
+    }
+
     public void syncToClients(MinecraftServer server) {
         for (ServerPlayerEntity player : PlayerLookup.all(server)) {
             syncToClient(player);
@@ -81,14 +93,16 @@ public class ModConfig implements ConfigData {
     }
 
     public void syncToClient(ServerPlayerEntity player) {
-        ServerPlayNetworking.send(player, new ConfigSyncPayload(chainHangAmount, maxChainRange));
+        ServerPlayNetworking.send(player, new ConfigSyncPayload(chainHangAmount, maxChainRange, collisionsEnabled));
     }
 
+    // [MODIFY THIS METHOD]
     public ModConfig copyFrom(ModConfig config) {
         this.chainHangAmount = config.chainHangAmount;
         this.maxChainRange = config.maxChainRange;
         this.quality = config.quality;
         this.showToolTip = config.showToolTip;
+        this.collisionsEnabled = config.collisionsEnabled;
         return this;
     }
 

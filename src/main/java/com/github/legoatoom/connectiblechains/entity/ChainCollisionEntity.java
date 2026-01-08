@@ -85,6 +85,12 @@ public class ChainCollisionEntity extends Entity implements ChainLinkEntity {
         if (chainedEntity.getWorld().isClient()) return;
 
         ServerWorld serverWorld = (ServerWorld) chainedEntity.getWorld();
+
+        if (!ConnectibleChains.runtimeConfig.isCollisionsEnabled()) {
+            destroyCollision(serverWorld, chainData);
+            return;
+        }
+
         chainData.collisionStorage.removeIf(id -> serverWorld.getEntityById(id) == null);
 
         if (!chainData.collisionStorage.isEmpty()) return;

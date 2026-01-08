@@ -26,17 +26,18 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.network.PacketByteBuf;
 
-public record ConfigSyncPayload(float chainHangAmount, int maxChainRange) implements FabricPacket {
+public record ConfigSyncPayload(float chainHangAmount, int maxChainRange, boolean collisionsEnabled) implements FabricPacket {
     public static final PacketType<ConfigSyncPayload> TYPE = PacketType.create(Helper.identifier("s2c_config_sync_packet_id"), ConfigSyncPayload::new);
 
     public ConfigSyncPayload(PacketByteBuf buf) {
-        this(buf.readFloat(), buf.readInt());
+        this(buf.readFloat(), buf.readInt(), buf.readBoolean());
     }
 
     @Override
     public void write(PacketByteBuf buf) {
         buf.writeFloat(chainHangAmount);
         buf.writeInt(maxChainRange);
+        buf.writeBoolean(collisionsEnabled);
     }
 
     @Override
@@ -54,6 +55,7 @@ public record ConfigSyncPayload(float chainHangAmount, int maxChainRange) implem
             ConnectibleChains.LOGGER.info("Received {} config from server", ConnectibleChains.MODID);
             ConnectibleChains.runtimeConfig.setChainHangAmount(this.chainHangAmount);
             ConnectibleChains.runtimeConfig.setMaxChainRange(this.maxChainRange);
+            ConnectibleChains.runtimeConfig.setCollisionsEnabled(this.collisionsEnabled);
         } catch (Exception e) {
             ConnectibleChains.LOGGER.error("Could not deserialize config: ", e);
         }

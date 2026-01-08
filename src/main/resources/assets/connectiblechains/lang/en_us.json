@@ -11,6 +11,8 @@
   "text.autoconfig.connectiblechains.option.chainHangAmount.@Tooltip[2]" : "Collision will update on new chains or world loading.",
   "text.autoconfig.connectiblechains.option.showToolTip" : "Show Catenary Compatibility Tooltip",
   "text.autoconfig.connectiblechains.option.showToolTip.@Tooltip" : "Show tooltip over chain items that are compatible with this mod.",
+  "text.autoconfig.connectiblechains.option.collisionsEnabled": "Enable Chain Collisions",
+  "text.autoconfig.connectiblechains.option.collisionsEnabled.@Tooltip": "If disabled, chains will not have a collision box and entities can pass through them.",
 
   "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[0]" : "Effects how long a chain can be.",
   "text.autoconfig.connectiblechains.option.maxChainRange.@Tooltip[1]" : "§nWarning§r: Long chains can sometimes become invisible!",
